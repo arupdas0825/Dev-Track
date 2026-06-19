@@ -1,8 +1,13 @@
 <div align="center">
 
-# 🧭 DevTrack
+<img width="80" height="80" alt="devtrack" src="https://github.com/user-attachments/assets/02a73b3f-a8d7-4906-878b-068dc985fddd" />
+ 
+
+#  DevTrack
 
 ### AI-Powered Developer Intelligence Platform
+
+**Track. Analyze. Elevate.**
 
 DevTrack turns raw GitHub activity into a measurable Developer Score, AI-generated career insights, and a shareable annual "GitHub Wrapped" report — wrapped in a GitHub × Linear × Vercel–inspired interface.
 
@@ -14,6 +19,8 @@ DevTrack turns raw GitHub activity into a measurable Developer Score, AI-generat
 [![Deploy](https://img.shields.io/badge/Deploy-Vercel-black?logo=vercel)](https://vercel.com/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](#-license)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](#-contributing)
+
+[![Live Demo](https://img.shields.io/badge/🚀_Live_Demo-dev--track--brown.vercel.app-7C3AED?style=for-the-badge)](https://dev-track-brown.vercel.app/)
 
 [Overview](#-project-overview) · [Features](#-key-features) · [Architecture](#-architecture-overview) · [Installation](#-installation-guide) · [Roadmap](#-future-roadmap) · [Contributing](#-contributing)
 
@@ -36,6 +43,12 @@ The product is built to support three audiences at once:
 | **Researchers / Admissions reviewers** | Quantified evidence of growth, diversity, and open-source contribution for academic portfolios |
 
 A live demo mode (`?user=demo`) is built in, so anyone can explore the full dashboard — Developer Score, AI Insights, and Wrapped — without connecting a GitHub account or configuring Firebase.
+
+### 🌐 Live Demo
+
+**[https://dev-track-brown.vercel.app/](https://dev-track-brown.vercel.app/)**
+
+Click **"Try Demo"** on the landing page (or visit `/dashboard?user=demo` directly) to explore the full dashboard instantly — no sign-in required.
 
 ---
 
@@ -369,7 +382,7 @@ NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=G-XXXXXXXXXX
 1. Go to **GitHub → Settings → Developer settings → OAuth Apps → New OAuth App**.
 2. Fill in:
    - **Application name:** `DevTrack`
-   - **Homepage URL:** your deployed URL (e.g. `https://devtrack.vercel.app`)
+   - **Homepage URL:** `https://dev-track-brown.vercel.app/`
    - **Authorization callback URL:** `https://<your-firebase-project-id>.firebaseapp.com/__/auth/handler`
 3. Click **Register application**, then generate a **Client Secret**.
 4. Copy the **Client ID** and **Client Secret** into the GitHub provider configuration in **Firebase Console → Authentication → Sign-in method → GitHub**.
