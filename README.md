@@ -91,7 +91,9 @@ DevTrack is intentionally positioned as a **Developer Intelligence Platform**, n
 
 | Landing Page | Dashboard — Overview | Developer Score |
 |---|---|---|
-| ![Landing Page](docs/screenshots/landing-page.png) | ![Overview Tab](docs/screenshots/dashboard-overview.png) | ![Score Tab](docs/screenshots/developer-score.png) |
+| <img width="1657" height="796" alt="image" src="https://github.com/user-attachments/assets/07778081-7f10-461a-91f4-b36c9c098bd0" />
+| <img width="1626" height="802" alt="image" src="https://github.com/user-attachments/assets/c5f52473-6cfe-49a1-92c5-d5de48ff1a8d" />
+ | ![Score Tab](docs/screenshots/developer-score.png) |
 
 | AI Insights | GitHub Wrapped | Repositories |
 |---|---|---|
