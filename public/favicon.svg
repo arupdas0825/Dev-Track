@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 130 120" width="100%" height="100%">
+  <defs>
+    <!-- Premium theme gradients -->
+    <linearGradient id="logo-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2F81F7" />
+      <stop offset="100%" stop-color="#8957e5" />
+    </linearGradient>
+    <linearGradient id="bar-grad" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#2F81F7" stop-opacity="0.6" />
+      <stop offset="100%" stop-color="#2F81F7" stop-opacity="1" />
+    </linearGradient>
+    <linearGradient id="line-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#a371f7" />
+      <stop offset="100%" stop-color="#8957e5" />
+    </linearGradient>
+  </defs>
+
+  <!-- Left Code Brackets </> -->
+  <path d="M 20 48 L 12 58 L 20 68" fill="none" stroke="#2F81F7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M 25 44 L 19 72" fill="none" stroke="#8B949E" stroke-width="2.5" stroke-linecap="round" />
+  <path d="M 26 48 L 34 58 L 26 68" fill="none" stroke="#2F81F7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+
+  <!-- Center Stylized D-Shape -->
+  <path d="M 44 34 H 74 A 24 24 0 0 1 98 58 A 24 24 0 0 1 74 82 H 44 A 5 5 0 0 1 44 72 H 74 A 14 14 0 0 0 88 58 A 14 14 0 0 0 74 44 H 44 A 5 5 0 0 1 44 34 Z" 
+        fill="url(#logo-grad)" />
+
+  <!-- Inner Analytics Bars (nested inside the C-loop) -->
+  <rect x="52" y="64" width="4.5" height="8" rx="1.5" fill="url(#bar-grad)" />
+  <rect x="61" y="56" width="4.5" height="16" rx="1.5" fill="url(#bar-grad)" />
+  <rect x="70" y="48" width="4.5" height="24" rx="1.5" fill="url(#bar-grad)" />
+
+  <!-- Right Line Chart representing Growth/Elevation -->
+  <path d="M 100 70 L 110 58 L 122 46" fill="none" stroke="url(#line-grad)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+  <circle cx="100" cy="70" r="3.5" fill="#0D1117" stroke="#a371f7" stroke-width="2" />
+  <circle cx="110" cy="58" r="3.5" fill="#0D1117" stroke="#a371f7" stroke-width="2" />
+  <circle cx="122" cy="46" r="3.5" fill="#8957e5" stroke="#F0F6FC" stroke-width="1.5" />
+</svg>
