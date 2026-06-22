@@ -2,6 +2,7 @@
 
 import { UserDashboardData } from "@/types";
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
+import { useTheme } from "@/components/ui/ThemeContext";
 
 interface AIInsightsTabProps {
   data: UserDashboardData;
@@ -9,6 +10,7 @@ interface AIInsightsTabProps {
 
 export default function AIInsightsTab({ data }: AIInsightsTabProps) {
   const { aiInsights } = data;
+  const { chartSettings } = useTheme();
 
   return (
     <div className="space-y-6">
@@ -131,14 +133,14 @@ export default function AIInsightsTab({ data }: AIInsightsTabProps) {
           <div className="lg:col-span-7 h-48 text-[9px] font-mono w-full">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={aiInsights.growthForecast.forecastMonths} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#30363D" vertical={false} />
-                <XAxis dataKey="month" stroke="#8B949E" tickLine={false} />
-                <YAxis stroke="#8B949E" domain={[10, 100]} tickLine={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+                <XAxis dataKey="month" stroke="var(--text-secondary)" tickLine={false} />
+                <YAxis stroke="var(--text-secondary)" domain={[10, 100]} tickLine={false} />
                 <Tooltip 
-                  contentStyle={{ backgroundColor: "#161B22", borderColor: "#30363D", borderRadius: "8px" }}
-                  labelStyle={{ color: "#F0F6FC" }}
+                  contentStyle={{ backgroundColor: "var(--surface)", borderColor: "var(--border)", borderRadius: "8px" }}
+                  labelStyle={{ color: "var(--text-primary)" }}
                 />
-                <Line type="monotone" dataKey="score" stroke="#58A6FF" strokeWidth={2.5} activeDot={{ r: 5 }} />
+                <Line type="monotone" dataKey="score" stroke="var(--accent)" isAnimationActive={chartSettings.animated} strokeWidth={2.5} activeDot={{ r: 5 }} />
               </LineChart>
             </ResponsiveContainer>
           </div>

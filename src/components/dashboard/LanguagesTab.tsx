@@ -3,6 +3,7 @@
 import { UserDashboardData } from "@/types";
 import { formatBytes } from "@/lib/utils";
 import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, Radar, BarChart, Bar, XAxis, YAxis, Tooltip } from "recharts";
+import { useTheme } from "@/components/ui/ThemeContext";
 
 interface LanguagesTabProps {
   data: UserDashboardData;
@@ -10,6 +11,7 @@ interface LanguagesTabProps {
 
 export default function LanguagesTab({ data }: LanguagesTabProps) {
   const { languages, repositories } = data;
+  const { chartSettings } = useTheme();
 
   if (languages.length === 0) {
     return (
@@ -113,14 +115,15 @@ export default function LanguagesTab({ data }: LanguagesTabProps) {
           <div className="h-56 w-full text-[9px] font-mono mt-4">
             <ResponsiveContainer width="100%" height="100%">
               <RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarData}>
-                <PolarGrid stroke="#30363D" />
-                <PolarAngleAxis dataKey="subject" stroke="#8B949E" />
+                <PolarGrid stroke="var(--border)" />
+                <PolarAngleAxis dataKey="subject" stroke="var(--text-secondary)" />
                 <Radar
                   name="Proficiency"
                   dataKey="A"
-                  stroke="#58A6FF"
-                  fill="#1F6FEB"
+                  stroke="var(--accent)"
+                  fill="var(--accent)"
                   fillOpacity={0.25}
+                  isAnimationActive={chartSettings.animated}
                 />
               </RadarChart>
             </ResponsiveContainer>
@@ -138,13 +141,13 @@ export default function LanguagesTab({ data }: LanguagesTabProps) {
           <div className="h-56 w-full text-[9px] font-mono mt-4">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={topLanguages} layout="vertical" margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
-                <XAxis type="number" stroke="#8B949E" tickLine={false} />
-                <YAxis dataKey="name" type="category" stroke="#8B949E" tickLine={false} width={70} />
+                <XAxis type="number" stroke="var(--text-secondary)" tickLine={false} />
+                <YAxis dataKey="name" type="category" stroke="var(--text-secondary)" tickLine={false} width={70} />
                 <Tooltip 
-                  contentStyle={{ backgroundColor: "#161B22", borderColor: "#30363D", borderRadius: "8px" }}
-                  labelStyle={{ color: "#F0F6FC" }}
+                  contentStyle={{ backgroundColor: "var(--surface)", borderColor: "var(--border)", borderRadius: "8px" }}
+                  labelStyle={{ color: "var(--text-primary)" }}
                 />
-                <Bar dataKey="percentage" fill="#3FB950" radius={[0, 4, 4, 0]} />
+                <Bar dataKey="percentage" fill="var(--accent)" isAnimationActive={chartSettings.animated} radius={[0, 4, 4, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>

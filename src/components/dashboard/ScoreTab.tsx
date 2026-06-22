@@ -2,6 +2,7 @@
 
 import { UserDashboardData } from "@/types";
 import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, Radar, Tooltip } from "recharts";
+import { useTheme } from "@/components/ui/ThemeContext";
 
 interface ScoreTabProps {
   data: UserDashboardData;
@@ -9,6 +10,7 @@ interface ScoreTabProps {
 
 export default function ScoreTab({ data }: ScoreTabProps) {
   const { score } = data;
+  const { chartSettings } = useTheme();
 
   const getScoreClassification = (val: number) => {
     if (val >= 95) return { label: "Elite Architect", color: "text-[#3FB950] border-[#238636]/30 bg-[#238636]/10", grade: "S+", level: "Level 6" };
@@ -62,21 +64,22 @@ export default function ScoreTab({ data }: ScoreTabProps) {
         </div>
 
         {/* Right Column: Recharts Interactive Radar */}
-        <div className="lg:col-span-8 flex justify-center py-4 border-t lg:border-t-0 lg:border-l border-[#30363D] h-64 text-[10px] font-mono w-full">
+        <div className="lg:col-span-8 flex justify-center py-4 border-t lg:border-t-0 lg:border-l border-border h-64 text-[10px] font-mono w-full">
           <ResponsiveContainer width="100%" height="100%">
             <RadarChart cx="50%" cy="50%" outerRadius="75%" data={radarData}>
-              <PolarGrid stroke="#30363D" />
-              <PolarAngleAxis dataKey="subject" stroke="#8B949E" />
+              <PolarGrid stroke="var(--border)" />
+              <PolarAngleAxis dataKey="subject" stroke="var(--text-secondary)" />
               <Radar
                 name="Score"
                 dataKey="A"
-                stroke="#58A6FF"
-                fill="#1F6FEB"
+                stroke="var(--accent)"
+                fill="var(--accent)"
                 fillOpacity={0.2}
+                isAnimationActive={chartSettings.animated}
               />
               <Tooltip 
-                contentStyle={{ backgroundColor: "#161B22", borderColor: "#30363D", borderRadius: "8px" }}
-                labelStyle={{ color: "#F0F6FC" }}
+                contentStyle={{ backgroundColor: "var(--surface)", borderColor: "var(--border)", borderRadius: "8px" }}
+                labelStyle={{ color: "var(--text-primary)" }}
               />
             </RadarChart>
           </ResponsiveContainer>

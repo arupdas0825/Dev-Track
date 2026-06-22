@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import { Inter, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 
+import { ThemeProvider } from "@/components/ui/ThemeContext";
+import ThemeSettingsModal from "@/components/ui/ThemeSettingsModal";
+
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
@@ -31,7 +34,10 @@ export default function RootLayout({
       className={`${inter.variable} ${spaceGrotesk.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-background text-foreground font-inter">
-        {children}
+        <ThemeProvider>
+          {children}
+          <ThemeSettingsModal />
+        </ThemeProvider>
       </body>
     </html>
   );

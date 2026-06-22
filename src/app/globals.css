@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
 :root {
+  /* Default active fallback (GitHub Dark) */
   --background: #0D1117;
   --foreground: #F0F6FC;
   --surface: #161B22;
@@ -13,8 +14,239 @@
   --success: #3FB950;
   --warning: #D29922;
   --danger: #F85149;
+
+  --accent-blue: #58A6FF;
+  --accent-green: #3FB950;
+  --accent-purple: #BC8CFF;
+  --accent-orange: #F0883E;
+  --accent-red: #FF7B72;
+  --accent-cyan: #39C5BB;
 }
 
+/* ---------------------------------------------------- */
+/* THEMES CONFIGURATION */
+/* ---------------------------------------------------- */
+
+/* 1. GitHub Light Theme */
+html.theme-github-light {
+  --background: #FFFFFF;
+  --foreground: #24292F;
+  --surface: #F6F8FA;
+  --surface-secondary: #EFF1F3;
+  --border: #D0D7DE;
+  --primary: #1A7F37;
+  --accent: #0969DA;
+  --text-primary: #24292F;
+  --text-secondary: #57606A;
+  --success: #1A7F37;
+  --warning: #9A6700;
+  --danger: #CF222E;
+
+  --accent-blue: #0969DA;
+  --accent-green: #1A7F37;
+  --accent-purple: #8250DF;
+  --accent-orange: #BC4C00;
+  --accent-red: #CF222E;
+  --accent-cyan: #05999E;
+}
+
+/* 2. GitHub Dark Theme */
+html.theme-github-dark {
+  --background: #0D1117;
+  --foreground: #F0F6FC;
+  --surface: #161B22;
+  --surface-secondary: #21262D;
+  --border: #30363D;
+  --primary: #238636;
+  --accent: #2F81F7;
+  --text-primary: #F0F6FC;
+  --text-secondary: #8B949E;
+  --success: #3FB950;
+  --warning: #D29922;
+  --danger: #F85149;
+
+  --accent-blue: #58A6FF;
+  --accent-green: #3FB950;
+  --accent-purple: #BC8CFF;
+  --accent-orange: #F0883E;
+  --accent-red: #FF7B72;
+  --accent-cyan: #39C5BB;
+}
+
+/* 3. GitHub Dark Dimmed Theme */
+html.theme-github-dark-dimmed {
+  --background: #22272E;
+  --foreground: #ADBAC7;
+  --surface: #2D333B;
+  --surface-secondary: #373E47;
+  --border: #444C56;
+  --primary: #347D39;
+  --accent: #539BF5;
+  --text-primary: #ADBAC7;
+  --text-secondary: #768390;
+  --success: #57AB5A;
+  --warning: #C69026;
+  --danger: #E5534B;
+
+  --accent-blue: #539BF5;
+  --accent-green: #57AB5A;
+  --accent-purple: #9B6BDF;
+  --accent-orange: #C69026;
+  --accent-red: #E5534B;
+  --accent-cyan: #319795;
+}
+
+/* 4. GitHub Dark High Contrast Theme */
+html.theme-github-dark-hc {
+  --background: #010409;
+  --foreground: #FFFFFF;
+  --surface: #0D1117;
+  --surface-secondary: #161B22;
+  --border: #484F58;
+  --primary: #2EA44F;
+  --accent: #409EFF;
+  --text-primary: #FFFFFF;
+  --text-secondary: #F0F6FC;
+  --success: #26A641;
+  --warning: #D29922;
+  --danger: #FF7B72;
+
+  --accent-blue: #409EFF;
+  --accent-green: #26A641;
+  --accent-purple: #D0BFFF;
+  --accent-orange: #F5A623;
+  --accent-red: #FF7B72;
+  --accent-cyan: #00E5FF;
+}
+
+/* 5. DevTrack Midnight Theme */
+html.dt-midnight {
+  --background: #0B0E14;
+  --foreground: #E2E8F0;
+  --surface: #111520;
+  --surface-secondary: #1A202C;
+  --border: #1E2538;
+  --primary: #2563EB;
+  --accent: #3B82F6;
+  --text-primary: #F8FAFC;
+  --text-secondary: #94A3B8;
+  --success: #10B981;
+  --warning: #F59E0B;
+  --danger: #EF4444;
+
+  --accent-blue: #3B82F6;
+  --accent-green: #10B981;
+  --accent-purple: #8B5CF6;
+  --accent-orange: #F97316;
+  --accent-red: #EF4444;
+  --accent-cyan: #06B6D4;
+}
+
+/* 6. DevTrack Neon Blue Theme */
+html.dt-neon-blue {
+  --background: #020817;
+  --foreground: #F8FAFC;
+  --surface: #0B1329;
+  --surface-secondary: #1E293B;
+  --border: #1D2D50;
+  --primary: #0F172A;
+  --accent: #00D2FF;
+  --text-primary: #F8FAFC;
+  --text-secondary: #64748B;
+  --success: #00F5D4;
+  --warning: #FEE440;
+  --danger: #F15BB5;
+
+  --accent-blue: #00D2FF;
+  --accent-green: #00F5D4;
+  --accent-purple: #D946EF;
+  --accent-orange: #F97316;
+  --accent-red: #FF2E93;
+  --accent-cyan: #00FFE7;
+}
+
+/* 7. DevTrack Graphite Theme */
+html.dt-graphite {
+  --background: #18181B;
+  --foreground: #FAFAFA;
+  --surface: #202023;
+  --surface-secondary: #27272A;
+  --border: #3F3F46;
+  --primary: #27272A;
+  --accent: #F4F4F5;
+  --text-primary: #FAFAFA;
+  --text-secondary: #A1A1AA;
+  --success: #52525B;
+  --warning: #A1A1AA;
+  --danger: #E4E4E7;
+
+  --accent-blue: #38BDF8;
+  --accent-green: #34D399;
+  --accent-purple: #C084FC;
+  --accent-orange: #FDBA74;
+  --accent-red: #F87171;
+  --accent-cyan: #2DD4BF;
+}
+
+/* 8. DevTrack Emerald Theme */
+html.dt-emerald {
+  --background: #061F17;
+  --foreground: #ECFDF5;
+  --surface: #0B3F30;
+  --surface-secondary: #0D4F3E;
+  --border: #124E3F;
+  --primary: #10B981;
+  --accent: #34D399;
+  --text-primary: #ECFDF5;
+  --text-secondary: #6EE7B7;
+  --success: #10B981;
+  --warning: #FBBF24;
+  --danger: #F87171;
+
+  --accent-blue: #60A5FA;
+  --accent-green: #34D399;
+  --accent-purple: #A78BFA;
+  --accent-orange: #FBBF24;
+  --accent-red: #F87171;
+  --accent-cyan: #2DD4BF;
+}
+
+/* 9. DevTrack Purple Matrix Theme */
+html.dt-purple-matrix {
+  --background: #0F051D;
+  --foreground: #F3E8FF;
+  --surface: #1A0B36;
+  --surface-secondary: #25124C;
+  --border: #31146C;
+  --primary: #8B5CF6;
+  --accent: #A855F7;
+  --text-primary: #F3E8FF;
+  --text-secondary: #C084FC;
+  --success: #22C55E;
+  --warning: #EAB308;
+  --danger: #EF4444;
+
+  --accent-blue: #38BDF8;
+  --accent-green: #4ADE80;
+  --accent-purple: #A855F7;
+  --accent-orange: #FB923C;
+  --accent-red: #F87171;
+  --accent-cyan: #22D3EE;
+}
+
+/* ---------------------------------------------------- */
+/* ACCENTS VALUE OVERRIDES */
+/* ---------------------------------------------------- */
+html.accent-blue { --accent: var(--accent-blue); }
+html.accent-green { --accent: var(--accent-green); }
+html.accent-purple { --accent: var(--accent-purple); }
+html.accent-orange { --accent: var(--accent-orange); }
+html.accent-red { --accent: var(--accent-red); }
+html.accent-cyan { --accent: var(--accent-cyan); }
+
+/* ---------------------------------------------------- */
+/* TAILWIND V4 CLASS MAPS */
+/* ---------------------------------------------------- */
 @theme {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -41,7 +273,70 @@ body {
   padding: 0;
 }
 
-/* Custom styles for charts or overlays */
+/* ---------------------------------------------------- */
+/* INTERFACE UTILITY RULES */
+/* ---------------------------------------------------- */
+
+/* 1. Animations Overrides */
+html.no-animations *, html.reduced-motion * {
+  transition-property: none !important;
+  transition-duration: 0s !important;
+  animation-duration: 0s !important;
+  animation-iteration-count: 1 !important;
+  animation-delay: 0s !important;
+}
+
+/* 2. Card Hover Effects Toggle */
+html.disable-card-hover .hover\:scale-102:hover {
+  transform: none !important;
+}
+html.disable-card-hover .hover\:shadow-lg:hover,
+html.disable-card-hover .hover\:shadow-2xl:hover {
+  box-shadow: none !important;
+}
+html.disable-card-hover .hover\:border-accent:hover,
+html.disable-card-hover .hover\:border-border:hover {
+  border-color: var(--border) !important;
+}
+
+/* 3. Blur Overrides */
+html.no-blur, html.no-blur * {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  filter: none !important;
+}
+
+/* 4. Glow Circle Overrides */
+html.no-glow .glow-circle,
+html.no-glow .blur-3xl,
+html.no-glow .blur-2xl,
+html.no-glow .blur-xl {
+  display: none !important;
+  opacity: 0 !important;
+  background: transparent !important;
+}
+
+/* 5. Layout Spacing overrides */
+html.layout-compact .mx-auto.max-w-7xl {
+  max-width: 72rem !important; /* max-w-6xl */
+}
+html.layout-compact .gap-8 {
+  gap: 1.25rem !important;
+}
+html.layout-compact .space-y-6 {
+  margin-top: 0.75rem !important;
+  margin-bottom: 0.75rem !important;
+}
+html.layout-compact .p-6,
+html.layout-compact .p-8 {
+  padding: 1rem !important;
+}
+
+html.layout-wide .mx-auto.max-w-7xl {
+  max-width: 95% !important;
+}
+
+/* Custom Scrollbars matching surface variables */
 .scrollbar-thin::-webkit-scrollbar {
   width: 6px;
   height: 6px;
