@@ -7,6 +7,7 @@ import { DevTrackUser } from "@/lib/firebase";
 import AuthModal from "../auth/AuthModal";
 import Logo from "../ui/Logo";
 import { useTheme } from "@/components/ui/ThemeContext";
+import { Palette } from "lucide-react";
 
 interface NavbarProps {
   currentUser: DevTrackUser | null;
@@ -18,8 +19,7 @@ interface NavbarProps {
 export default function Navbar({ currentUser, onLoginSuccess, onLogout, onDemoTrigger }: NavbarProps) {
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  const { setIsThemeModalOpen } = useTheme();
+  const { openModal } = useTheme();
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border bg-background/85 backdrop-blur-md">
@@ -40,22 +40,13 @@ export default function Navbar({ currentUser, onLoginSuccess, onLogout, onDemoTr
 
         {/* Action Controls */}
         <div className="hidden md:flex items-center gap-4">
-          {/* Universal Theme Palette Button */}
           <button
-            onClick={() => setIsThemeModalOpen(true)}
-            className="text-text-secondary hover:text-text-primary transition-colors focus:outline-none cursor-pointer p-2 rounded-lg border border-border bg-surface/30 hover:bg-surface/75"
+            onClick={openModal}
+            className="rounded-full p-2 hover:bg-surface-secondary transition-colors"
             title="Theme Settings"
-            aria-label="Theme settings"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="h-4.5 w-4.5">
-              <circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/>
-              <circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/>
-              <circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/>
-              <circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/>
-              <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.92 0 1.63-.77 1.63-1.7 0-.42-.15-.82-.41-1.16-.26-.35-.41-.79-.41-1.27 0-1.1 1-2 2.11-2h1.79c3.08 0 5.88-2.54 5.88-5.7C22 6.5 17.5 2 12 2Z"/>
-            </svg>
+            <Palette size={20} className="text-text-secondary" />
           </button>
-
           {currentUser ? (
             <div className="flex items-center gap-4">
               <Link

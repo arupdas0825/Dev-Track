@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 import { Inter, Space_Grotesk } from "next/font/google";
-import "./globals.css";
-
 import { ThemeProvider } from "@/components/ui/ThemeContext";
-import ThemeSettingsModal from "@/components/ui/ThemeSettingsModal";
+import { ThemeModal } from "@/components/ui/ThemeModal";
+import "./globals.css";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -29,16 +28,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className={`${inter.variable} ${spaceGrotesk.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col bg-background text-foreground font-inter">
-        <ThemeProvider>
+    <ThemeProvider>
+      <html
+        lang="en"
+        className={`${inter.variable} ${spaceGrotesk.variable} h-full antialiased`}
+      >
+        <body className="min-h-full flex flex-col bg-background text-foreground font-inter">
           {children}
-          <ThemeSettingsModal />
-        </ThemeProvider>
-      </body>
-    </html>
+          <ThemeModal />
+        </body>
+      </html>
+    </ThemeProvider>
   );
 }

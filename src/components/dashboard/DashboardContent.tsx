@@ -14,7 +14,6 @@ import ScoreTab from "./ScoreTab";
 import AIInsightsTab from "./AIInsightsTab";
 import WrappedTab from "./WrappedTab";
 import SettingsTab from "./SettingsTab";
-import { useTheme } from "@/components/ui/ThemeContext";
 import { useGithubProfile } from "@/hooks/useGithubProfile";
 import { useRepositories } from "@/hooks/useRepositories";
 import { useAnalytics } from "@/hooks/useAnalytics";
@@ -22,7 +21,6 @@ import { useAnalytics } from "@/hooks/useAnalytics";
 type TabId = "overview" | "repos" | "contrib" | "lang" | "score" | "ai" | "wrapped" | "settings";
 
 export default function DashboardContent() {
-  const { interfaceSettings, layoutDensity } = useTheme();
   const searchParams = useSearchParams();
   const router = useRouter();
   const [currentUser, setCurrentUser] = useState<DevTrackUser | null>(null);
@@ -229,11 +227,9 @@ export default function DashboardContent() {
     <div className="flex min-h-screen flex-col bg-background">
       <Navbar currentUser={currentUser} onLoginSuccess={handleLoginSuccess} onLogout={handleLogout} />
 
-      <div className={`flex-1 mx-auto w-full px-4 py-8 sm:px-6 lg:px-8 flex flex-col md:flex-row transition-all duration-300 ${
-        layoutDensity === "compact" ? "max-w-6xl gap-4" : layoutDensity === "wide" ? "max-w-[95%] gap-8" : "max-w-7xl gap-8"
-      }`}>
+      <div className="flex-1 mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8 flex flex-col md:flex-row gap-8">
         {/* Sidebar Nav */}
-        <aside className={`flex-shrink-0 transition-all duration-300 ${interfaceSettings.compactSidebar ? "md:w-48" : "md:w-64"}`}>
+        <aside className="md:w-64 flex-shrink-0">
           {/* Ctrl+K Trigger Search Bar */}
           <div className="mb-4 hidden md:block">
             <button
@@ -272,9 +268,7 @@ export default function DashboardContent() {
 
         {/* Tab Content window */}
         <div className="flex-1 min-w-0">
-          <div className={`border border-border bg-surface/20 rounded-xl transition-all duration-300 ${
-            interfaceSettings.compactCards ? "p-4" : "p-6"
-          }`}>
+          <div className="border border-border bg-surface/20 rounded-xl p-6">
             {renderActiveTabContent()}
           </div>
         </div>

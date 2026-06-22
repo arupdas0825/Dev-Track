@@ -2,7 +2,6 @@
 
 import { UserDashboardData } from "@/types";
 import { formatNumber, calculateAccountAge } from "@/lib/utils";
-import { useTheme } from "@/components/ui/ThemeContext";
 
 interface OverviewTabProps {
   data: UserDashboardData;
@@ -29,8 +28,6 @@ export default function OverviewTab({ data }: OverviewTabProps) {
   const radius = 60;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (score.overall / 100) * circumference;
-
-  const { chartSettings } = useTheme();
 
   // Generate GitHub-style contribution cells for the last 365 days (53 weeks)
   const renderContributionGrid = () => {
@@ -71,36 +68,15 @@ export default function OverviewTab({ data }: OverviewTabProps) {
           {weeks.map((week, wIndex) => (
             <div key={wIndex} className="flex flex-col gap-[3px]">
               {week.map((day, dIndex) => {
-                let cellStyle: React.CSSProperties = {};
-                let colorClass = "";
-                
-                if (chartSettings.heatmapStyle === "github") {
-                  if (day.level === 0) colorClass = "bg-surface-secondary/40 border border-border/10";
-                  else if (day.level === 1) colorClass = "bg-[#0e4429]";
-                  else if (day.level === 2) colorClass = "bg-[#006d32]";
-                  else if (day.level === 3) colorClass = "bg-[#26a641]";
-                  else if (day.level === 4) colorClass = "bg-[#39d353]";
-                } else if (chartSettings.heatmapStyle === "devtrack") {
-                  if (day.level === 0) {
-                    cellStyle = { backgroundColor: "var(--surface-secondary)", opacity: 0.4 };
-                  } else {
-                    const opacities = [0.22, 0.48, 0.74, 1.0];
-                    cellStyle = { backgroundColor: "var(--accent)", opacity: opacities[day.level - 1] };
-                  }
-                } else {
-                  // minimal monochrome
-                  if (day.level === 0) {
-                    cellStyle = { backgroundColor: "var(--surface-secondary)", opacity: 0.4 };
-                  } else {
-                    const opacities = [0.18, 0.42, 0.68, 1.0];
-                    cellStyle = { backgroundColor: "var(--text-primary)", opacity: opacities[day.level - 1] };
-                  }
-                }
+                let colorClass = "bg-[#161B22]"; // Empty level 0
+                if (day.level === 1) colorClass = "bg-[#0e4429]";
+                if (day.level === 2) colorClass = "bg-[#006d32]";
+                if (day.level === 3) colorClass = "bg-[#26a641]";
+                if (day.level === 4) colorClass = "bg-[#39d353]";
 
                 return (
                   <div
                     key={dIndex}
-                    style={cellStyle}
                     className={`h-[11px] w-[11px] rounded-[1.5px] transition-all hover:scale-125 cursor-pointer ${colorClass}`}
                     title={`${day.count} contributions on ${day.dateStr}`}
                   />

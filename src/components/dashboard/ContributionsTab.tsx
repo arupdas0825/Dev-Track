@@ -2,7 +2,6 @@
 
 import { UserDashboardData } from "@/types";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, BarChart, Bar, CartesianGrid } from "recharts";
-import { useTheme } from "@/components/ui/ThemeContext";
 
 interface ContributionsTabProps {
   data: UserDashboardData;
@@ -10,7 +9,6 @@ interface ContributionsTabProps {
 
 export default function ContributionsTab({ data }: ContributionsTabProps) {
   const { contributions, profile } = data;
-  const { chartSettings } = useTheme();
 
   // 1. Group daily contributions by month (last 12 months)
   const getMonthlyTrendData = () => {
@@ -174,40 +172,40 @@ export default function ContributionsTab({ data }: ContributionsTabProps) {
               <AreaChart data={monthlyData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorContribs" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="var(--accent)" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="var(--accent)" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="#1F6FEB" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#1F6FEB" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-                <XAxis dataKey="month" stroke="var(--text-secondary)" tickLine={false} />
-                <YAxis stroke="var(--text-secondary)" tickLine={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#30363D" vertical={false} />
+                <XAxis dataKey="month" stroke="#8B949E" tickLine={false} />
+                <YAxis stroke="#8B949E" tickLine={false} />
                 <Tooltip 
-                  contentStyle={{ backgroundColor: "var(--surface)", borderColor: "var(--border)", borderRadius: "8px" }}
-                  labelStyle={{ color: "var(--text-primary)" }}
+                  contentStyle={{ backgroundColor: "#161B22", borderColor: "#30363D", borderRadius: "8px" }}
+                  labelStyle={{ color: "#F0F6FC" }}
                 />
-                <Area type="monotone" dataKey="contributions" stroke="var(--accent)" isAnimationActive={chartSettings.animated} strokeWidth={2} fillOpacity={1} fill="url(#colorContribs)" />
+                <Area type="monotone" dataKey="contributions" stroke="#58A6FF" strokeWidth={2} fillOpacity={1} fill="url(#colorContribs)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
         </div>
 
         {/* Chart 2: Day of Week Bar Chart */}
-        <div className="lg:col-span-4 rounded-xl border border-border bg-[#161B22]/40 p-5 flex flex-col justify-between">
+        <div className="lg:col-span-4 rounded-xl border border-[#30363D] bg-[#161B22]/40 p-5 flex flex-col justify-between">
           <div>
-            <h4 className="text-xs font-mono font-bold text-text-secondary uppercase tracking-wider">Commit Distribution</h4>
-            <p className="text-[10px] text-text-secondary mt-0.5">Weekly density profile.</p>
+            <h4 className="text-xs font-mono font-bold text-[#8B949E] uppercase tracking-wider">Commit Distribution</h4>
+            <p className="text-[10px] text-[#8B949E] mt-0.5">Weekly density profile.</p>
           </div>
           <div className="h-48 w-full mt-4 text-[9px] font-mono">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={dayOfWeekData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-                <XAxis dataKey="day" stroke="var(--text-secondary)" tickLine={false} />
-                <YAxis stroke="var(--text-secondary)" tickLine={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#30363D" vertical={false} />
+                <XAxis dataKey="day" stroke="#8B949E" tickLine={false} />
+                <YAxis stroke="#8B949E" tickLine={false} />
                 <Tooltip 
-                  contentStyle={{ backgroundColor: "var(--surface)", borderColor: "var(--border)", borderRadius: "8px" }}
-                  labelStyle={{ color: "var(--text-primary)" }}
+                  contentStyle={{ backgroundColor: "#161B22", borderColor: "#30363D", borderRadius: "8px" }}
+                  labelStyle={{ color: "#F0F6FC" }}
                 />
-                <Bar dataKey="count" fill="var(--accent)" isAnimationActive={chartSettings.animated} radius={[4, 4, 0, 0]} />
+                <Bar dataKey="count" fill="#3FB950" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>

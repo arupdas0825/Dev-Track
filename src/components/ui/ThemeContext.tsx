@@ -1,268 +1,235 @@
+// src/components/ui/ThemeContext.tsx
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 
 export type ThemeMode = "light" | "dark" | "system";
-
 export type ThemeProfile =
   | "github-dark"
   | "github-dark-dimmed"
   | "github-dark-hc"
-  | "dt-midnight"
-  | "dt-neon-blue"
-  | "dt-graphite"
-  | "dt-emerald"
-  | "dt-purple-matrix";
-
+  | "devtrack-midnight"
+  | "devtrack-neon-blue"
+  | "devtrack-graphite"
+  | "devtrack-emerald"
+  | "devtrack-purple-matrix";
 export type AccentColor = "blue" | "green" | "purple" | "orange" | "red" | "cyan";
-
 export type LayoutDensity = "default" | "compact" | "wide";
-
-export interface InterfaceSettings {
+export type InterfaceSettings = {
   animations: boolean;
   reducedMotion: boolean;
   cardHover: boolean;
-  blur: boolean;
-  glow: boolean;
+  blurEffects: boolean;
+  glowEffects: boolean;
   compactSidebar: boolean;
   compactCards: boolean;
-}
-
-export interface ChartSettings {
-  animated: boolean;
+};
+export type ChartSettings = {
+  animatedCharts: boolean;
   heatmapStyle: "github" | "devtrack" | "minimal";
+};
+
+export interface ThemeContextProps {
+  mode: ThemeMode;
+  profile: ThemeProfile;
+  accent: AccentColor;
+  layout: LayoutDensity;
+  interface: InterfaceSettings;
+  chart: ChartSettings;
+  modalOpen: boolean;
+  setMode: (mode: ThemeMode) => void;
+  setProfile: (profile: ThemeProfile) => void;
+  setAccent: (accent: AccentColor) => void;
+  setLayout: (layout: LayoutDensity) => void;
+  setInterface: (settings: Partial<InterfaceSettings>) => void;
+  setChart: (settings: Partial<ChartSettings>) => void;
+  openModal: () => void;
+  closeModal: () => void;
 }
 
-interface ThemeContextType {
-  themeMode: ThemeMode;
-  setThemeMode: (mode: ThemeMode) => void;
-  themeProfile: ThemeProfile;
-  setThemeProfile: (profile: ThemeProfile) => void;
-  accentColor: AccentColor;
-  setAccentColor: (accent: AccentColor) => void;
-  layoutDensity: LayoutDensity;
-  setLayoutDensity: (density: LayoutDensity) => void;
-  interfaceSettings: InterfaceSettings;
-  toggleInterfaceSetting: (setting: keyof InterfaceSettings) => void;
-  chartSettings: ChartSettings;
-  toggleChartAnimation: () => void;
-  setHeatmapStyle: (style: "github" | "devtrack" | "minimal") => void;
-  isThemeModalOpen: boolean;
-  setIsThemeModalOpen: (open: boolean) => void;
-}
+const defaultInterface: InterfaceSettings = {
+  animations: true,
+  reducedMotion: false,
+  cardHover: true,
+  blurEffects: true,
+  glowEffects: true,
+  compactSidebar: false,
+  compactCards: false,
+};
 
-const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+const defaultChart: ChartSettings = {
+  animatedCharts: true,
+  heatmapStyle: "github",
+};
 
-export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [themeMode, setThemeModeState] = useState<ThemeMode>("dark");
-  const [themeProfile, setThemeProfileState] = useState<ThemeProfile>("github-dark");
-  const [accentColor, setAccentColorState] = useState<AccentColor>("blue");
-  const [layoutDensity, setLayoutDensityState] = useState<LayoutDensity>("default");
-  
-  const [interfaceSettings, setInterfaceSettings] = useState<InterfaceSettings>({
-    animations: true,
-    reducedMotion: false,
-    cardHover: true,
-    blur: true,
-    glow: true,
-    compactSidebar: false,
-    compactCards: false,
-  });
+const ThemeContext = createContext<ThemeContextProps | undefined>(undefined);
 
-  const [chartSettings, setChartSettings] = useState<ChartSettings>({
-    animated: true,
-    heatmapStyle: "github",
-  });
+const themeProfiles: Record<ThemeProfile, Record<string, string>> = {
+  "github-dark": {
+    "--background": "#0d1117",
+    "--surface": "#161b22",
+    "--surface-secondary": "#21262d",
+    "--border": "#30363d",
+    "--accent": "#58a6ff",
+  },
+  "github-dark-dimmed": {
+    "--background": "#0d1117",
+    "--surface": "#161b22",
+    "--surface-secondary": "#21262d",
+    "--border": "#30363d",
+    "--accent": "#6e7681",
+  },
+  "github-dark-hc": {
+    "--background": "#0d1117",
+    "--surface": "#161b22",
+    "--surface-secondary": "#21262d",
+    "--border": "#f1e3bc",
+    "--accent": "#ffb300",
+  },
+  "devtrack-midnight": {
+    "--background": "#0a0c10",
+    "--surface": "#14171c",
+    "--surface-secondary": "#1a1d23",
+    "--border": "#2d323c",
+    "--accent": "#1e40af",
+  },
+  "devtrack-neon-blue": {
+    "--background": "#020617",
+    "--surface": "#091135",
+    "--surface-secondary": "#0d1c4a",
+    "--border": "#17386b",
+    "--accent": "#3b82f6",
+  },
+  "devtrack-graphite": {
+    "--background": "#111418",
+    "--surface": "#1c2127",
+    "--surface-secondary": "#262c33",
+    "--border": "#404752",
+    "--accent": "#6366f1",
+  },
+  "devtrack-emerald": {
+    "--background": "#041c15",
+    "--surface": "#07352c",
+    "--surface-secondary": "#084d3a",
+    "--border": "#2e7d5b",
+    "--accent": "#10b981",
+  },
+  "devtrack-purple-matrix": {
+    "--background": "#181125",
+    "--surface": "#241a34",
+    "--surface-secondary": "#30243e",
+    "--border": "#5b4475",
+    "--accent": "#a78bfa",
+  },
+};
 
-  const [isThemeModalOpen, setIsThemeModalOpen] = useState(false);
+const accentColors: Record<AccentColor, string> = {
+  blue: "#58a6ff",
+  green: "#3fb950",
+  purple: "#a371f7",
+  orange: "#d29922",
+  red: "#f85149",
+  cyan: "#1f6feb",
+};
 
-  // Load from localStorage on mount
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const mode = localStorage.getItem("dt_pref_theme_mode") as ThemeMode;
-      const profile = localStorage.getItem("dt_pref_theme_profile") as ThemeProfile;
-      const accent = localStorage.getItem("dt_pref_accent_color") as AccentColor;
-      const density = localStorage.getItem("dt_pref_layout_density") as LayoutDensity;
+export const ThemeProvider = ({ children }: { children: ReactNode }) => {
+  const [mode, setMode] = useState<ThemeMode>("system");
+  const [profile, setProfile] = useState<ThemeProfile>("github-dark");
+  const [accent, setAccent] = useState<AccentColor>("blue");
+  const [layout, setLayout] = useState<LayoutDensity>("default");
+  const [interfaceSettings, setInterfaceSettings] =
+    useState<InterfaceSettings>(defaultInterface);
+  const [chartSettings, setChartSettings] = useState<ChartSettings>(defaultChart);
+  const [modalOpen, setModalOpen] = useState(false);
 
-      if (mode) setThemeModeState(mode);
-      if (profile) setThemeProfileState(profile);
-      if (accent) setAccentColorState(accent);
-      if (density) setLayoutDensityState(density);
-
-      try {
-        const storedInterface = localStorage.getItem("dt_pref_interface_settings");
-        if (storedInterface) {
-          setInterfaceSettings(JSON.parse(storedInterface));
-        }
-        const storedCharts = localStorage.getItem("dt_pref_chart_settings");
-        if (storedCharts) {
-          setChartSettings(JSON.parse(storedCharts));
-        }
-      } catch (e) {
-        console.error("Failed to parse settings from localStorage:", e);
-      }
-    }
-  }, []);
-
-  // Update localStorage and document attributes whenever values change
-  const setThemeMode = (mode: ThemeMode) => {
-    setThemeModeState(mode);
-    localStorage.setItem("dt_pref_theme_mode", mode);
-  };
-
-  const setThemeProfile = (profile: ThemeProfile) => {
-    setThemeProfileState(profile);
-    localStorage.setItem("dt_pref_theme_profile", profile);
-  };
-
-  const setAccentColor = (accent: AccentColor) => {
-    setAccentColorState(accent);
-    localStorage.setItem("dt_pref_accent_color", accent);
-  };
-
-  const setLayoutDensity = (density: LayoutDensity) => {
-    setLayoutDensityState(density);
-    localStorage.setItem("dt_pref_layout_density", density);
-  };
-
-  const toggleInterfaceSetting = (setting: keyof InterfaceSettings) => {
-    setInterfaceSettings((prev) => {
-      const updated = { ...prev, [setting]: !prev[setting] };
-      // Special check: if reducedMotion is enabled, disable animations
-      if (setting === "reducedMotion" && updated.reducedMotion) {
-        updated.animations = false;
-      }
-      localStorage.setItem("dt_pref_interface_settings", JSON.stringify(updated));
-      return updated;
-    });
-  };
-
-  const toggleChartAnimation = () => {
-    setChartSettings((prev) => {
-      const updated = { ...prev, animated: !prev.animated };
-      localStorage.setItem("dt_pref_chart_settings", JSON.stringify(updated));
-      return updated;
-    });
-  };
-
-  const setHeatmapStyle = (style: "github" | "devtrack" | "minimal") => {
-    setChartSettings((prev) => {
-      const updated = { ...prev, heatmapStyle: style };
-      localStorage.setItem("dt_pref_chart_settings", JSON.stringify(updated));
-      return updated;
-    });
-  };
-
-  // Sync classes to <html>
+  // Load persisted settings on mount
   useEffect(() => {
     if (typeof window === "undefined") return;
+    const storedMode = localStorage.getItem("devtrack_theme_mode") as ThemeMode;
+    const storedProfile = localStorage.getItem("devtrack_theme_profile") as ThemeProfile;
+    const storedAccent = localStorage.getItem("devtrack_accent_color") as AccentColor;
+    const storedLayout = localStorage.getItem("devtrack_layout_density") as LayoutDensity;
+    const storedInterface = localStorage.getItem("devtrack_interface_settings");
+    const storedChart = localStorage.getItem("devtrack_chart_settings");
+    if (storedMode) setMode(storedMode);
+    if (storedProfile) setProfile(storedProfile);
+    if (storedAccent) setAccent(storedAccent);
+    if (storedLayout) setLayout(storedLayout);
+    if (storedInterface) setInterfaceSettings(JSON.parse(storedInterface));
+    if (storedChart) setChartSettings(JSON.parse(storedChart));
+  }, []);
 
-    const root = document.documentElement;
-
-    // 1. Remove all old theme profiles and light classes
-    const classesToRemove = [
-      "theme-github-light",
-      "theme-github-dark",
-      "theme-github-dark-dimmed",
-      "theme-github-dark-hc",
-      "dt-midnight",
-      "dt-neon-blue",
-      "dt-graphite",
-      "dt-emerald",
-      "dt-purple-matrix"
-    ];
-    root.classList.remove(...classesToRemove);
-
-    // 2. Determine active theme class based on mode
-    let activeClass = "";
-    if (themeMode === "light") {
-      activeClass = "theme-github-light";
-    } else if (themeMode === "dark") {
-      activeClass = themeProfile;
-    } else {
-      // System mode
-      const isSystemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-      activeClass = isSystemDark ? themeProfile : "theme-github-light";
-    }
-    root.classList.add(activeClass);
-
-    // 3. Remove and apply accent classes
-    const accents = ["accent-blue", "accent-green", "accent-purple", "accent-orange", "accent-red", "accent-cyan"];
-    root.classList.remove(...accents);
-    root.classList.add(`accent-${accentColor}`);
-
-    // 4. Interface Toggles
-    root.classList.toggle("no-animations", !interfaceSettings.animations);
-    root.classList.toggle("reduced-motion", interfaceSettings.reducedMotion);
-    root.classList.toggle("disable-card-hover", !interfaceSettings.cardHover);
-    root.classList.toggle("no-blur", !interfaceSettings.blur);
-    root.classList.toggle("no-glow", !interfaceSettings.glow);
-    root.classList.toggle("compact-sidebar", interfaceSettings.compactSidebar);
-    root.classList.toggle("compact-cards", interfaceSettings.compactCards);
-
-    // 5. Layout density
-    root.classList.remove("layout-default", "layout-compact", "layout-wide");
-    root.classList.add(`layout-${layoutDensity}`);
-  }, [themeMode, themeProfile, accentColor, layoutDensity, interfaceSettings]);
-
-  // System listener for theme changes
+  // Apply theme variables whenever relevant state changes
   useEffect(() => {
-    if (typeof window === "undefined" || themeMode !== "system") return;
+    if (typeof document === "undefined") return;
+    // Resolve mode
+    const effectiveMode =
+      mode === "system"
+        ? window.matchMedia("(prefers-color-scheme: dark)").matches
+          ? "dark"
+          : "light"
+        : mode;
+    // Apply profile colors
+    const vars = themeProfiles[profile];
+    Object.entries(vars).forEach(([key, value]) => {
+      document.documentElement.style.setProperty(key, value);
+    });
+    // Apply accent override
+    document.documentElement.style.setProperty("--accent", accentColors[accent]);
+    // Apply mode‑specific adjustments (background may differ for light mode)
+    if (effectiveMode === "light") {
+      document.documentElement.style.setProperty("--background", "#ffffff");
+      document.documentElement.style.setProperty("--foreground", "#24292f");
+      document.documentElement.style.setProperty("--text-primary", "#24292f");
+      document.documentElement.style.setProperty("--text-secondary", "#57606a");
+    } else {
+      // dark background already set by profile
+      document.documentElement.style.setProperty("--foreground", "#F0F6FC");
+      document.documentElement.style.setProperty("--text-primary", "#F0F6FC");
+      document.documentElement.style.setProperty("--text-secondary", "#8B949E");
+    }
+    // Persist
+    localStorage.setItem("devtrack_theme_mode", mode);
+    localStorage.setItem("devtrack_theme_profile", profile);
+    localStorage.setItem("devtrack_accent_color", accent);
+    localStorage.setItem("devtrack_layout_density", layout);
+    localStorage.setItem(
+      "devtrack_interface_settings",
+      JSON.stringify(interfaceSettings)
+    );
+    localStorage.setItem("devtrack_chart_settings", JSON.stringify(chartSettings));
+  }, [mode, profile, accent, layout, interfaceSettings, chartSettings]);
 
-    const media = window.matchMedia("(prefers-color-scheme: dark)");
-    const handleChange = () => {
-      const root = document.documentElement;
-      const isSystemDark = media.matches;
-      const activeClass = isSystemDark ? themeProfile : "theme-github-light";
+  const setInterface = (partial: Partial<InterfaceSettings>) => {
+    setInterfaceSettings((prev) => ({ ...prev, ...partial }));
+  };
+  const setChart = (partial: Partial<ChartSettings>) => {
+    setChartSettings((prev) => ({ ...prev, ...partial }));
+  };
 
-      const themeClasses = [
-        "theme-github-light",
-        "theme-github-dark",
-        "theme-github-dark-dimmed",
-        "theme-github-dark-hc",
-        "dt-midnight",
-        "dt-neon-blue",
-        "dt-graphite",
-        "dt-emerald",
-        "dt-purple-matrix"
-      ];
-      root.classList.remove(...themeClasses);
-      root.classList.add(activeClass);
-    };
+  const value: ThemeContextProps = {
+    mode,
+    profile,
+    accent,
+    layout,
+    interface: interfaceSettings,
+    chart: chartSettings,
+    modalOpen,
+    setMode,
+    setProfile,
+    setAccent,
+    setLayout,
+    setInterface,
+    setChart,
+    openModal: () => setModalOpen(true),
+    closeModal: () => setModalOpen(false),
+  };
 
-    media.addEventListener("change", handleChange);
-    return () => media.removeEventListener("change", handleChange);
-  }, [themeMode, themeProfile]);
+  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
+};
 
-  return (
-    <ThemeContext.Provider
-      value={{
-        themeMode,
-        setThemeMode,
-        themeProfile,
-        setThemeProfile,
-        accentColor,
-        setAccentColor,
-        layoutDensity,
-        setLayoutDensity,
-        interfaceSettings,
-        toggleInterfaceSetting,
-        chartSettings,
-        toggleChartAnimation,
-        setHeatmapStyle,
-        isThemeModalOpen,
-        setIsThemeModalOpen,
-      }}
-    >
-      {children}
-    </ThemeContext.Provider>
-  );
-}
-
-export function useTheme() {
-  const context = useContext(ThemeContext);
-  if (context === undefined) {
-    throw new Error("useTheme must be used within a ThemeProvider");
-  }
-  return context;
-}
+export const useTheme = () => {
+  const ctx = useContext(ThemeContext);
+  if (!ctx) throw new Error("useTheme must be used within ThemeProvider");
+  return ctx;
+};
