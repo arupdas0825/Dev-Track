@@ -101,6 +101,25 @@ export default function DashboardContent() {
     } : null
   );
 
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+  const [commandSearchQuery, setCommandSearchQuery] = useState("");
+
+  // 3. Listen for Ctrl+K
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setIsCommandPaletteOpen(prev => !prev);
+        setCommandSearchQuery("");
+      }
+      if (e.key === "Escape") {
+        setIsCommandPaletteOpen(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
   const isLoading = !dashboardData && (profileLoading || reposLoading || analyticsLoading);
   const error = !dashboardData ? (profileError || reposError || analyticsError) : null;
 
@@ -194,6 +213,16 @@ export default function DashboardContent() {
     { id: "settings", label: "Settings", icon: "M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" },
   ];
 
+  // Filtering for Command Palette
+  const filteredCommands = tabsList.filter(tab => 
+    tab.label.toLowerCase().includes(commandSearchQuery.toLowerCase())
+  );
+
+  const filteredRepos = dashboardData?.repositories ? 
+    dashboardData.repositories.filter(repo => 
+      repo.name.toLowerCase().includes(commandSearchQuery.toLowerCase())
+    ).slice(0, 5) : [];
+
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <Navbar currentUser={currentUser} onLoginSuccess={handleLoginSuccess} onLogout={handleLogout} />
@@ -201,6 +230,22 @@ export default function DashboardContent() {
       <div className="flex-1 mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8 flex flex-col md:flex-row gap-8">
         {/* Sidebar Nav */}
         <aside className="md:w-64 flex-shrink-0">
+          {/* Ctrl+K Trigger Search Bar */}
+          <div className="mb-4 hidden md:block">
+            <button
+              onClick={() => setIsCommandPaletteOpen(true)}
+              className="w-full flex items-center justify-between px-3 py-2 rounded-lg border border-border bg-[#161B22]/50 hover:bg-[#161B22] text-xs text-text-secondary cursor-pointer transition-all"
+            >
+              <div className="flex items-center gap-2">
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <span>Search dashboard...</span>
+              </div>
+              <span className="font-mono text-[9px] border border-border px-1.5 py-0.5 rounded bg-surface">Ctrl K</span>
+            </button>
+          </div>
+
           <nav className="flex flex-row md:flex-col overflow-x-auto md:overflow-visible gap-1.5 border-b md:border-b-0 border-border pb-3 md:pb-0 scrollbar-none">
             {tabsList.map(tab => (
               <button
@@ -228,6 +273,104 @@ export default function DashboardContent() {
           </div>
         </div>
       </div>
+
+      {/* Raycast-style Command Palette Modal */}
+      {isCommandPaletteOpen && (
+        <div className="fixed inset-0 z-50 flex items-start justify-center pt-[15vh] px-4">
+          {/* Backdrop */}
+          <div 
+            onClick={() => setIsCommandPaletteOpen(false)}
+            className="fixed inset-0 bg-background/80 backdrop-blur-sm"
+          />
+
+          {/* Dialog Container */}
+          <div className="relative w-full max-w-lg rounded-xl border border-border bg-[#161B22] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-100">
+            {/* Search Input */}
+            <div className="flex items-center gap-3 px-4 border-b border-border">
+              <svg className="h-4.5 w-4.5 text-text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input
+                type="text"
+                autoFocus
+                placeholder="Search tabs, repositories, or commands..."
+                value={commandSearchQuery}
+                onChange={(e) => setCommandSearchQuery(e.target.value)}
+                className="w-full py-4 text-sm bg-transparent border-0 outline-none text-text-primary placeholder:text-text-secondary"
+              />
+            </div>
+
+            {/* Results */}
+            <div className="max-h-[300px] overflow-y-auto p-2 scrollbar-thin space-y-3">
+              {/* Navigation Commands */}
+              <div>
+                <div className="px-2 pb-1 text-[10px] font-bold text-text-secondary tracking-wider uppercase font-mono">Navigation</div>
+                {filteredCommands.length > 0 ? (
+                  <div className="space-y-0.5">
+                    {filteredCommands.map(tab => (
+                      <button
+                        key={tab.id}
+                        onClick={() => {
+                          setActiveTab(tab.id);
+                          setIsCommandPaletteOpen(false);
+                        }}
+                        className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs hover:bg-surface-secondary text-text-secondary hover:text-text-primary transition-all text-left"
+                      >
+                        <span className="flex items-center gap-3">
+                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                            <path strokeLinecap="round" strokeLinejoin="round" d={tab.icon} />
+                          </svg>
+                          {tab.label}
+                        </span>
+                        <span className="font-mono text-[9px] text-text-secondary opacity-60">Go to tab</span>
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="px-3 py-2 text-xs text-text-secondary italic">No matching tabs</div>
+                )}
+              </div>
+
+              {/* Repository Searches */}
+              {dashboardData?.repositories && (
+                <div>
+                  <div className="px-2 pb-1 text-[10px] font-bold text-text-secondary tracking-wider uppercase font-mono">Repositories</div>
+                  {filteredRepos.length > 0 ? (
+                    <div className="space-y-0.5">
+                      {filteredRepos.map(repo => (
+                        <a
+                          key={repo.name}
+                          href={repo.html_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={() => setIsCommandPaletteOpen(false)}
+                          className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs hover:bg-surface-secondary text-text-secondary hover:text-text-primary transition-all text-left"
+                        >
+                          <span className="flex items-center gap-3 font-mono truncate">
+                            <svg className="h-4 w-4 text-text-secondary flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                            </svg>
+                            <span className="truncate">{repo.name}</span>
+                          </span>
+                          <span className="font-mono text-[9px] text-accent flex-shrink-0">Open on GitHub</span>
+                        </a>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="px-3 py-2 text-xs text-text-secondary italic">No matching repositories</div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="px-4 py-2 bg-[#0D1117] border-t border-border flex items-center justify-between text-[10px] text-text-secondary font-mono">
+              <span>Use <kbd className="border border-border px-1 rounded bg-surface">Esc</kbd> to close</span>
+              <span>Command Palette v2</span>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

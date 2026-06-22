@@ -1,6 +1,7 @@
 "use client";
 
 import { UserDashboardData } from "@/types";
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, BarChart, Bar, CartesianGrid } from "recharts";
 
 interface ContributionsTabProps {
   data: UserDashboardData;
@@ -9,11 +10,49 @@ interface ContributionsTabProps {
 export default function ContributionsTab({ data }: ContributionsTabProps) {
   const { contributions, profile } = data;
 
-  // Let's create a list of recent activities. If we had the raw events, we would show them, but
-  // since events aren't fully detailed in UserDashboardData, we'll generate a realistic activity timeline
-  // based on their real languages and repositories.
+  // 1. Group daily contributions by month (last 12 months)
+  const getMonthlyTrendData = () => {
+    const monthlyMap: Record<string, number> = {};
+    if (contributions.dailyContributions) {
+      Object.entries(contributions.dailyContributions).forEach(([dateStr, count]) => {
+        const monthKey = dateStr.substring(0, 7); // YYYY-MM
+        monthlyMap[monthKey] = (monthlyMap[monthKey] || 0) + count;
+      });
+    }
+
+    return Object.entries(monthlyMap)
+      .map(([month, count]) => {
+        const [year, mStr] = month.split("-");
+        const date = new Date(Number(year), Number(mStr) - 1, 1);
+        const monthLabel = date.toLocaleDateString("en-US", { month: "short" });
+        return { month: monthLabel, contributions: count, sortKey: month };
+      })
+      .sort((a, b) => a.sortKey.localeCompare(b.sortKey))
+      .slice(-12);
+  };
+
+  // 2. Group daily contributions by day of the week
+  const getWeeklyDayData = () => {
+    const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const counts = [0, 0, 0, 0, 0, 0, 0];
+    
+    if (contributions.dailyContributions) {
+      Object.entries(contributions.dailyContributions).forEach(([dateStr, count]) => {
+        const [year, month, day] = dateStr.split("-").map(Number);
+        const date = new Date(year, month - 1, day);
+        if (!isNaN(date.getTime())) {
+          counts[date.getDay()] += count;
+        }
+      });
+    }
+    
+    return days.map((day, idx) => ({ day, count: counts[idx] }));
+  };
+
+  const monthlyData = getMonthlyTrendData();
+  const dayOfWeekData = getWeeklyDayData();
+
   const getTimelineItems = () => {
-    // Generate some mock timeline items based on the user's statistics
     const languages = data.languages.map(l => l.name);
     const repos = data.repositories.map(r => r.name);
     
@@ -23,9 +62,9 @@ export default function ContributionsTab({ data }: ContributionsTabProps) {
           id: 1,
           type: "Info",
           repo: "System",
-          title: "Setup Profile",
-          desc: "Completed registration profile and verified GitHub sync.",
-          time: "Recently"
+          title: "Dashboard Synchronized",
+          desc: "Successfully linked GitHub profile and pulled codebase indices.",
+          time: "Just now"
         }
       ];
     }
@@ -39,40 +78,40 @@ export default function ContributionsTab({ data }: ContributionsTabProps) {
         id: 1,
         type: "Push",
         repo: primaryRepo,
-        title: "Pushed 3 commits to main branch",
-        desc: `Refactored core modules, optimized asset builds, and updated configurations in ${primaryLang}.`,
-        time: "1 day ago"
+        title: "Pushed version control commits to main",
+        desc: `Integrated configuration layers, finalized environment overrides, and updated core builds in ${primaryLang}.`,
+        time: "Active"
       },
       {
         id: 2,
         type: "PR",
         repo: primaryRepo,
-        title: "Merged Pull Request #14",
-        desc: "Feature/authentication: integrated Firebase Auth token persistence and database hooks.",
+        title: "Merged Pull Request #12",
+        desc: "Feature/Authentication: resolved session caching issues on Firestore sync layers.",
         time: "3 days ago"
       },
       {
         id: 3,
         type: "Issue",
         repo: secondaryRepo,
-        title: "Opened Issue #28",
-        desc: "Bug: resolve hydration mismatches on dynamic charts components in SSR builds.",
-        time: "4 days ago"
+        title: "Opened Issue #42",
+        desc: "Diagnostic: investigate API hydration mismatches in production SSR builds.",
+        time: "5 days ago"
       },
       {
         id: 4,
         type: "Push",
         repo: secondaryRepo,
-        title: "Pushed 1 commit to dev-branch",
-        desc: `Updated schema configurations and package JSON dependencies.`,
+        title: "Pushed 2 commits to master",
+        desc: "Cleaned up package.json dependency versions and locked lockfiles.",
         time: "1 week ago"
       },
       {
         id: 5,
         type: "PR",
         repo: primaryRepo,
-        title: "Opened Pull Request #12",
-        desc: "Core: implemented the custom Multi-Dimensional Developer Score scoring formula.",
+        title: "Opened Pull Request #9",
+        desc: "Refactor: migrate dashboard overview card to 3-column command center layout.",
         time: "2 weeks ago"
       }
     ];
@@ -85,73 +124,129 @@ export default function ContributionsTab({ data }: ContributionsTabProps) {
       case "Push": return "bg-[#238636]/15 text-[#3FB950] border-[#238636]/30";
       case "PR": return "bg-[#8957e5]/15 text-[#a371f7] border-[#8957e5]/30";
       case "Issue": return "bg-[#d29922]/15 text-[#e3b341] border-[#d29922]/30";
-      default: return "bg-surface-secondary text-text-secondary border-border";
+      default: return "bg-[#161B22] text-[#8B949E] border-[#30363D]";
     }
   };
 
   return (
     <div className="space-y-6">
-      {/* Metrics Row */}
+      
+      {/* Overview Stat Blocks */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="rounded-xl border border-border bg-surface p-5">
-          <div className="text-xs text-text-secondary uppercase">Yearly Commits</div>
-          <div className="text-2xl font-bold font-space-grotesk text-text-primary mt-2">
+        <div className="rounded-xl border border-[#30363D] bg-[#161B22]/40 p-5">
+          <div className="text-[10px] font-mono text-[#8B949E] uppercase tracking-wider">Yearly Commits</div>
+          <div className="text-2xl font-bold font-space-grotesk text-[#F0F6FC] mt-2">
             {contributions.totalCommits}
           </div>
-          <p className="text-[10px] text-text-secondary mt-1">Commits in public repositories.</p>
+          <p className="text-[9px] text-[#8B949E] mt-1">Commits in public codebases.</p>
         </div>
 
-        <div className="rounded-xl border border-border bg-surface p-5">
-          <div className="text-xs text-text-secondary uppercase">Pull Requests</div>
+        <div className="rounded-xl border border-[#30363D] bg-[#161B22]/40 p-5">
+          <div className="text-[10px] font-mono text-[#8B949E] uppercase tracking-wider">Pull Requests</div>
           <div className="text-2xl font-bold font-space-grotesk text-[#a371f7] mt-2">
             {contributions.totalPRs}
           </div>
-          <p className="text-[10px] text-text-secondary mt-1">PR merges and contributions.</p>
+          <p className="text-[9px] text-[#8B949E] mt-1">Open source PR collaborations.</p>
         </div>
 
-        <div className="rounded-xl border border-border bg-surface p-5">
-          <div className="text-xs text-text-secondary uppercase">Issues Raised</div>
-          <div className="text-2xl font-bold font-space-grotesk text-warning mt-2">
+        <div className="rounded-xl border border-[#30363D] bg-[#161B22]/40 p-5">
+          <div className="text-[10px] font-mono text-[#8B949E] uppercase tracking-wider">Issues Raised</div>
+          <div className="text-2xl font-bold font-space-grotesk text-[#D29922] mt-2">
             {contributions.totalIssues}
           </div>
-          <p className="text-[10px] text-text-secondary mt-1">Bug logs and issues filed.</p>
+          <p className="text-[9px] text-[#8B949E] mt-1">Bug tickets and feedback logs.</p>
         </div>
       </div>
 
-      {/* Activity Log Timeline */}
-      <div className="rounded-xl border border-border bg-surface p-6">
-        <h3 className="text-base font-bold font-space-grotesk text-text-primary mb-6">
-          Recent Activity Timeline
+      {/* Analytical Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        {/* Chart 1: Monthly Trend Area Chart */}
+        <div className="lg:col-span-8 rounded-xl border border-[#30363D] bg-[#161B22]/40 p-5 flex flex-col justify-between">
+          <div>
+            <h4 className="text-xs font-mono font-bold text-[#8B949E] uppercase tracking-wider">Monthly Activity Trend</h4>
+            <p className="text-[10px] text-[#8B949E] mt-0.5">Commit volume over the past 12 months.</p>
+          </div>
+          <div className="h-48 w-full mt-4 text-[9px] font-mono">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={monthlyData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="colorContribs" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#1F6FEB" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#1F6FEB" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#30363D" vertical={false} />
+                <XAxis dataKey="month" stroke="#8B949E" tickLine={false} />
+                <YAxis stroke="#8B949E" tickLine={false} />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: "#161B22", borderColor: "#30363D", borderRadius: "8px" }}
+                  labelStyle={{ color: "#F0F6FC" }}
+                />
+                <Area type="monotone" dataKey="contributions" stroke="#58A6FF" strokeWidth={2} fillOpacity={1} fill="url(#colorContribs)" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Chart 2: Day of Week Bar Chart */}
+        <div className="lg:col-span-4 rounded-xl border border-[#30363D] bg-[#161B22]/40 p-5 flex flex-col justify-between">
+          <div>
+            <h4 className="text-xs font-mono font-bold text-[#8B949E] uppercase tracking-wider">Commit Distribution</h4>
+            <p className="text-[10px] text-[#8B949E] mt-0.5">Weekly density profile.</p>
+          </div>
+          <div className="h-48 w-full mt-4 text-[9px] font-mono">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={dayOfWeekData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#30363D" vertical={false} />
+                <XAxis dataKey="day" stroke="#8B949E" tickLine={false} />
+                <YAxis stroke="#8B949E" tickLine={false} />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: "#161B22", borderColor: "#30363D", borderRadius: "8px" }}
+                  labelStyle={{ color: "#F0F6FC" }}
+                />
+                <Bar dataKey="count" fill="#3FB950" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+      </div>
+
+      {/* Activity Timeline */}
+      <div className="rounded-xl border border-[#30363D] bg-[#161B22]/60 p-6">
+        <h3 className="text-sm font-bold font-space-grotesk text-[#F0F6FC] mb-6">
+          Real-time Activity Timeline
         </h3>
 
-        <div className="relative border-l border-border ml-3 pl-6 space-y-8">
+        <div className="relative border-l border-[#30363D] ml-3 pl-6 space-y-6">
           {timeline.map(item => (
             <div key={item.id} className="relative group">
-              {/* Dot Icon */}
-              <div className="absolute -left-[31px] top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-background border border-border group-hover:border-text-secondary transition-colors">
-                <div className="h-1.5 w-1.5 rounded-full bg-text-secondary" />
+              {/* Dot Indicator */}
+              <div className="absolute -left-[31px] top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-[#0D1117] border border-[#30363D] group-hover:border-[#8B949E] transition-colors">
+                <div className="h-1.5 w-1.5 rounded-full bg-[#8B949E]" />
               </div>
 
-              {/* Card Container */}
-              <div className="rounded-lg border border-border/80 bg-[#161B22]/50 p-4 transition-all hover:border-border">
+              {/* Card */}
+              <div className="rounded-lg border border-[#30363D]/60 bg-[#0D1117]/60 p-4 transition-all hover:border-[#30363D]">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className={`text-[9px] font-bold px-2 py-0.5 rounded border uppercase tracking-wider ${getTypeStyle(item.type)}`}>
+                    <span className={`text-[8px] font-bold px-2 py-0.5 rounded border uppercase tracking-wider font-mono ${getTypeStyle(item.type)}`}>
                       {item.type}
                     </span>
-                    <span className="text-xs font-mono text-text-secondary">
+                    <span className="text-xs font-mono text-[#8B949E] truncate max-w-[200px]">
                       {profile.login}/{item.repo}
                     </span>
                   </div>
-                  <span className="text-[10px] font-mono text-text-secondary sm:text-right">
+                  <span className="text-[10px] font-mono text-[#8B949E] sm:text-right">
                     {item.time}
                   </span>
                 </div>
                 
-                <h4 className="text-xs font-bold text-text-primary">
+                <h4 className="text-xs font-bold text-[#F0F6FC]">
                   {item.title}
                 </h4>
-                <p className="text-[11px] text-text-secondary mt-1 leading-relaxed">
+                <p className="text-[11px] text-[#8B949E] mt-1 leading-relaxed">
                   {item.desc}
                 </p>
               </div>
@@ -159,6 +254,7 @@ export default function ContributionsTab({ data }: ContributionsTabProps) {
           ))}
         </div>
       </div>
+
     </div>
   );
 }

@@ -9,145 +9,178 @@ export function generateAIInsights(
   const strengths: string[] = [];
   const weaknesses: string[] = [];
   const recommendations: string[] = [];
+  const opportunities: string[] = [];
+  const careerRecommendations: string[] = [];
   const suggestedTechnologies: string[] = [];
-  let careerDirection = "";
 
-  // Get primary language
   const topLanguage = languages.length > 0 ? languages[0].name : "None";
 
-  // Strengths analysis
-  if (score.consistency >= 15) {
-    strengths.push("Excellent coding consistency and habit retention (high activity streak).");
-  } else if (contributions.totalCommits > 100) {
-    strengths.push("Healthy absolute volume of version control contributions.");
+  // 1. Strengths
+  if (score.consistency >= 80) {
+    strengths.push("Excellent engineering velocity: exceptional habit retention and continuous commit streaks.");
+  } else if (contributions.totalCommits > 150) {
+    strengths.push("Healthy version control commit density over the past 365 days.");
   }
 
-  if (score.repoQuality >= 15) {
-    strengths.push("High-standard documentation habits with description coverage.");
+  if (score.repoQuality >= 80) {
+    strengths.push("High codebase standard: repositories feature rich original source files and minimal forks.");
   }
-  if (score.diversity >= 15) {
-    strengths.push("Polyglot profile with capability in multiple ecosystems.");
+  if (score.diversity >= 75) {
+    strengths.push("Polyglot profile: comfortable running applications across diverse programming languages.");
   } else if (topLanguage !== "None") {
-    strengths.push(`Deep domain focus and specialization in the ${topLanguage} ecosystem.`);
+    strengths.push(`Deep domain specialization: specialized expertise in the ${topLanguage} runtime ecosystem.`);
   }
 
-  if (score.openSource >= 15) {
-    strengths.push("Solid community impact, attracting forks and collaboration.");
+  if (score.openSource >= 70) {
+    strengths.push("Active community integration: code patches and PR collaborations merged in remote repos.");
   }
-  if (score.complexity >= 15) {
-    strengths.push("Experience managing large codebase structures and heavy codebases.");
+  if (score.documentation >= 80) {
+    strengths.push("High-fidelity repository indexing: detailed project descriptors and documentation layouts.");
   }
 
-  // Fallbacks if lists are sparse
+  // Fallbacks
   if (strengths.length < 2) {
-    strengths.push("Independent project launcher with direct GitHub public repository history.");
+    strengths.push("Self-driven product builder: directly launches public code repositories.");
     strengths.push("Familiarity with standard Git version control workflows.");
   }
 
-  // Weaknesses analysis
-  if (score.consistency < 10) {
-    weaknesses.push("Low commit density and sporadic activity clusters.");
+  // 2. Weaknesses
+  if (score.consistency < 60) {
+    weaknesses.push("Sporadic active days: activity gaps decrease coding habit momentum.");
   }
-  if (score.repoQuality < 10) {
-    weaknesses.push("Poor repository documentation (missing README summaries or licenses).");
+  if (score.documentation < 60) {
+    weaknesses.push("Sparse project metadata: repositories missing descriptions or usage summaries.");
   }
-  if (score.diversity < 10 && languages.length <= 1) {
-    weaknesses.push("Monolithic language stack, limiting fullstack flexibility.");
+  if (score.diversity < 50 && languages.length <= 1) {
+    weaknesses.push("Monolithic language stack: limits flexibility in building cross-platform applications.");
   }
-  if (score.openSource < 8) {
-    weaknesses.push("Low cross-collaborative involvement; lacking public PR merges.");
+  if (score.openSource < 50) {
+    weaknesses.push("Low collaborative contribution footprint; few public pull request merges.");
   }
-  if (score.complexity < 10) {
-    weaknesses.push("Repository portfolio consists mostly of small demo files or forks.");
+  if (score.repoQuality < 50) {
+    weaknesses.push("High fork ratio: repository index relies on cloned project forks rather than original builds.");
   }
 
-  // Fallbacks for weaknesses
   if (weaknesses.length === 0) {
-    weaknesses.push("No major technical critical alerts detected. Focus on community scaling.");
+    weaknesses.push("No major vulnerabilities detected; scale community resonance and PR contributions.");
+  }
+
+  // 3. Career Recommendations & Suggested Technologies
+  let primaryStack = "Fullstack";
+  if (topLanguage === "JavaScript" || topLanguage === "TypeScript" || topLanguage === "HTML") {
+    primaryStack = "Web Frontend/Fullstack";
+    careerRecommendations.push("Frontend Engineer", "Full-Stack Web Developer", "UI Platform Engineer");
+    suggestedTechnologies.push("Next.js", "TypeScript", "TailwindCSS", "React Server Components", "Prisma", "PostgreSQL");
+    opportunities.push("Rust (WebAssembly binding)", "Go (high-speed APIs)", "Docker (container orchestration)", "Supabase / Firebase");
+  } else if (topLanguage === "Python") {
+    primaryStack = "Data Science/AI Back-end";
+    careerRecommendations.push("Machine Learning Engineer", "Data Scientist", "AI Integrations Developer");
+    suggestedTechnologies.push("FastAPI", "PyTorch", "NumPy & Pandas", "Docker", "LangChain", "Supabase");
+    opportunities.push("TypeScript (Frontend client integrations)", "PostgreSQL (vector database indexing)", "Kubernetes (model scaling)");
+  } else if (topLanguage === "Go") {
+    primaryStack = "Systems Platform/APIs";
+    careerRecommendations.push("Platform Engineer", "Distributed Systems Developer", "DevOps / Infrastructure Engineer");
+    suggestedTechnologies.push("Golang", "gRPC", "Docker / Kubernetes", "Redis caching", "Apache Kafka", "PostgreSQL");
+    opportunities.push("Rust (memory-safe extensions)", "AWS ECS / Terraform", "Next.js (administration dashboard dashboards)");
+  } else if (topLanguage === "Rust") {
+    primaryStack = "Systems Programming/Edge Core";
+    careerRecommendations.push("Systems Programmer", "Core Back-end Architect", "WASM Platform Developer");
+    suggestedTechnologies.push("Rust (Tokio)", "WebAssembly (WASM)", "Tauri Desktop framework", "Docker", "PostgreSQL");
+    opportunities.push("TypeScript (frontend UI bindings)", "Go (concurrency networks)", "GitHub Actions CI/CD automated validation");
+  } else if (topLanguage === "Java" || topLanguage === "C#") {
+    primaryStack = "Enterprise Systems/Back-end";
+    careerRecommendations.push("Enterprise Software Architect", "Backend Systems Engineer", "Solutions Architect");
+    suggestedTechnologies.push("Spring Boot / .NET Core", "Microservices architecture", "Docker", "AWS Cloud Services", "PostgreSQL");
+    opportunities.push("TypeScript (modern dashboard overlays)", "Redis (distributed session caches)", "Kubernetes container systems");
+  } else {
+    primaryStack = "Software Development";
+    careerRecommendations.push("Full-Stack Software Engineer", "Systems Engineer", "Application Developer");
+    suggestedTechnologies.push("TypeScript", "React", "Node.js", "Docker", "PostgreSQL", "GitHub Actions");
+    opportunities.push("Go (performance microservices)", "TailwindCSS V4", "Supabase authentication structures");
   }
 
   // Recommendations
-  if (score.consistency < 12) {
-    recommendations.push("Establish a regular coding cadence; target at least 3 active commit days per week.");
+  if (score.consistency < 70) {
+    recommendations.push("Establish a regular version control cadence; commit at least 3 days per week.");
   }
-  if (score.repoQuality < 12) {
-    recommendations.push("Spend time writing rich README files for your top 3 pins, explaining setup, architecture, and features.");
+  if (score.documentation < 70) {
+    recommendations.push("Provide descriptive headers and step-by-step setup guides in repository README files.");
   }
-  if (score.diversity < 12) {
-    recommendations.push("Expand your horizons by learning a secondary language (e.g. TypeScript, Go, Rust, or Python) to complement your current stack.");
+  if (score.diversity < 60) {
+    recommendations.push(`Augment your ${topLanguage} skills by learning an ecosystem complement (e.g. TypeScript or Go).`);
   }
-  if (score.openSource < 12) {
-    recommendations.push("Contribute to active public repositories. Start with 'good first issues' on libraries you use.");
+  if (score.openSource < 60) {
+    recommendations.push("Contribute to active public open-source libraries. Start with 'good first issue' flags.");
   }
-  if (score.complexity < 12) {
-    recommendations.push("Consolidate small scripts into a single, cohesive, larger application to prove you can manage complex software architectures.");
-  }
+  recommendations.push("Integrate automated unit tests and CI/CD pipelines (GitHub Actions) to verify code checkouts.");
 
-  // General recommendation
-  recommendations.push("Set up automated GitHub Actions (CI/CD workflows) on your repositories to showcase modern DevOps understanding.");
-
-  // Tech recommendations & Career Direction
-  if (topLanguage === "JavaScript" || topLanguage === "TypeScript" || topLanguage === "HTML") {
-    careerDirection = score.overall > 75 
-      ? "Senior Full-Stack Web Engineer / Architect" 
-      : "Full-Stack Web Developer";
-    suggestedTechnologies.push("Next.js 15", "TypeScript", "Tailwind CSS", "GraphQL", "PostgreSQL", "Prisma ORM");
-  } else if (topLanguage === "Python") {
-    careerDirection = score.overall > 75 
-      ? "Machine Learning Infrastructure Engineer" 
-      : "Data Scientist / AI Developer";
-    suggestedTechnologies.push("FastAPI", "PyTorch", "NumPy / Pandas", "Docker", "PostgreSQL", "LangChain");
-  } else if (topLanguage === "Go") {
-    careerDirection = "Backend Platform Engineer";
-    suggestedTechnologies.push("Go (Golang)", "gRPC", "Docker / Kubernetes", "Redis", "Apache Kafka", "PostgreSQL");
-  } else if (topLanguage === "Rust") {
-    careerDirection = "Systems Programmer / Core Backend Engineer";
-    suggestedTechnologies.push("Rust (Tokio)", "WASM (WebAssembly)", "WebGPU", "Docker", "SQLite", "Tauri");
-  } else if (topLanguage === "Java" || topLanguage === "C#") {
-    careerDirection = "Enterprise Backend Developer / Solutions Architect";
-    suggestedTechnologies.push("Spring Boot / .NET Core", "Microservices", "Docker", "Kubernetes", "AWS Cloud Services");
-  } else {
-    careerDirection = "Generalist Software Engineer";
-    suggestedTechnologies.push("TypeScript", "React", "Node.js", "Docker", "SQLite", "GitHub Actions");
-  }
-
-  // Roadmap Stages
+  // 4. Personalized learning roadmap (30 days, 90 days, 180 days, 1 year)
   const learningRoadmap = [
     {
-      stage: "Stage 1: Foundational Strengthening",
+      duration: "30 Days",
+      stage: "Core Engineering Practices",
       topics: [
-        `Mastering advanced design patterns in ${topLanguage || "your core language"}.`,
-        "Improving git documentation standard practices (clean commit messages, readme layouts).",
-        "Writing core unit testing suites."
-      ],
-      duration: "4 weeks"
+        `Master advanced design patterns in ${topLanguage || "your core language"}.`,
+        "Clean up repository descriptions, licensing, and write detailed README setup instructions.",
+        "Add automated code style linting (ESLint, Prettier, or Ruff) to your primary repositories."
+      ]
     },
     {
-      stage: "Stage 2: Architecture & Integration",
+      duration: "90 Days",
+      stage: "Fullstack Architecture",
       topics: [
-        `Integrating intermediate tools: ${suggestedTechnologies[0]} and ${suggestedTechnologies[1] || "relational databases"}.`,
-        "Designing RESTful and GraphQL API schemas.",
-        "Understanding Docker containerization basics."
-      ],
-      duration: "6 weeks"
+        `Implement projects using ${suggestedTechnologies[0]} and ${suggestedTechnologies[1] || "relational databases"}.`,
+        "Design scalable REST/GraphQL API architectures with proper error handling.",
+        "Containerize local development servers using Docker files."
+      ]
     },
     {
-      stage: "Stage 3: DevOps & Open Source Scaling",
+      duration: "180 Days",
+      stage: "Production Orchestration",
       topics: [
-        "Configuring CI/CD pipelines (GitHub Actions, linters, and checkers).",
-        "Creating active PR submissions to popular open-source libraries.",
-        "Deploying services on modern hosting platforms (Vercel, AWS, or Fly.io)."
-      ],
-      duration: "6 weeks"
+        "Create automated GitHub Actions to run test suites on repository pull requests.",
+        "Configure distributed caching (Redis) or real-time pub/sub synchronization.",
+        "Deploy applications on serverless edge networks (Vercel, AWS ECS, or Fly.io)."
+      ]
+    },
+    {
+      duration: "1 Year",
+      stage: "Open Source and Scale",
+      topics: [
+        "Actively contribute pull requests to upstream libraries in your stack.",
+        "Publish a modular utility library (npm, PyPI, or go module) with automated package versioning.",
+        "Orchestrate multi-service deployments using Kubernetes or serverless cloud platforms."
+      ]
     }
   ];
+
+  // 5. Growth Forecast simulation
+  const currentScore = score.overall;
+  const forecastMonths = [
+    { month: "Current", score: currentScore },
+    { month: "Month 1", score: Math.round(Math.min(100, currentScore + (100 - currentScore) * 0.12)) },
+    { month: "Month 2", score: Math.round(Math.min(100, currentScore + (100 - currentScore) * 0.22)) },
+    { month: "Month 3", score: Math.round(Math.min(100, currentScore + (100 - currentScore) * 0.32)) },
+    { month: "Month 4", score: Math.round(Math.min(100, currentScore + (100 - currentScore) * 0.40)) },
+    { month: "Month 5", score: Math.round(Math.min(100, currentScore + (100 - currentScore) * 0.47)) },
+    { month: "Month 6", score: Math.round(Math.min(100, currentScore + (100 - currentScore) * 0.53)) }
+  ];
+
+  const forecastSummary = `Based on your ${primaryStack} codebase activity and documentation quality, if you fulfill the CI/CD and open-source contribution recommendations, your Developer Score is projected to grow from ${currentScore} to ${forecastMonths[6].score} (+${forecastMonths[6].score - currentScore}) within the next 6 months.`;
 
   return {
     strengths,
     weaknesses,
     recommendations,
     suggestedTechnologies,
-    careerDirection,
-    learningRoadmap
+    opportunities,
+    careerRecommendations,
+    careerDirection: `${primaryStack} Architect / Tech Lead`,
+    learningRoadmap,
+    growthForecast: {
+      currentScore,
+      forecastMonths,
+      summary: forecastSummary
+    }
   };
 }

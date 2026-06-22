@@ -19,12 +19,16 @@ export interface DeveloperScore {
   diversity: number;
   openSource: number;
   complexity: number;
+  communityImpact: number;
+  documentation: number;
   breakdown: {
     consistencyReason: string;
     repoQualityReason: string;
     diversityReason: string;
     openSourceReason: string;
     complexityReason: string;
+    communityImpactReason: string;
+    documentationReason: string;
   };
 }
 
@@ -33,12 +37,19 @@ export interface AIInsights {
   weaknesses: string[];
   recommendations: string[];
   suggestedTechnologies: string[];
+  opportunities: string[];
+  careerRecommendations: string[];
   careerDirection: string;
   learningRoadmap: {
     stage: string;
     topics: string[];
     duration: string;
   }[];
+  growthForecast: {
+    currentScore: number;
+    forecastMonths: { month: string; score: number }[];
+    summary: string;
+  };
 }
 
 export interface GitHubWrapped {

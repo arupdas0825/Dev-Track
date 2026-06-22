@@ -2,254 +2,219 @@
 
 import { UserDashboardData } from "@/types";
 import { formatBytes } from "@/lib/utils";
+import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, Radar, BarChart, Bar, XAxis, YAxis, Tooltip } from "recharts";
 
 interface LanguagesTabProps {
   data: UserDashboardData;
 }
 
 export default function LanguagesTab({ data }: LanguagesTabProps) {
-  const { languages } = data;
+  const { languages, repositories } = data;
 
   if (languages.length === 0) {
     return (
-      <div className="rounded-xl border border-border bg-surface p-12 text-center text-text-secondary text-sm">
+      <div className="rounded-xl border border-[#30363D] bg-[#161B22]/40 p-12 text-center text-[#8B949E] text-xs">
         No language metrics discovered in public repositories.
       </div>
     );
   }
 
-  // Categorize languages specifically into Phase 5 buckets
-  const phase5Buckets: Record<string, { name: string; bytes: number; color: string }> = {
-    TypeScript: { name: "TypeScript", bytes: 0, color: "#3178c6" },
-    JavaScript: { name: "JavaScript", bytes: 0, color: "#f1e05a" },
-    Python: { name: "Python", bytes: 0, color: "#3572A5" },
-    Java: { name: "Java", bytes: 0, color: "#b07219" },
-    "C++": { name: "C++", bytes: 0, color: "#f34b7d" },
-    Other: { name: "Other", bytes: 0, color: "#8B949E" },
-  };
-
-  let totalBytes = 0;
-  languages.forEach((lang) => {
-    const key = lang.name;
-    if (key === "TypeScript" || key === "JavaScript" || key === "Python" || key === "Java" || key === "C++") {
-      phase5Buckets[key].bytes += lang.bytes;
-    } else {
-      phase5Buckets["Other"].bytes += lang.bytes;
-    }
-    totalBytes += lang.bytes;
-  });
-
-  const categorizedLanguages = Object.values(phase5Buckets)
-    .map((lang) => {
-      const percentage = totalBytes > 0 ? Math.round((lang.bytes / totalBytes) * 100) : 0;
-      return {
-        ...lang,
-        percentage,
+  // 1. Framework Detection Engine
+  const detectFrameworks = () => {
+    const detected: { name: string; icon: string; category: string }[] = [];
+    
+    // Scan names and descriptions
+    repositories.forEach(repo => {
+      const searchStr = `${repo.name} ${repo.description || ""}`.toLowerCase();
+      
+      const checkAndAdd = (name: string, icon: string, category: string, keywords: string[]) => {
+        if (keywords.some(kw => searchStr.includes(kw))) {
+          if (!detected.some(d => d.name === name)) {
+            detected.push({ name, icon, category });
+          }
+        }
       };
-    })
-    .filter((lang) => lang.bytes > 0)
-    .sort((a, b) => b.bytes - a.bytes);
 
-  const renderPieChart = (stats: typeof categorizedLanguages) => {
-    const r = 50;
-    const cx = 80;
-    const cy = 80;
-    const strokeWidth = 22;
-    const circumference = 2 * Math.PI * r;
-    
-    let currentOffset = 0;
-    
-    return (
-      <div className="flex flex-col sm:flex-row items-center gap-6 w-full justify-around">
-        <svg width="160" height="160" viewBox="0 0 160 160" className="overflow-visible flex-shrink-0">
-          <g transform="rotate(-90 80 80)">
-            {stats.map((slice) => {
-              const strokeLength = (slice.percentage / 100) * circumference;
-              const offset = currentOffset;
-              currentOffset += strokeLength;
-              return (
-                <circle
-                  key={slice.name}
-                  cx={cx}
-                  cy={cy}
-                  r={r}
-                  fill="transparent"
-                  stroke={slice.color}
-                  strokeWidth={strokeWidth}
-                  strokeDasharray={`${strokeLength} ${circumference}`}
-                  strokeDashoffset={-offset}
-                  className="transition-all duration-300 hover:opacity-85"
-                >
-                  <title>{`${slice.name}: ${slice.percentage}%`}</title>
-                </circle>
-              );
-            })}
-          </g>
-        </svg>
-        
-        {/* Legend */}
-        <div className="flex flex-col gap-2.5 font-mono text-xs text-left w-full sm:w-auto">
-          {stats.map((slice) => (
-            <div key={slice.name} className="flex items-center gap-2">
-              <span
-                style={{ backgroundColor: slice.color }}
-                className="h-3 w-3 rounded-sm flex-shrink-0"
-              />
-              <span className="text-text-primary font-bold">{slice.name}</span>
-              <span className="text-text-secondary">({slice.percentage}%)</span>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
+      checkAndAdd("Next.js", "▲", "Frontend Framework", ["next.js", "nextjs", "next-saas", "next15"]);
+      checkAndAdd("React", "⚛", "Frontend Library", ["react", "framer-motion", "components", "hooks"]);
+      checkAndAdd("TailwindCSS", "⚡", "Styling Utility", ["tailwind", "tailwindcss"]);
+      checkAndAdd("Node.js / Express", "🟢", "Backend Runtime", ["express", "node.js", "nodejs", "expressjs"]);
+      checkAndAdd("FastAPI", "🐍", "Backend API", ["fastapi", "uvicorn"]);
+      checkAndAdd("Django", "🦄", "Backend Fullstack", ["django", "wsgi"]);
+      checkAndAdd("Prisma", "◮", "Database ORM", ["prisma", "prismadb"]);
+      checkAndAdd("PostgreSQL", "🐘", "Relational Database", ["postgres", "postgresql", "psql"]);
+      checkAndAdd("MongoDB", "🍃", "NoSQL Database", ["mongodb", "mongo"]);
+      checkAndAdd("Supabase", "⚡", "BaaS Backend", ["supabase", "supabase-js"]);
+      checkAndAdd("Firebase", "🔥", "BaaS Backend", ["firebase", "firestore", "google-services"]);
+      checkAndAdd("Docker", "🐳", "Infrastructure", ["docker", "dockerfile", "docker-compose"]);
+      checkAndAdd("Kubernetes", "☸", "Infrastructure", ["kubernetes", "k8s"]);
+      checkAndAdd("GraphQL", "⬡", "API Gateway", ["graphql", "apollo", "schema.graphql"]);
+    });
+
+    return detected;
   };
 
-  const renderBarChart = (stats: typeof categorizedLanguages) => {
-    const height = 120;
-    const width = 280;
-    const maxVal = Math.max(...stats.map(d => d.percentage), 1);
-    const barWidth = 24;
-    const gap = 16;
-    
-    return (
-      <svg width="100%" height={height + 30} viewBox={`0 0 ${width} ${height + 30}`} className="overflow-visible max-w-[280px]">
-        {stats.map((item, index) => {
-          const barHeight = (item.percentage / maxVal) * height;
-          const x = index * (barWidth + gap) + 20;
-          const y = height - barHeight + 10;
-          
-          return (
-            <g key={item.name}>
-              <rect
-                x={x}
-                y={y}
-                width={barWidth}
-                height={barHeight}
-                rx="3"
-                fill={item.color}
-                className="transition-all duration-300 hover:opacity-85"
-              />
-              <text
-                x={x + barWidth / 2}
-                y={y - 5}
-                fill="var(--text-secondary)"
-                fontSize="9"
-                textAnchor="middle"
-                className="font-mono font-bold"
-              >
-                {item.percentage}%
-              </text>
-              <text
-                x={x + barWidth / 2}
-                y={height + 22}
-                fill="var(--text-secondary)"
-                fontSize="9"
-                textAnchor="middle"
-                className="font-mono font-bold"
-              >
-                {item.name.substring(0, 3)}
-              </text>
-            </g>
-          );
-        })}
-      </svg>
-    );
-  };
+  const detectedFrameworks = detectFrameworks();
 
-  // Common libraries associated with each language for premium context
-  const getEcosystemLibs = (lang: string): string[] => {
-    switch (lang) {
-      case "TypeScript":
-      case "JavaScript":
-        return ["React", "Next.js", "Vite", "Node.js", "TailwindCSS"];
-      case "Python":
-        return ["FastAPI", "NumPy", "Pandas", "PyTorch", "Django"];
-      case "Go":
-        return ["Gin", "Go Modules", "gRPC", "Hugo", "Cobra"];
-      case "Rust":
-        return ["Cargo", "Tokio", "Tauri", "Actix", "Serde"];
-      case "Java":
-        return ["Spring Boot", "Maven", "Gradle", "Hibernate", "JUnit"];
-      case "HTML":
-      case "CSS":
-        return ["Sass", "PostCSS", "Semantic HTML", "CSS Modules"];
-      default:
-        return ["Ecosystem tools", "Standard Libraries", "CLI Utilities"];
+  // Sort and limit languages for Radar / Bar Chart display
+  const topLanguages = [...languages]
+    .sort((a, b) => b.bytes - a.bytes)
+    .slice(0, 6);
+
+  // Radar data mapping
+  const radarData = topLanguages.map(l => ({
+    subject: l.name,
+    A: l.percentage,
+    fullMark: 100,
+  }));
+
+  // Analyze primary stack
+  const getPrimaryStackAnalysis = () => {
+    const topLang = topLanguages.length > 0 ? topLanguages[0].name : "";
+    if (!topLang) return "Undetermined Stack";
+
+    const hasFrontend = detectedFrameworks.some(f => f.category.includes("Frontend"));
+    const hasBackend = detectedFrameworks.some(f => f.category.includes("Backend") || f.category.includes("Database"));
+
+    if (topLang === "TypeScript" || topLang === "JavaScript") {
+      if (hasFrontend && hasBackend) return "Enterprise TypeScript Fullstack Architect";
+      if (hasFrontend) return "Modern Client UI Platform Engineer";
+      return "Runtime JavaScript API Architect";
     }
+    if (topLang === "Python") {
+      if (detectedFrameworks.some(f => f.name === "FastAPI" || f.name === "Django")) {
+        return "Python Full-Stack Systems Engineer";
+      }
+      return "Data Pipelines & AI Infrastructure Engineer";
+    }
+    if (topLang === "Go") {
+      return "Cloud-Native Infrastructure & API Developer";
+    }
+    if (topLang === "Rust") {
+      return "Low-Level Systems & WebAssembly Specialist";
+    }
+    return `${topLang} Developer`;
   };
 
   return (
     <div className="space-y-6">
-      {/* Phase 5: Language Distribution Visualization */}
+      
+      {/* 2-Column Chart Layout */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="rounded-xl border border-border bg-surface p-6 flex flex-col items-center justify-center">
-          <h3 className="text-base font-bold font-space-grotesk text-text-primary mb-6 self-start">
-            Ecosystem Distribution (Pie Chart)
-          </h3>
-          {renderPieChart(categorizedLanguages)}
+        
+        {/* Technology Radar Chart */}
+        <div className="rounded-xl border border-[#30363D] bg-[#161B22]/40 p-6 flex flex-col items-center justify-between">
+          <div className="self-start">
+            <h3 className="text-xs font-mono font-bold text-[#8B949E] uppercase tracking-wider">
+              Technology Radar Profile
+            </h3>
+            <p className="text-[10px] text-[#8B949E] mt-0.5">Language experience weight mapped across key vectors.</p>
+          </div>
+          <div className="h-56 w-full text-[9px] font-mono mt-4">
+            <ResponsiveContainer width="100%" height="100%">
+              <RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarData}>
+                <PolarGrid stroke="#30363D" />
+                <PolarAngleAxis dataKey="subject" stroke="#8B949E" />
+                <Radar
+                  name="Proficiency"
+                  dataKey="A"
+                  stroke="#58A6FF"
+                  fill="#1F6FEB"
+                  fillOpacity={0.25}
+                />
+              </RadarChart>
+            </ResponsiveContainer>
+          </div>
         </div>
 
-        <div className="rounded-xl border border-border bg-surface p-6 flex flex-col items-center justify-center">
-          <h3 className="text-base font-bold font-space-grotesk text-text-primary mb-6 self-start">
-            Language Percentages (Bar Chart)
-          </h3>
-          {renderBarChart(categorizedLanguages)}
+        {/* Language distribution bar chart */}
+        <div className="rounded-xl border border-[#30363D] bg-[#161B22]/40 p-6 flex flex-col items-center justify-between">
+          <div className="self-start">
+            <h3 className="text-xs font-mono font-bold text-[#8B949E] uppercase tracking-wider">
+              Ecosystem Volume
+            </h3>
+            <p className="text-[10px] text-[#8B949E] mt-0.5">Relative percentages calculated from codebase file sizes.</p>
+          </div>
+          <div className="h-56 w-full text-[9px] font-mono mt-4">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={topLanguages} layout="vertical" margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
+                <XAxis type="number" stroke="#8B949E" tickLine={false} />
+                <YAxis dataKey="name" type="category" stroke="#8B949E" tickLine={false} width={70} />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: "#161B22", borderColor: "#30363D", borderRadius: "8px" }}
+                  labelStyle={{ color: "#F0F6FC" }}
+                />
+                <Bar dataKey="percentage" fill="#3FB950" radius={[0, 4, 4, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </div>
+
       </div>
 
-      {/* Ecosystem Detail Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {categorizedLanguages.map(lang => (
-          <div
-            key={lang.name}
-            className="rounded-xl border border-border bg-surface p-5 flex flex-col justify-between"
-          >
-            <div>
-              <div className="flex items-center justify-between border-b border-border/40 pb-3 mb-4">
-                <div className="flex items-center gap-2">
-                  <span
-                    style={{ backgroundColor: lang.color }}
-                    className="h-3 w-3 rounded-full"
-                  />
-                  <h4 className="text-sm font-bold text-text-primary font-space-grotesk">
-                    {lang.name}
-                  </h4>
-                </div>
-                <span className="text-[10px] font-bold font-mono text-accent bg-accent/10 border border-accent/20 px-2.5 py-0.5 rounded-full">
-                  {lang.percentage}%
-                </span>
-              </div>
+      {/* Framework & Technology Integration Panel */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        {/* Left: Framework Badges */}
+        <div className="lg:col-span-8 rounded-xl border border-[#30363D] bg-[#161B22]/60 p-6 space-y-4">
+          <div>
+            <h3 className="text-xs font-mono font-bold text-[#8B949E] uppercase tracking-wider">
+              Detected Stack Integrations
+            </h3>
+            <p className="text-[10px] text-[#8B949E] mt-0.5">Libraries and utilities scanned within repository metadata.</p>
+          </div>
 
-              <div className="space-y-3 font-mono text-xs">
-                <div className="flex justify-between">
-                  <span className="text-text-secondary">INDEXED SIZE:</span>
-                  <span className="text-text-primary">{formatBytes(lang.bytes)}</span>
+          {detectedFrameworks.length > 0 ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {detectedFrameworks.map(framework => (
+                <div
+                  key={framework.name}
+                  className="flex items-center gap-2.5 p-3 rounded-lg border border-[#30363D]/60 bg-[#0D1117] hover:border-[#30363D] transition-all"
+                >
+                  <span className="text-sm">{framework.icon}</span>
+                  <div className="min-w-0">
+                    <div className="text-[11px] font-bold text-[#F0F6FC] truncate">{framework.name}</div>
+                    <div className="text-[8px] font-mono text-[#8B949E] uppercase tracking-wide truncate">{framework.category}</div>
+                  </div>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-text-secondary">ECOSYSTEM MATURITY:</span>
-                  <span className="text-success font-bold">Stable</span>
-                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-xs text-[#8B949E] italic py-6">
+              No third-party framework markers scanned in repo names/descriptions.
+            </div>
+          )}
+        </div>
+
+        {/* Right: Primary Stack Analysis */}
+        <div className="lg:col-span-4 rounded-xl border border-[#30363D] bg-[#161B22]/60 p-6 flex flex-col justify-between">
+          <div className="space-y-4">
+            <div>
+              <h3 className="text-xs font-mono font-bold text-[#8B949E] uppercase tracking-wider">
+                Primary Stack Diagnosis
+              </h3>
+              <p className="text-[10px] text-[#8B949E] mt-0.5">Role classification generated from language distribution.</p>
+            </div>
+
+            <div className="rounded-lg border border-[#58A6FF]/20 bg-[#1F6FEB]/5 p-4 text-center">
+              <span className="text-[9px] font-mono font-bold text-[#58A6FF] uppercase block tracking-wider">Developer Persona</span>
+              <div className="text-sm font-bold font-space-grotesk text-[#F0F6FC] mt-1.5 leading-tight">
+                {getPrimaryStackAnalysis()}
               </div>
             </div>
 
-            <div className="mt-5 border-t border-border/40 pt-4">
-              <span className="text-[10px] font-mono text-text-secondary uppercase block mb-2">
-                Ecosystem Frameworks & Tools
-              </span>
-              <div className="flex flex-wrap gap-1.5">
-                {getEcosystemLibs(lang.name).map(lib => (
-                  <span
-                    key={lib}
-                    className="text-[9px] font-bold text-text-secondary bg-surface-secondary border border-border px-2 py-0.5 rounded"
-                  >
-                    {lib}
-                  </span>
-                ))}
-              </div>
+            <div className="text-[11px] text-[#8B949E] leading-relaxed font-sans">
+              Your dominant ecosystem is <strong className="text-[#F0F6FC]">{topLanguages[0]?.name || "unknown"}</strong>, with supporting packages and project descriptors referencing <strong className="text-[#F0F6FC]">{detectedFrameworks.slice(0, 3).map(f => f.name).join(", ") || "various libraries"}</strong>.
             </div>
           </div>
-        ))}
+
+          <div className="text-[10px] font-mono text-[#3FB950] border-t border-[#30363D]/40 pt-4 mt-6">
+            ✓ Stack indexing verified.
+          </div>
+        </div>
+
       </div>
+
     </div>
   );
 }

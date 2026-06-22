@@ -231,12 +231,16 @@ export function getDemoDashboardData(): UserDashboardData {
     diversity: 17,
     openSource: 19,
     complexity: 19,
+    communityImpact: 18,
+    documentation: 19,
     breakdown: {
       consistencyReason: "Daily contributions with exceptional commit density and a peak 45-day active streak.",
       repoQualityReason: "Average stars exceed 500 per project. 100% repository description and documentation coverage.",
       diversityReason: "Mastery of front-end TypeScript combined with high-performance languages like Go and Rust.",
       openSourceReason: "Significant community reach with 352 forks and 84 pull requests merged into external repos.",
-      complexityReason: "Manages heavy codebases with large source directories, build actions, and unit tests."
+      complexityReason: "Manages heavy codebases with large source directories, build actions, and unit tests.",
+      communityImpactReason: "High community impact through external stars, issue threads response times, and forks.",
+      documentationReason: "Outstanding documentation index, keeping READMEs and inline comments updated across projects."
     }
   };
 
@@ -256,6 +260,8 @@ export function getDemoDashboardData(): UserDashboardData {
       "Submit core features to the Next.js/Vercel upstream repositories directly to scale Open Source score."
     ],
     suggestedTechnologies: ["Rust (WASM)", "Next.js 15 (App Router)", "Go Router", "GitHub Actions CI/CD", "Docker / Kubernetes"],
+    opportunities: ["Go Router", "Kubernetes", "Prometheus", "Grafana", "WebAssembly"],
+    careerRecommendations: ["Principal Engineer", "Cloud Architect", "Lead Systems Architect"],
     careerDirection: "Lead Fullstack / Systems Architect",
     learningRoadmap: [
       {
@@ -276,7 +282,19 @@ export function getDemoDashboardData(): UserDashboardData {
         ],
         duration: "6 weeks"
       }
-    ]
+    ],
+    growthForecast: {
+      currentScore: 92,
+      forecastMonths: [
+        { month: "Jan", score: 92 },
+        { month: "Feb", score: 93 },
+        { month: "Mar", score: 95 },
+        { month: "Apr", score: 96 },
+        { month: "May", score: 97 },
+        { month: "Jun", score: 98 }
+      ],
+      summary: "By optimizing documentation coverage and contributing regularly to external repositories, your score is projected to reach 98 in the next six months."
+    }
   };
 
   const wrapped = {

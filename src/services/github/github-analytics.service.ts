@@ -118,7 +118,7 @@ export class GitHubAnalyticsService {
   ): { analyticsDoc: UserAnalyticsDoc; dashboardData: UserDashboardData } {
     const contributions = this.mergeContributionStats(contributionsInput, repos);
     const languages = this.aggregateLanguages(repos);
-    const score = calculateDeveloperScore(repos, contributions);
+    const score = calculateDeveloperScore(repos, contributions, profile.followers);
     const aiInsights = generateAIInsights(repos, languages, score, contributions);
     const wrapped = this.generateWrappedData(profile, repos, contributions, languages);
 
