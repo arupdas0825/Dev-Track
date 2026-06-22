@@ -2,6 +2,7 @@ import { GitHubProfile, GitHubRepository, LanguageStat, ContributionStats, UserD
 import { GitHubUserService } from "../services/github/github-user.service";
 import { GitHubRepositoryService } from "../services/github/github-repository.service";
 import { GitHubAnalyticsService } from "../services/github/github-analytics.service";
+import { GitHubContributionService } from "../services/github/github-contribution.service";
 
 // Language color mapping inspired by GitHub
 const LANGUAGE_COLORS: Record<string, string> = {
@@ -38,219 +39,20 @@ export async function fetchGitHubDashboardData(
   // 2. Fetch Repositories
   const repositories = await GitHubRepositoryService.fetchUserProfileRepos(username, token);
 
-  // 3. Fetch Events
-  const headers: Record<string, string> = {
-    Accept: "application/vnd.github.v3+json",
-  };
-  if (token) {
-    headers["Authorization"] = `token ${token}`;
-  }
-  const eventsRes = await fetch(
-    `https://api.github.com/users/${username}/events?per_page=100`,
-    { headers }
-  );
-  let events: any[] = [];
-  if (eventsRes.ok) {
-    events = await eventsRes.json();
-  }
+  // 3. Fetch real user contributions via GitHubContributionService
+  const contributions = await GitHubContributionService.fetchUserContributions(username, token);
 
   // 4. Calculate everything using GitHubAnalyticsService
   const { dashboardData } = GitHubAnalyticsService.calculateDashboardAnalytics(
     profile.id.toString(),
     profile,
     repositories,
-    events
+    contributions
   );
 
   return dashboardData;
 }
 
-function parseContributions(
-  profile: GitHubProfile,
-  repos: GitHubRepository[],
-  events: any[]
-): ContributionStats {
-  const dailyContributions: Record<string, number> = {};
-  let totalCommitsFromEvents = 0;
-  let totalPRs = 0;
-  let totalIssues = 0;
-
-  // Process last 100 events
-  events.forEach((event: any) => {
-    if (!event.created_at) return;
-    const dateStr = event.created_at.split("T")[0]; // YYYY-MM-DD
-    dailyContributions[dateStr] = (dailyContributions[dateStr] || 0) + 1;
-
-    if (event.type === "PushEvent") {
-      const commitCount = event.payload?.commits?.length || 1;
-      totalCommitsFromEvents += commitCount;
-      dailyContributions[dateStr] = (dailyContributions[dateStr] || 0) + commitCount - 1; // Add additional commits
-    } else if (event.type === "PullRequestEvent") {
-      totalPRs += 1;
-    } else if (event.type === "IssuesEvent") {
-      totalIssues += 1;
-    }
-  });
-
-  // Calculate streaks
-  const dates = Object.keys(dailyContributions).sort();
-  let longestStreak = 0;
-  let currentStreak = 0;
-  let runningStreak = 0;
-
-  if (dates.length > 0) {
-    // Generate simple streak count based on consecutive days active in events feed
-    let lastDate: Date | null = null;
-    dates.forEach(dateStr => {
-      const currentDate = new Date(dateStr);
-      if (lastDate === null) {
-        runningStreak = 1;
-      } else {
-        const diffTime = Math.abs(currentDate.getTime() - lastDate.getTime());
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        if (diffDays === 1) {
-          runningStreak++;
-        } else if (diffDays > 1) {
-          if (runningStreak > longestStreak) {
-            longestStreak = runningStreak;
-          }
-          runningStreak = 1;
-        }
-      }
-      lastDate = currentDate;
-    });
-    longestStreak = Math.max(longestStreak, runningStreak);
-
-    // Current streak (check if active today or yesterday)
-    const today = new Date();
-    const yesterday = new Date();
-    yesterday.setDate(today.getDate() - 1);
-    
-    const todayStr = today.toISOString().split("T")[0];
-    const yesterdayStr = yesterday.toISOString().split("T")[0];
-
-    if (dailyContributions[todayStr] || dailyContributions[yesterdayStr]) {
-      currentStreak = runningStreak;
-    } else {
-      currentStreak = 0;
-    }
-  }
-
-  // Fallbacks if events are empty/low because of public rate limits
-  // We approximate annual commits using a scaling heuristic: base of 15 commits per public repo + stars weight
-  const totalStarsEarned = repos.reduce((acc, r) => acc + r.stargazers_count, 0);
-  const totalForksEarned = repos.reduce((acc, r) => acc + r.forks_count, 0);
-  const baseEstimatedCommits = profile.public_repos * 12 + totalStarsEarned * 3 + 10;
-  const totalCommits = Math.max(totalCommitsFromEvents, baseEstimatedCommits);
-
-  // PRs and Issues estimation if 0
-  const finalPRs = Math.max(totalPRs, Math.round(profile.public_repos * 0.3));
-  const finalIssues = Math.max(totalIssues, Math.round(profile.public_repos * 0.2));
-
-  // Fill in mock contribution matrix for the calendar if it's sparse
-  // We'll generate random contributions for the last 30 days based on their public repos to make the UI look alive
-  const calendarDays: Record<string, number> = { ...dailyContributions };
-  const todayDate = new Date();
-  for (let i = 0; i < 90; i++) {
-    const d = new Date();
-    d.setDate(todayDate.getDate() - i);
-    const dStr = d.toISOString().split("T")[0];
-    if (!calendarDays[dStr]) {
-      // Seed occasional activity based on repo count
-      const seed = Math.random();
-      const activityThreshold = Math.min(0.7, 0.1 + (profile.public_repos * 0.02));
-      if (seed < activityThreshold) {
-        calendarDays[dStr] = Math.floor(Math.random() * 4) + 1;
-      }
-    }
-  }
-
-  return {
-    totalCommits,
-    totalPRs: finalPRs,
-    totalIssues: finalIssues,
-    totalStarsEarned,
-    totalForksEarned,
-    activeMonthsCount: dates.length > 0 ? Math.max(1, Math.round(dates.length / 3)) : 3,
-    longestStreak: Math.max(longestStreak, Math.min(14, Math.round(profile.public_repos * 0.5))),
-    currentStreak: Math.max(currentStreak, dailyContributions[todayDate.toISOString().split("T")[0]] ? 1 : 0),
-    dailyContributions: calendarDays,
-  };
-}
-
-function aggregateLanguages(repos: GitHubRepository[]): LanguageStat[] {
-  const languageBytes: Record<string, number> = {};
-  let totalBytes = 0;
-
-  repos.forEach(repo => {
-    if (repo.language) {
-      // Repos sizes are in KB, we treat it as an proxy for size contribution
-      const weight = repo.size || 100;
-      languageBytes[repo.language] = (languageBytes[repo.language] || 0) + weight;
-      totalBytes += weight;
-    }
-  });
-
-  const list = Object.keys(languageBytes).map(name => {
-    const bytes = languageBytes[name];
-    const percentage = totalBytes > 0 ? Math.round((bytes / totalBytes) * 100) : 0;
-    return {
-      name,
-      bytes,
-      percentage,
-      color: LANGUAGE_COLORS[name] || "#888888",
-    };
-  });
-
-  return list.sort((a, b) => b.bytes - a.bytes);
-}
-
-function generateWrappedData(
-  profile: GitHubProfile,
-  repos: GitHubRepository[],
-  contributions: ContributionStats,
-  languages: LanguageStat[]
-): any {
-  const year = new Date().getFullYear();
-  const mostUsedLanguage = languages.length > 0 ? languages[0].name : "Markdown";
-  
-  let mostActiveRepo = "None";
-  if (repos.length > 0) {
-    const sortedRepos = [...repos].sort((a, b) => b.stargazers_count + b.forks_count - (a.stargazers_count + a.forks_count));
-    mostActiveRepo = sortedRepos[0].name;
-  }
-
-  let biggestAchievement = "System Deployer";
-  let achievementDescription = "Deployed multiple functional code bases to GitHub.";
-
-  if (contributions.longestStreak > 20) {
-    biggestAchievement = "Streak Champion";
-    achievementDescription = `Maintained a dedication streak of ${contributions.longestStreak} days of writing code.`;
-  } else if (contributions.totalStarsEarned > 10) {
-    biggestAchievement = "Community Influencer";
-    achievementDescription = `Accumulated ${contributions.totalStarsEarned} stargazers across your public codebases.`;
-  } else if (repos.length > 15) {
-    biggestAchievement = "Productive Builder";
-    achievementDescription = `Successfully created and published ${repos.length} open-source packages.`;
-  }
-
-  let percentile = "top 15%";
-  if (contributions.totalCommits > 500) percentile = "top 2%";
-  else if (contributions.totalCommits > 200) percentile = "top 8%";
-  else if (contributions.totalCommits > 50) percentile = "top 25%";
-
-  return {
-    year,
-    mostUsedLanguage,
-    mostActiveRepo,
-    longestStreak: contributions.longestStreak,
-    biggestAchievement,
-    achievementDescription,
-    contributionSummary: `You wrote code in ${languages.slice(0, 3).map(l => l.name).join(", ") || "various environments"}, committing ${contributions.totalCommits} times.`,
-    totalCommits: contributions.totalCommits,
-    percentileText: `You ranked in the ${percentile} of contributors this year.`,
-  };
-}
 
 export function getDemoDashboardData(): UserDashboardData {
   const profile: GitHubProfile = {

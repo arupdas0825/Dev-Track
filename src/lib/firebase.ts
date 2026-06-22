@@ -7,6 +7,7 @@ export type { DevTrackUser };
 import { GitHubUserService } from "../services/github/github-user.service";
 import { GitHubRepositoryService } from "../services/github/github-repository.service";
 import { GitHubAnalyticsService } from "../services/github/github-analytics.service";
+import { GitHubContributionService } from "../services/github/github-contribution.service";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -159,28 +160,15 @@ export async function syncUserAndReposInFirestore(
   const profile = await GitHubUserService.fetchUserProfile(username, token);
   const repositories = await GitHubRepositoryService.fetchUserProfileRepos(username, token);
 
-  // 2. Fetch events
-  const headers: Record<string, string> = {
-    Accept: "application/vnd.github.v3+json",
-  };
-  if (token) {
-    headers["Authorization"] = `token ${token}`;
-  }
-  const eventsRes = await fetch(
-    `https://api.github.com/users/${username}/events?per_page=100`,
-    { headers }
-  );
-  let events: any[] = [];
-  if (eventsRes.ok) {
-    events = await eventsRes.json();
-  }
+  // 2. Fetch live contributions from GitHubContributionService
+  const contributions = await GitHubContributionService.fetchUserContributions(username, token);
 
   // 3. Compute analytics and dashboard data
   const { analyticsDoc, dashboardData } = GitHubAnalyticsService.calculateDashboardAnalytics(
     uid,
     profile,
     repositories,
-    events
+    contributions
   );
 
   // 4. Save profile in users/{uid}

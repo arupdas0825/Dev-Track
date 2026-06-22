@@ -50,106 +50,16 @@ export class GitHubAnalyticsService {
     return list.sort((a, b) => b.bytes - a.bytes);
   }
 
-  static parseContributions(
-    profile: GitHubProfile,
-    repos: GitHubRepository[],
-    events: any[]
+  static mergeContributionStats(
+    fetchedStats: ContributionStats,
+    repos: GitHubRepository[]
   ): ContributionStats {
-    const dailyContributions: Record<string, number> = {};
-    let totalCommitsFromEvents = 0;
-    let totalPRs = 0;
-    let totalIssues = 0;
-
-    events.forEach((event: any) => {
-      if (!event.created_at) return;
-      const dateStr = event.created_at.split("T")[0];
-      dailyContributions[dateStr] = (dailyContributions[dateStr] || 0) + 1;
-
-      if (event.type === "PushEvent") {
-        const commitCount = event.payload?.commits?.length || 1;
-        totalCommitsFromEvents += commitCount;
-        dailyContributions[dateStr] = (dailyContributions[dateStr] || 0) + commitCount - 1;
-      } else if (event.type === "PullRequestEvent") {
-        totalPRs += 1;
-      } else if (event.type === "IssuesEvent") {
-        totalIssues += 1;
-      }
-    });
-
-    const dates = Object.keys(dailyContributions).sort();
-    let longestStreak = 0;
-    let currentStreak = 0;
-    let runningStreak = 0;
-
-    if (dates.length > 0) {
-      let lastDate: Date | null = null;
-      dates.forEach(dateStr => {
-        const currentDate = new Date(dateStr);
-        if (lastDate === null) {
-          runningStreak = 1;
-        } else {
-          const diffTime = Math.abs(currentDate.getTime() - lastDate.getTime());
-          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-          if (diffDays === 1) {
-            runningStreak++;
-          } else if (diffDays > 1) {
-            if (runningStreak > longestStreak) {
-              longestStreak = runningStreak;
-            }
-            runningStreak = 1;
-          }
-        }
-        lastDate = currentDate;
-      });
-      longestStreak = Math.max(longestStreak, runningStreak);
-
-      const today = new Date();
-      const yesterday = new Date();
-      yesterday.setDate(today.getDate() - 1);
-      
-      const todayStr = today.toISOString().split("T")[0];
-      const yesterdayStr = yesterday.toISOString().split("T")[0];
-
-      if (dailyContributions[todayStr] || dailyContributions[yesterdayStr]) {
-        currentStreak = runningStreak;
-      } else {
-        currentStreak = 0;
-      }
-    }
-
     const totalStarsEarned = repos.reduce((acc, r) => acc + r.stargazers_count, 0);
     const totalForksEarned = repos.reduce((acc, r) => acc + r.forks_count, 0);
-    const baseEstimatedCommits = profile.public_repos * 12 + totalStarsEarned * 3 + 10;
-    const totalCommits = Math.max(totalCommitsFromEvents, baseEstimatedCommits);
-
-    const finalPRs = Math.max(totalPRs, Math.round(profile.public_repos * 0.3));
-    const finalIssues = Math.max(totalIssues, Math.round(profile.public_repos * 0.2));
-
-    const calendarDays: Record<string, number> = { ...dailyContributions };
-    const todayDate = new Date();
-    for (let i = 0; i < 90; i++) {
-      const d = new Date();
-      d.setDate(todayDate.getDate() - i);
-      const dStr = d.toISOString().split("T")[0];
-      if (!calendarDays[dStr]) {
-        const seed = Math.random();
-        const activityThreshold = Math.min(0.7, 0.1 + (profile.public_repos * 0.02));
-        if (seed < activityThreshold) {
-          calendarDays[dStr] = Math.floor(Math.random() * 4) + 1;
-        }
-      }
-    }
-
     return {
-      totalCommits,
-      totalPRs: finalPRs,
-      totalIssues: finalIssues,
+      ...fetchedStats,
       totalStarsEarned,
       totalForksEarned,
-      activeMonthsCount: dates.length > 0 ? Math.max(1, Math.round(dates.length / 3)) : 3,
-      longestStreak: Math.max(longestStreak, Math.min(14, Math.round(profile.public_repos * 0.5))),
-      currentStreak: Math.max(currentStreak, dailyContributions[todayDate.toISOString().split("T")[0]] ? 1 : 0),
-      dailyContributions: calendarDays,
     };
   }
 
@@ -204,9 +114,9 @@ export class GitHubAnalyticsService {
     uid: string,
     profile: GitHubProfile,
     repos: GitHubRepository[],
-    events: any[]
+    contributionsInput: ContributionStats
   ): { analyticsDoc: UserAnalyticsDoc; dashboardData: UserDashboardData } {
-    const contributions = this.parseContributions(profile, repos, events);
+    const contributions = this.mergeContributionStats(contributionsInput, repos);
     const languages = this.aggregateLanguages(repos);
     const score = calculateDeveloperScore(repos, contributions);
     const aiInsights = generateAIInsights(repos, languages, score, contributions);

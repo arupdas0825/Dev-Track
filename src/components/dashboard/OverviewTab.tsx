@@ -201,14 +201,18 @@ export default function OverviewTab({ data }: OverviewTabProps) {
 
         {renderContributionGrid()}
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6 pt-6 border-t border-border/60 text-center font-mono">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6 pt-6 border-t border-border/60 text-center font-mono">
           <div>
             <div className="text-xs text-text-secondary">TOTAL COMMITS</div>
             <div className="text-lg font-bold text-text-primary mt-1">{contributions.totalCommits}</div>
           </div>
           <div>
+            <div className="text-xs text-text-secondary">CURRENT STREAK</div>
+            <div className="text-lg font-bold text-success mt-1">{contributions.currentStreak} Days</div>
+          </div>
+          <div>
             <div className="text-xs text-text-secondary">LONGEST STREAK</div>
-            <div className="text-lg font-bold text-success mt-1">{contributions.longestStreak} Days</div>
+            <div className="text-lg font-bold text-[#a371f7] mt-1">{contributions.longestStreak} Days</div>
           </div>
           <div>
             <div className="text-xs text-text-secondary">ACTIVE MONTHS</div>
