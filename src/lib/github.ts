@@ -1,6 +1,7 @@
 import { GitHubProfile, GitHubRepository, LanguageStat, ContributionStats, UserDashboardData, DeveloperScore, AIInsights } from "../types";
-import { calculateDeveloperScore } from "../services/score";
-import { generateAIInsights } from "../services/ai";
+import { GitHubUserService } from "../services/github/github-user.service";
+import { GitHubRepositoryService } from "../services/github/github-repository.service";
+import { GitHubAnalyticsService } from "../services/github/github-analytics.service";
 
 // Language color mapping inspired by GitHub
 const LANGUAGE_COLORS: Record<string, string> = {
@@ -31,35 +32,19 @@ export async function fetchGitHubDashboardData(
     return getDemoDashboardData();
   }
 
+  // 1. Fetch Profile
+  const profile = await GitHubUserService.fetchUserProfile(username, token);
+
+  // 2. Fetch Repositories
+  const repositories = await GitHubRepositoryService.fetchUserProfileRepos(username, token);
+
+  // 3. Fetch Events
   const headers: Record<string, string> = {
     Accept: "application/vnd.github.v3+json",
   };
-
   if (token) {
     headers["Authorization"] = `token ${token}`;
   }
-
-  // 1. Fetch Profile
-  const profileRes = await fetch(`https://api.github.com/users/${username}`, { headers });
-  if (!profileRes.ok) {
-    if (profileRes.status === 404) {
-      throw new Error(`GitHub user "${username}" not found.`);
-    }
-    throw new Error(`Failed to fetch GitHub profile: ${profileRes.statusText}`);
-  }
-  const profile: GitHubProfile = await profileRes.ok ? await profileRes.json() : null;
-
-  // 2. Fetch Repositories
-  const reposRes = await fetch(
-    `https://api.github.com/users/${username}/repos?per_page=100&sort=updated`,
-    { headers }
-  );
-  let repositories: GitHubRepository[] = [];
-  if (reposRes.ok) {
-    repositories = await reposRes.json();
-  }
-
-  // 3. Fetch Events to calculate activity and streaks
   const eventsRes = await fetch(
     `https://api.github.com/users/${username}/events?per_page=100`,
     { headers }
@@ -69,30 +54,15 @@ export async function fetchGitHubDashboardData(
     events = await eventsRes.json();
   }
 
-  // Compute contributions from events and profile
-  const contributions = parseContributions(profile, repositories, events);
-
-  // Compute languages
-  const languages = aggregateLanguages(repositories);
-
-  // Calculate Developer Score
-  const score = calculateDeveloperScore(repositories, contributions);
-
-  // Generate AI Insights
-  const aiInsights = generateAIInsights(repositories, languages, score, contributions);
-
-  // Generate Wrapped Details
-  const wrapped = generateWrappedData(profile, repositories, contributions, languages);
-
-  return {
+  // 4. Calculate everything using GitHubAnalyticsService
+  const { dashboardData } = GitHubAnalyticsService.calculateDashboardAnalytics(
+    profile.id.toString(),
     profile,
     repositories,
-    languages,
-    contributions,
-    score,
-    aiInsights,
-    wrapped,
-  };
+    events
+  );
+
+  return dashboardData;
 }
 
 function parseContributions(

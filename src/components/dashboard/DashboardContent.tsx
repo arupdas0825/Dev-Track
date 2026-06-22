@@ -14,6 +14,9 @@ import ScoreTab from "./ScoreTab";
 import AIInsightsTab from "./AIInsightsTab";
 import WrappedTab from "./WrappedTab";
 import SettingsTab from "./SettingsTab";
+import { useGithubProfile } from "@/hooks/useGithubProfile";
+import { useRepositories } from "@/hooks/useRepositories";
+import { useAnalytics } from "@/hooks/useAnalytics";
 
 type TabId = "overview" | "repos" | "contrib" | "lang" | "score" | "ai" | "wrapped" | "settings";
 
@@ -22,9 +25,7 @@ export default function DashboardContent() {
   const router = useRouter();
   const [currentUser, setCurrentUser] = useState<DevTrackUser | null>(null);
   const [activeTab, setActiveTab] = useState<TabId>("overview");
-  const [dashboardData, setDashboardData] = useState<UserDashboardData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [syncedData, setSyncedData] = useState<UserDashboardData | null>(null);
   const [githubToken, setGithubToken] = useState("");
 
   const usernameParam = searchParams.get("user") || "";
@@ -45,79 +46,63 @@ export default function DashboardContent() {
     }
   }, []);
 
-  // 3. Fetch Dashboard Data when username or token updates
+  // Determine actual username to load
+  let targetUser = usernameParam.trim();
+  if (!targetUser) {
+    if (currentUser) {
+      targetUser = currentUser.username;
+    } else {
+      // Fallback to demo profile if not logged in and no query param
+      targetUser = "demo";
+    }
+  }
+
+  // Reset synced data when user changes
   useEffect(() => {
-    const loadDashboardData = async () => {
-      // Determine actual username to load
-      let targetUser = usernameParam.trim();
-      
-      if (!targetUser) {
-        if (currentUser) {
-          targetUser = currentUser.username;
-        } else {
-          // Fallback to demo profile if not logged in and no query param
-          targetUser = "demo";
-        }
-      }
+    setSyncedData(null);
+  }, [targetUser]);
 
-      setIsLoading(true);
-      setError(null);
+  // Load from hooks
+  const { profile, loading: profileLoading, error: profileError } = useGithubProfile(targetUser, githubToken);
+  const { repositories, loading: reposLoading, error: reposError } = useRepositories(targetUser, githubToken);
+  const { languages, contributions, score, aiInsights, wrapped, loading: analyticsLoading, error: analyticsError } = useAnalytics(targetUser, githubToken);
 
-      try {
-        if (targetUser.toLowerCase() === "demo" || targetUser.toLowerCase() === "devtrack-demo") {
-          const fetchedData = await fetchGitHubDashboardData(targetUser, githubToken);
-          setDashboardData(fetchedData);
-          setIsLoading(false);
-          return;
-        }
-
-        // 1. Try to load from Firestore first
-        const firestoreData = await getUserFromFirestore(targetUser);
-        if (firestoreData) {
-          setDashboardData(firestoreData);
-          setIsLoading(false);
-
-          // Asynchronously trigger refresh for current user in background
-          if (currentUser && currentUser.username.toLowerCase() === targetUser.toLowerCase()) {
-            syncUserAndReposInFirestore(currentUser.uid, targetUser, githubToken).catch(console.error);
+  // Background Sync logic
+  useEffect(() => {
+    let isMounted = true;
+    if (!targetUser || targetUser.toLowerCase() === "demo" || targetUser.toLowerCase() === "devtrack-demo") return;
+    
+    if (currentUser && currentUser.username.toLowerCase() === targetUser.toLowerCase()) {
+      const runSync = async () => {
+        try {
+          const freshData = await syncUserAndReposInFirestore(currentUser.uid, targetUser, githubToken);
+          if (isMounted) {
+            setSyncedData(freshData);
           }
-          return;
+        } catch (e) {
+          console.error("Background sync failed:", e);
         }
+      };
+      runSync();
+    }
+    return () => { isMounted = false; };
+  }, [targetUser, currentUser, githubToken]);
 
-        // 2. Fetch fresh data since not in Firestore
-        let fetchedData: UserDashboardData;
-        if (currentUser && currentUser.username.toLowerCase() === targetUser.toLowerCase()) {
-          // Currently logged-in user: run full sync pipeline
-          fetchedData = await syncUserAndReposInFirestore(currentUser.uid, targetUser, githubToken);
-        } else {
-          // Public search: fetch from GitHub and store/cache under local storage (since we don't have their uid)
-          fetchedData = await fetchGitHubDashboardData(targetUser, githubToken);
-          await saveDeveloperMetrics(targetUser, fetchedData);
-        }
-        setDashboardData(fetchedData);
-      } catch (err: any) {
-        console.error(err);
-        
-        // Fall back to offline saved copy if error occurs and cache is available
-        const fallbackCached = localStorage.getItem(`devtrack_profile_${targetUser.toLowerCase()}`);
-        if (fallbackCached) {
-          try {
-            const parsed = JSON.parse(fallbackCached);
-            setDashboardData(parsed.data);
-            setError(null); // Clear error since we have cached data
-          } catch (e) {
-            setError(err.message || "Failed to retrieve GitHub analysis. Please check the username or API limits.");
-          }
-        } else {
-          setError(err.message || "Failed to retrieve GitHub analysis. Please check the username or API limits.");
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  // Derive final dashboardData
+  const dashboardData: UserDashboardData | null = syncedData || (
+    profile && contributions && score && aiInsights && wrapped ? {
+      profile,
+      repositories,
+      languages,
+      contributions,
+      score,
+      aiInsights,
+      wrapped
+    } : null
+  );
 
-    loadDashboardData();
-  }, [usernameParam, currentUser, githubToken]);
+  const isLoading = !dashboardData && (profileLoading || reposLoading || analyticsLoading);
+  const error = !dashboardData ? (profileError || reposError || analyticsError) : null;
 
   const handleLogout = async () => {
     await logOutUser();

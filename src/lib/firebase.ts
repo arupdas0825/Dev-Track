@@ -2,8 +2,11 @@ import { initializeApp, getApps, getApp, FirebaseApp } from "firebase/app";
 import { getAuth, signInWithPopup, GithubAuthProvider, signOut, onAuthStateChanged, User, Auth } from "firebase/auth";
 import { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs, writeBatch, Firestore } from "firebase/firestore";
 import { getAnalytics, isSupported, Analytics } from "firebase/analytics";
-import { UserDashboardData, GitHubRepository, GitHubProfile, ContributionStats, DeveloperScore } from "../types";
-import { fetchGitHubDashboardData } from "./github";
+import { UserDashboardData, GitHubRepository, GitHubProfile, ContributionStats, DeveloperScore, UserProfileDoc, UserAnalyticsDoc, DevTrackUser } from "../types";
+export type { DevTrackUser };
+import { GitHubUserService } from "../services/github/github-user.service";
+import { GitHubRepositoryService } from "../services/github/github-repository.service";
+import { GitHubAnalyticsService } from "../services/github/github-analytics.service";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -43,16 +46,6 @@ if (isFirebaseEnabled) {
   } catch (error) {
     console.error("Firebase failed to initialize:", error);
   }
-}
-
-// User representation for Dev-Track
-export interface DevTrackUser {
-  uid: string;
-  email: string | null;
-  displayName: string | null;
-  photoURL: string | null;
-  username: string; // GitHub handle
-  token?: string; // GitHub Access Token if retrieved
 }
 
 // 1. Auth Handlers
@@ -162,77 +155,89 @@ export async function syncUserAndReposInFirestore(
     throw new Error("Firebase is not initialized or configured.");
   }
 
-  // 1. Fetch complete real data from GitHub
-  const dashboardData = await fetchGitHubDashboardData(username, token);
+  // 1. Fetch live profile and repos from services
+  const profile = await GitHubUserService.fetchUserProfile(username, token);
+  const repositories = await GitHubRepositoryService.fetchUserProfileRepos(username, token);
 
-  // 2. Reference user document
+  // 2. Fetch events
+  const headers: Record<string, string> = {
+    Accept: "application/vnd.github.v3+json",
+  };
+  if (token) {
+    headers["Authorization"] = `token ${token}`;
+  }
+  const eventsRes = await fetch(
+    `https://api.github.com/users/${username}/events?per_page=100`,
+    { headers }
+  );
+  let events: any[] = [];
+  if (eventsRes.ok) {
+    events = await eventsRes.json();
+  }
+
+  // 3. Compute analytics and dashboard data
+  const { analyticsDoc, dashboardData } = GitHubAnalyticsService.calculateDashboardAnalytics(
+    uid,
+    profile,
+    repositories,
+    events
+  );
+
+  // 4. Save profile in users/{uid}
   const userDocRef = doc(db, "users", uid);
   const userDocSnap = await getDoc(userDocRef);
-
   const now = new Date().toISOString();
   let createdAt = now;
-
   if (userDocSnap.exists()) {
-    const existingData = userDocSnap.data();
-    if (existingData.createdAt) {
-      createdAt = existingData.createdAt;
+    const existing = userDocSnap.data();
+    if (existing.createdAt) {
+      createdAt = existing.createdAt;
     }
   }
 
-  // 3. User document payload (Phase 1, 2, & 6)
-  const userPayload = {
+  const profilePayload: UserProfileDoc = {
     uid,
-    githubId: dashboardData.profile.id,
-    username: dashboardData.profile.login.toLowerCase(),
-    displayName: dashboardData.profile.name || null,
-    email: dashboardData.profile.email || null,
-    avatar: dashboardData.profile.avatar_url || null,
-    bio: dashboardData.profile.bio || null,
-    followers: dashboardData.profile.followers,
-    following: dashboardData.profile.following,
-    publicRepos: dashboardData.profile.public_repos,
-    githubCreatedAt: dashboardData.profile.created_at,
+    githubId: profile.id,
+    username: profile.login.toLowerCase(),
+    displayName: profile.name || null,
+    email: profile.email || null,
+    avatarUrl: profile.avatar_url || null,
+    bio: profile.bio || null,
+    company: profile.company || null,
+    location: profile.location || null,
+    blog: profile.blog || null,
+    followers: profile.followers,
+    following: profile.following,
+    publicRepos: profile.public_repos,
     createdAt,
     lastLogin: now,
-
-    // Store calculated score metrics
-    consistencyScore: dashboardData.score.consistency,
-    repositoryScore: dashboardData.score.repoQuality,
-    diversityScore: dashboardData.score.diversity,
-    communityScore: dashboardData.score.openSource,
-    complexityScore: dashboardData.score.complexity,
-    overallScore: dashboardData.score.overall,
-    scoreBreakdown: dashboardData.score.breakdown,
-
-    // Nested payloads for dashboard reconstruction
-    score: dashboardData.score,
-    contributions: dashboardData.contributions,
-    aiInsights: dashboardData.aiInsights,
-    wrapped: dashboardData.wrapped,
-    languages: dashboardData.languages,
   };
 
-  await setDoc(userDocRef, userPayload, { merge: true });
+  await setDoc(userDocRef, profilePayload, { merge: true });
 
-  // 4. Batch store repositories in subcollection (Phase 3)
+  // 5. Save repositories in repositories/{uid}/items subcollection
   const batch = writeBatch(db);
-  for (const repo of dashboardData.repositories) {
-    const repoDocRef = doc(db, "users", uid, "repositories", repo.name);
+  for (const repo of repositories) {
+    const repoDocRef = doc(db, "repositories", uid, "items", repo.name);
     batch.set(repoDocRef, {
       name: repo.name,
       description: repo.description || null,
       language: repo.language || null,
       stars: repo.stargazers_count,
       forks: repo.forks_count,
+      watchers: repo.watchers_count,
       visibility: repo.private ? "private" : "public",
-      updatedAt: repo.updated_at,
-      createdAt: repo.created_at,
+      createdDate: repo.created_at,
+      updatedDate: repo.updated_at,
       size: repo.size || 0,
       fork: repo.fork || false,
     }, { merge: true });
   }
-
   await batch.commit();
+
+  // 6. Save analytics in analytics/{uid}
+  const analyticsDocRef = doc(db, "analytics", uid);
+  await setDoc(analyticsDocRef, analyticsDoc, { merge: true });
 
   // Also update local storage cache for fast rendering
   if (typeof window !== "undefined") {
@@ -252,6 +257,7 @@ export async function getUserFromFirestore(username: string): Promise<UserDashbo
   }
 
   try {
+    // 1. Query users collection by username field
     const usersRef = collection(db, "users");
     const q = query(usersRef, where("username", "==", username.toLowerCase()));
     const querySnapshot = await getDocs(q);
@@ -261,11 +267,19 @@ export async function getUserFromFirestore(username: string): Promise<UserDashbo
     }
 
     const userDoc = querySnapshot.docs[0];
-    const userData = userDoc.data();
-    const uid = userDoc.id;
+    const profileData = userDoc.data() as UserProfileDoc;
+    const uid = profileData.uid;
 
-    // Fetch repositories subcollection
-    const reposRef = collection(db, "users", uid, "repositories");
+    // 2. Fetch analytics document from analytics/{uid}
+    const analyticsDocRef = doc(db, "analytics", uid);
+    const analyticsDocSnap = await getDoc(analyticsDocRef);
+    if (!analyticsDocSnap.exists()) {
+      return null;
+    }
+    const analyticsData = analyticsDocSnap.data() as UserAnalyticsDoc;
+
+    // 3. Fetch repositories subcollection from repositories/{uid}/items
+    const reposRef = collection(db, "repositories", uid, "items");
     const reposSnapshot = await getDocs(reposRef);
     const repositories: GitHubRepository[] = [];
 
@@ -274,55 +288,51 @@ export async function getUserFromFirestore(username: string): Promise<UserDashbo
       repositories.push({
         id: repoData.id || Math.floor(Math.random() * 1000000),
         name: repoData.name,
-        full_name: `${userData.username}/${repoData.name}`,
-        html_url: `https://github.com/${userData.username}/${repoData.name}`,
+        full_name: `${profileData.username}/${repoData.name}`,
+        html_url: `https://github.com/${profileData.username}/${repoData.name}`,
         description: repoData.description,
         fork: repoData.fork || false,
-        created_at: repoData.createdAt,
-        updated_at: repoData.updatedAt,
-        pushed_at: repoData.updatedAt,
+        created_at: repoData.createdDate,
+        updated_at: repoData.updatedDate,
+        pushed_at: repoData.updatedDate,
         size: repoData.size || 0,
         stargazers_count: repoData.stars,
-        watchers_count: repoData.stars,
+        watchers_count: repoData.watchers || repoData.stars,
         language: repoData.language,
         forks_count: repoData.forks,
         open_issues_count: 0,
+        private: repoData.visibility === "private",
+        visibility: repoData.visibility,
       });
     });
 
-    // Reconstruct GitHubProfile
+    // 4. Reconstruct GitHubProfile
     const profile: GitHubProfile = {
-      login: userData.username,
-      id: userData.githubId,
-      avatar_url: userData.avatar,
-      html_url: `https://github.com/${userData.username}`,
-      name: userData.displayName,
-      company: userData.company || null,
-      blog: userData.blog || null,
-      location: userData.location || null,
-      email: userData.email,
-      bio: userData.bio,
-      public_repos: userData.publicRepos,
-      public_gists: userData.publicGists || 0,
-      followers: userData.followers,
-      following: userData.following,
-      created_at: userData.githubCreatedAt,
+      login: profileData.username,
+      id: profileData.githubId,
+      avatar_url: profileData.avatarUrl || "",
+      html_url: `https://github.com/${profileData.username}`,
+      name: profileData.displayName,
+      company: profileData.company,
+      blog: profileData.blog,
+      location: profileData.location,
+      email: profileData.email,
+      bio: profileData.bio,
+      public_repos: profileData.publicRepos,
+      public_gists: 0,
+      followers: profileData.followers,
+      following: profileData.following,
+      created_at: profileData.createdAt,
     };
-
-    const contributions: ContributionStats = userData.contributions;
-    const score: DeveloperScore = userData.score;
-    const aiInsights = userData.aiInsights;
-    const wrapped = userData.wrapped;
-    const languages = userData.languages || [];
 
     const dashboardData: UserDashboardData = {
       profile,
       repositories,
-      languages,
-      contributions,
-      score,
-      aiInsights,
-      wrapped,
+      languages: analyticsData.languageDistribution || [],
+      contributions: analyticsData.contributions,
+      score: analyticsData.scoreBreakdown,
+      aiInsights: analyticsData.aiInsights,
+      wrapped: analyticsData.wrapped,
     };
 
     return dashboardData;
