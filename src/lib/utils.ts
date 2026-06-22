@@ -24,3 +24,22 @@ export function formatBytes(bytes: number): string {
   }
   return bytes + " B";
 }
+
+export function calculateAccountAge(createdAtString: string): string {
+  const created = new Date(createdAtString);
+  const now = new Date();
+  
+  let years = now.getFullYear() - created.getFullYear();
+  let months = now.getMonth() - created.getMonth();
+  
+  if (months < 0) {
+    years--;
+    months += 12;
+  }
+  
+  if (years === 0) {
+    return `${months} month${months !== 1 ? 's' : ''}`;
+  }
+  
+  return `${years} year${years !== 1 ? 's' : ''}${months > 0 ? `, ${months} month${months !== 1 ? 's' : ''}` : ''}`;
+}

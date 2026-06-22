@@ -32,6 +32,8 @@ export interface GitHubRepository {
   language: string | null;
   forks_count: number;
   open_issues_count: number;
+  private?: boolean;
+  visibility?: string;
   languages?: Record<string, number>; // language names mapped to byte size
   qualityScore?: number; // calculated repo quality score
 }

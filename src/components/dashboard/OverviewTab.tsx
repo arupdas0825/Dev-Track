@@ -1,7 +1,7 @@
 "use client";
 
 import { UserDashboardData } from "@/types";
-import { formatNumber } from "@/lib/utils";
+import { formatNumber, calculateAccountAge } from "@/lib/utils";
 
 interface OverviewTabProps {
   data: UserDashboardData;
@@ -141,7 +141,7 @@ export default function OverviewTab({ data }: OverviewTabProps) {
         </div>
 
         {/* Social Summary Counters */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 pt-6 border-t border-border/60">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4 mt-6 pt-6 border-t border-border/60">
           <div className="text-center md:text-left">
             <div className="text-xs text-text-secondary uppercase">Followers</div>
             <div className="text-lg font-bold font-space-grotesk text-text-primary mt-1">
@@ -161,9 +161,21 @@ export default function OverviewTab({ data }: OverviewTabProps) {
             </div>
           </div>
           <div className="text-center md:text-left">
-            <div className="text-xs text-text-secondary uppercase">Starred Repos</div>
+            <div className="text-xs text-text-secondary uppercase">Stars</div>
             <div className="text-lg font-bold font-space-grotesk text-text-primary mt-1">
-              {contributions.totalStarsEarned}
+              {formatNumber(contributions.totalStarsEarned)}
+            </div>
+          </div>
+          <div className="text-center md:text-left">
+            <div className="text-xs text-text-secondary uppercase">Forks</div>
+            <div className="text-lg font-bold font-space-grotesk text-text-primary mt-1">
+              {formatNumber(contributions.totalForksEarned)}
+            </div>
+          </div>
+          <div className="text-center md:text-left">
+            <div className="text-xs text-text-secondary uppercase">Account Age</div>
+            <div className="text-xs font-bold font-space-grotesk text-text-primary mt-1.5 whitespace-nowrap">
+              {calculateAccountAge(profile.created_at)}
             </div>
           </div>
         </div>

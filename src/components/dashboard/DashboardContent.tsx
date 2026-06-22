@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { fetchGitHubDashboardData } from "@/lib/github";
-import { saveDeveloperMetrics, getSavedDeveloperMetrics, subscribeToAuthChanges, logOutUser, DevTrackUser } from "@/lib/firebase";
+import { saveDeveloperMetrics, getSavedDeveloperMetrics, subscribeToAuthChanges, logOutUser, DevTrackUser, syncUserAndReposInFirestore, getUserFromFirestore } from "@/lib/firebase";
 import { UserDashboardData } from "@/types";
 import Navbar from "../layout/Navbar";
 import OverviewTab from "./OverviewTab";
@@ -64,47 +64,52 @@ export default function DashboardContent() {
       setError(null);
 
       try {
-        // Try local storage cache first
-        const cacheKey = `devtrack_profile_${targetUser.toLowerCase()}`;
-        const cachedStr = localStorage.getItem(cacheKey);
-        
-        let fetchedData: UserDashboardData;
-
-        if (cachedStr && targetUser.toLowerCase() !== "demo") {
-          try {
-            const parsed = JSON.parse(cachedStr);
-            // Cache valid for 30 minutes
-            const cacheAge = Date.now() - new Date(parsed.updatedAt).getTime();
-            if (cacheAge < 30 * 60 * 1000) {
-              fetchedData = parsed.data;
-              setDashboardData(fetchedData);
-              setIsLoading(false);
-              return;
-            }
-          } catch (e) {}
+        if (targetUser.toLowerCase() === "demo" || targetUser.toLowerCase() === "devtrack-demo") {
+          const fetchedData = await fetchGitHubDashboardData(targetUser, githubToken);
+          setDashboardData(fetchedData);
+          setIsLoading(false);
+          return;
         }
 
-        // Fetch fresh data
-        fetchedData = await fetchGitHubDashboardData(targetUser, githubToken);
-        setDashboardData(fetchedData);
+        // 1. Try to load from Firestore first
+        const firestoreData = await getUserFromFirestore(targetUser);
+        if (firestoreData) {
+          setDashboardData(firestoreData);
+          setIsLoading(false);
 
-        // Sync/Save data in Firebase Firestore (or fallback localStorage cache)
-        if (targetUser.toLowerCase() !== "demo") {
+          // Asynchronously trigger refresh for current user in background
+          if (currentUser && currentUser.username.toLowerCase() === targetUser.toLowerCase()) {
+            syncUserAndReposInFirestore(currentUser.uid, targetUser, githubToken).catch(console.error);
+          }
+          return;
+        }
+
+        // 2. Fetch fresh data since not in Firestore
+        let fetchedData: UserDashboardData;
+        if (currentUser && currentUser.username.toLowerCase() === targetUser.toLowerCase()) {
+          // Currently logged-in user: run full sync pipeline
+          fetchedData = await syncUserAndReposInFirestore(currentUser.uid, targetUser, githubToken);
+        } else {
+          // Public search: fetch from GitHub and store/cache under local storage (since we don't have their uid)
+          fetchedData = await fetchGitHubDashboardData(targetUser, githubToken);
           await saveDeveloperMetrics(targetUser, fetchedData);
         }
+        setDashboardData(fetchedData);
       } catch (err: any) {
         console.error(err);
-        setError(err.message || "Failed to retrieve GitHub analysis. Please check the username or API limits.");
         
         // Fall back to offline saved copy if error occurs and cache is available
-        const targetUser = usernameParam.trim() || (currentUser ? currentUser.username : "demo");
         const fallbackCached = localStorage.getItem(`devtrack_profile_${targetUser.toLowerCase()}`);
         if (fallbackCached) {
           try {
             const parsed = JSON.parse(fallbackCached);
             setDashboardData(parsed.data);
             setError(null); // Clear error since we have cached data
-          } catch (e) {}
+          } catch (e) {
+            setError(err.message || "Failed to retrieve GitHub analysis. Please check the username or API limits.");
+          }
+        } else {
+          setError(err.message || "Failed to retrieve GitHub analysis. Please check the username or API limits.");
         }
       } finally {
         setIsLoading(false);
