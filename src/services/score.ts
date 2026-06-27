@@ -53,44 +53,44 @@ export function calculateDeveloperScore(
   }
 
   // 1. Contribution Consistency (Max 20 pts)
-  // Commits weight (max 10 pts for 200 commits), streak weight (max 10 pts for 20-day streak)
-  const commitPts = Math.min(10, (contributions.totalCommits / 200) * 10);
-  const streakPts = Math.min(10, (contributions.longestStreak / 20) * 10);
+  // Commits weight (max 12 pts for 1000 annual commits), streak weight (max 8 pts for 60-day streak)
+  const commitPts = Math.min(12, (contributions.totalCommits / 1000) * 12);
+  const streakPts = Math.min(8, (contributions.longestStreak / 60) * 8);
   const consistencyScore = Math.round(Math.min(20, commitPts + streakPts));
   const consistencyReason = `Scored ${consistencyScore}/20 based on ${contributions.totalCommits} commits and a ${contributions.longestStreak}-day longest streak.`;
 
   // 2. Repository Quality (Max 20 pts)
-  // Avg stars per repo (max 10 pts log scale), Original project ratio (max 10 pts)
+  // Avg stars per repo & original project ratio (max 20 pts)
   let repoQualityScore = 0;
   let repoQualityReason = "No public repositories found.";
   if (repos.length > 0) {
     const totalStars = repos.reduce((acc, r) => acc + (r.stargazers_count || 0), 0);
     const avgStars = totalStars / repos.length;
-    const starPts = Math.min(10, avgStars > 0 ? Math.log2(avgStars + 1) * 3 : 0);
+    const starPts = Math.min(12, totalStars > 0 ? Math.log10(totalStars + 1) * 6 : 0);
     const originalRepos = repos.filter(r => !r.fork).length;
     const originalRatio = originalRepos / repos.length;
-    const originalPts = originalRatio * 10;
+    const originalPts = originalRatio * 8;
     repoQualityScore = Math.round(Math.min(20, starPts + originalPts));
     repoQualityReason = `Scored ${repoQualityScore}/20 with ${originalRepos}/${repos.length} original builds and ${avgStars.toFixed(1)} average stars/repo.`;
   }
 
   // 3. Open Source Activity (Max 15 pts)
-  // Pull requests merged/submitted (max 10 pts for 10 PRs), issues raised (max 5 pts for 5 issues)
-  const prPts = Math.min(10, (contributions.totalPRs / 10) * 10);
-  const issuePts = Math.min(5, (contributions.totalIssues / 5) * 5);
+  // Pull requests (max 10 pts for 40 PRs), issues raised (max 5 pts for 20 issues)
+  const prPts = Math.min(10, (contributions.totalPRs / 40) * 10);
+  const issuePts = Math.min(5, (contributions.totalIssues / 20) * 5);
   const openSourceScore = Math.round(Math.min(15, prPts + issuePts));
   const openSourceReason = `Scored ${openSourceScore}/15 reflecting ${contributions.totalPRs} pull request interactions and ${contributions.totalIssues} issue reports.`;
 
   // 4. Community Impact (Max 15 pts)
-  // Stargazers earned across repos (max 10 pts log scale), followers count (max 5 pts for 25 followers)
+  // Stargazers earned across repos (max 10 pts log scale for 100 stars), followers count (max 5 pts for 100 followers)
   const totalStarsEarned = repos.reduce((acc, r) => acc + (r.stargazers_count || 0), 0);
-  const starImpactPts = Math.min(10, totalStarsEarned > 0 ? Math.log2(totalStarsEarned + 1) * 2.5 : 0);
-  const followerPts = Math.min(5, (followers / 25) * 5);
+  const starImpactPts = Math.min(10, totalStarsEarned > 0 ? Math.log10(totalStarsEarned + 1) * 5 : 0);
+  const followerPts = Math.min(5, (followers / 100) * 5);
   const communityImpactScore = Math.round(Math.min(15, starImpactPts + followerPts));
   const communityImpactReason = `Scored ${communityImpactScore}/15 across ${totalStarsEarned} stargazers earned and ${followers} network followers.`;
 
   // 5. Documentation Hygiene (Max 10 pts)
-  // Repos with description coverage (max 6 pts), repos with substantial size/structure (max 4 pts)
+  // Repos with description coverage (max 6 pts), repos with substantial size/structure (max 4 pts for 20MB avg)
   let documentationScore = 0;
   let documentationReason = "No repositories available for documentation analysis.";
   if (repos.length > 0) {
@@ -98,28 +98,28 @@ export function calculateDeveloperScore(
     const descPts = (withDesc / repos.length) * 6;
     const totalKB = repos.reduce((acc, r) => acc + (r.size || 0), 0);
     const avgKB = totalKB / repos.length;
-    const sizePts = Math.min(4, (avgKB / 5000) * 4);
+    const sizePts = Math.min(4, (avgKB / 20000) * 4);
     documentationScore = Math.round(Math.min(10, descPts + sizePts));
     documentationReason = `Scored ${documentationScore}/10 with ${withDesc}/${repos.length} repos featuring indexed descriptions.`;
   }
 
   // 6. Technical Diversity (Max 10 pts)
-  // Unique programming languages count (max 5 pts for 5 langs), stack balance (max 5 pts)
+  // Unique programming languages count & stack balance (max 10 pts for 4+ major runtimes)
   const languageSet = new Set<string>();
   repos.forEach(r => {
     if (r.language) languageSet.add(r.language);
   });
   const uniqueCount = languageSet.size;
-  const langCountPts = Math.min(5, (uniqueCount / 5) * 5);
-  const balancePts = uniqueCount > 1 ? Math.min(5, uniqueCount * 1.25) : (uniqueCount === 1 ? 2.5 : 0);
+  const langCountPts = Math.min(6, (uniqueCount / 4) * 6);
+  const balancePts = uniqueCount > 1 ? Math.min(4, uniqueCount * 1.0) : (uniqueCount === 1 ? 2.0 : 0);
   const diversityScore = Math.round(Math.min(10, langCountPts + balancePts));
   const diversityReason = `Scored ${diversityScore}/10 across ${uniqueCount} active runtime languages.`;
 
   // 7. Project Scale (Max 10 pts)
-  // Public repository volume (max 5 pts for 10 repos), cumulative codebase size (max 5 pts for 20MB)
+  // Public repository volume (max 5 pts for 20 repos), cumulative codebase size (max 5 pts for 100MB)
   const totalKB = repos.reduce((acc, r) => acc + (r.size || 0), 0);
-  const repoVolPts = Math.min(5, (repos.length / 10) * 5);
-  const codeScalePts = Math.min(5, (totalKB / 20000) * 5);
+  const repoVolPts = Math.min(5, (repos.length / 20) * 5);
+  const codeScalePts = Math.min(5, (totalKB / 100000) * 5);
   const projectScaleScore = Math.round(Math.min(10, repoVolPts + codeScalePts));
   const projectScaleReason = `Scored ${projectScaleScore}/10 indexing ${repos.length} public codebases totaling ${(totalKB / 1024).toFixed(1)} MB.`;
 

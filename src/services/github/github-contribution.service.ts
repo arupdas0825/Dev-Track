@@ -192,8 +192,8 @@ export class GitHubContributionService {
     const { currentStreak, longestStreak } = this.calculateStreaks(dailyContributions);
 
     // Estimate breakdown based on total contributions in the last 365 days
-    const totalPRs = Math.max(0, Math.round(totalContributions * 0.08));
-    const totalIssues = Math.max(0, Math.round(totalContributions * 0.05));
+    const totalPRs = Math.max(0, Math.round(totalContributions * 0.02));
+    const totalIssues = Math.max(0, Math.round(totalContributions * 0.01));
     const totalCommits = Math.max(0, totalContributions - totalPRs - totalIssues);
 
     // Estimate active months count from last 365 days

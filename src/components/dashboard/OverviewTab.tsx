@@ -26,11 +26,9 @@ export default function OverviewTab({ data }: OverviewTabProps) {
   const gradeStyle = getGradeStyle(score.grade || "D", score.isAvailable ?? true);
 
   // SVG Progress Circle math
-  const radius = 60;
+  const radius = 46;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - ((score.isAvailable ? score.overall : 0) / 100) * circumference;
-
-
 
   const topLanguages = languages.slice(0, 5);
   const totalLangBytes = topLanguages.reduce((sum, l) => sum + l.bytes, 0);
@@ -65,57 +63,62 @@ export default function OverviewTab({ data }: OverviewTabProps) {
               </p>
             )}
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 text-[11px] text-[#8B949E]">
-              {profile.location && (
-                <div className="flex items-center gap-1.5 truncate">
-                  <svg className="h-3.5 w-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+            <div className="space-y-1.5 pt-2 text-[11px] text-[#8B949E]">
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                {profile.location && (
+                  <div className="flex items-center gap-1.5">
+                    <svg className="h-3.5 w-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    </svg>
+                    <span>{profile.location}</span>
+                  </div>
+                )}
+                <div className="flex items-center gap-1.5">
+                  <svg className="h-3.5 w-3.5 text-[#8B949E]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
-                  <span className="truncate">{profile.location}</span>
+                  <span>Joined {new Date(profile.created_at).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}</span>
+                </div>
+              </div>
+
+              {profile.blog && (
+                <div className="pt-0.5">
+                  <a
+                    href={profile.blog.startsWith("http") ? profile.blog : `https://${profile.blog}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-[#58A6FF] hover:underline break-all"
+                  >
+                    <svg className="h-3.5 w-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101" />
+                    </svg>
+                    <span>{profile.blog.startsWith("http") ? profile.blog : `https://${profile.blog}`}</span>
+                  </a>
                 </div>
               )}
-              {profile.blog && (
-                <a
-                  href={profile.blog.startsWith("http") ? profile.blog : `https://${profile.blog}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 text-[#58A6FF] hover:underline truncate"
-                >
-                  <svg className="h-3.5 w-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101" />
-                  </svg>
-                  <span className="truncate">{profile.blog}</span>
-                </a>
-              )}
-              <div className="flex items-center gap-1.5 sm:col-span-2">
-                <svg className="h-3.5 w-3.5 text-[#8B949E]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                <span>Joined {new Date(profile.created_at).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}</span>
-              </div>
             </div>
           </div>
         </div>
 
         {/* Center Column: Developer Grade */}
         <div className="lg:col-span-3 flex flex-col items-center justify-center border-b lg:border-b-0 lg:border-r border-[#30363D] pb-6 lg:pb-0">
-          <div className="relative flex items-center justify-center h-28 w-28">
+          <div className="relative flex items-center justify-center h-32 w-32">
             {/* SVG Progress Arc */}
-            <svg className="absolute transform -rotate-90 w-full h-full">
+            <svg className="absolute transform -rotate-90 w-full h-full" viewBox="0 0 120 120">
               <circle
-                cx="56"
-                cy="56"
+                cx="60"
+                cy="60"
                 r={radius}
                 className="stroke-[#30363D]"
-                strokeWidth="6"
+                strokeWidth="8"
                 fill="transparent"
               />
               <circle
-                cx="56"
-                cy="56"
+                cx="60"
+                cy="60"
                 r={radius}
                 stroke={gradeStyle.stroke}
-                strokeWidth="6"
+                strokeWidth="8"
                 fill="transparent"
                 strokeDasharray={circumference}
                 strokeDashoffset={strokeDashoffset}
