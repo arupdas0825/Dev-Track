@@ -88,9 +88,20 @@ export default function ContributionHeatmap({
     const headers: { month: string; colIndex: number }[] = [];
     let lastMonth = "";
     weekCols.forEach((col, idx) => {
-      if (col[0] && col[0].month !== lastMonth) {
-        lastMonth = col[0].month;
-        headers.push({ month: lastMonth, colIndex: idx });
+      const firstOfMonth = col.find((d) => d.dateStr.endsWith("-01"));
+      if (firstOfMonth) {
+        const mName = firstOfMonth.month;
+        if (mName !== lastMonth) {
+          if (headers.length > 0 && idx - headers[headers.length - 1].colIndex < 2) {
+            headers.pop();
+          }
+          headers.push({ month: mName, colIndex: idx });
+          lastMonth = mName;
+        }
+      } else if (idx === 0) {
+        const mName = col[6].month;
+        headers.push({ month: mName, colIndex: 0 });
+        lastMonth = mName;
       }
     });
 
