@@ -12,15 +12,36 @@ export interface ContributionStats {
   dailyContributions: Record<string, number>;
 }
 
+export interface CategoryScore {
+  score: number;
+  maxScore: number;
+  reason: string;
+}
+
 export interface DeveloperScore {
-  overall: number;
+  overall: number; // Total out of 100
+  grade: string; // S, A+, A, B+, B, C+, C, D, or Grade unavailable
+  isAvailable: boolean;
+  revalidated: boolean;
+  mismatchDetected?: boolean;
+  categories: {
+    consistency: CategoryScore;      // Max 20
+    repoQuality: CategoryScore;      // Max 20
+    openSource: CategoryScore;       // Max 15
+    communityImpact: CategoryScore;  // Max 15
+    documentation: CategoryScore;    // Max 10
+    diversity: CategoryScore;        // Max 10
+    projectScale: CategoryScore;     // Max 10
+  };
+  // Backward compatibility convenience properties
   consistency: number;
   repoQuality: number;
   diversity: number;
   openSource: number;
-  complexity: number;
   communityImpact: number;
   documentation: number;
+  projectScale: number;
+  complexity: number;
   breakdown: {
     consistencyReason: string;
     repoQualityReason: string;
@@ -29,6 +50,7 @@ export interface DeveloperScore {
     complexityReason: string;
     communityImpactReason: string;
     documentationReason: string;
+    projectScaleReason?: string;
   };
 }
 

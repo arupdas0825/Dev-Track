@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { UserDashboardData } from "@/types";
 import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, Radar, Tooltip } from "recharts";
 
@@ -9,33 +10,40 @@ interface ScoreTabProps {
 
 export default function ScoreTab({ data }: ScoreTabProps) {
   const { score } = data;
+  const [showWhyGrade, setShowWhyGrade] = useState(true);
 
-  const getScoreClassification = (val: number) => {
-    if (val >= 95) return { label: "Elite Architect", color: "text-[#3FB950] border-[#238636]/30 bg-[#238636]/10", grade: "S+", level: "Level 6" };
-    if (val >= 90) return { label: "Principal Engineer", color: "text-[#3FB950] border-[#238636]/30 bg-[#238636]/10", grade: "A+", level: "Level 5" };
-    if (val >= 80) return { label: "Senior Engineer", color: "text-[#58A6FF] border-[#1F6FEB]/30 bg-[#1F6FEB]/10", grade: "A", level: "Level 4" };
-    if (val >= 70) return { label: "Professional Builder", color: "text-[#D29922] border-[#D29922]/30 bg-[#D29922]/10", grade: "B", level: "Level 3" };
-    if (val >= 50) return { label: "Advanced Intermediate", color: "text-[#D29922] border-[#D29922]/30 bg-[#D29922]/10", grade: "C", level: "Level 2" };
-    return { label: "Novice Builder", color: "text-[#8B949E] border-[#30363D] bg-[#161B22]", grade: "D", level: "Level 1" };
+  const isAvail = score.isAvailable !== false;
+  const gradeStr = isAvail ? score.grade || "D" : "Grade unavailable";
+
+  const getScoreColor = (g: string) => {
+    if (g === "S" || g === "A+") return "text-[#3FB950] border-[#238636]/30 bg-[#238636]/10";
+    if (g === "A" || g === "B+") return "text-[#58A6FF] border-[#1F6FEB]/30 bg-[#1F6FEB]/10";
+    if (g === "B" || g === "C+") return "text-[#D29922] border-[#D29922]/30 bg-[#D29922]/10";
+    return "text-[#F85149] border-[#30363D] bg-[#161B22]";
   };
 
-  const classification = getScoreClassification(score.overall);
+  const badgeClass = getScoreColor(gradeStr);
 
-  // Radar data mapping for the 6 V2 dimensions
+  const categories = score.categories || {
+    consistency: { score: Math.round((score.consistency / 100) * 20), maxScore: 20, reason: score.breakdown?.consistencyReason || "" },
+    repoQuality: { score: Math.round((score.repoQuality / 100) * 20), maxScore: 20, reason: score.breakdown?.repoQualityReason || "" },
+    openSource: { score: Math.round((score.openSource / 100) * 15), maxScore: 15, reason: score.breakdown?.openSourceReason || "" },
+    communityImpact: { score: Math.round((score.communityImpact / 100) * 15), maxScore: 15, reason: score.breakdown?.communityImpactReason || "" },
+    documentation: { score: Math.round((score.documentation / 100) * 10), maxScore: 10, reason: score.breakdown?.documentationReason || "" },
+    diversity: { score: Math.round((score.diversity / 100) * 10), maxScore: 10, reason: score.breakdown?.diversityReason || "" },
+    projectScale: { score: Math.round(((score.projectScale || score.repoQuality) / 100) * 10), maxScore: 10, reason: score.breakdown?.projectScaleReason || "" },
+  };
+
+  // Radar data mapping for the 7 categories
   const radarData = [
-    { subject: "Consistency", A: score.consistency },
-    { subject: "Repo Quality", A: score.repoQuality },
-    { subject: "Tech Diversity", A: score.diversity },
-    { subject: "OS Impact", A: score.openSource },
-    { subject: "Comm. Impact", A: score.communityImpact },
-    { subject: "Documentation", A: score.documentation },
+    { subject: "Consistency", A: Math.round((categories.consistency.score / categories.consistency.maxScore) * 100) },
+    { subject: "Repo Quality", A: Math.round((categories.repoQuality.score / categories.repoQuality.maxScore) * 100) },
+    { subject: "OS Activity", A: Math.round((categories.openSource.score / categories.openSource.maxScore) * 100) },
+    { subject: "Comm. Impact", A: Math.round((categories.communityImpact.score / categories.communityImpact.maxScore) * 100) },
+    { subject: "Documentation", A: Math.round((categories.documentation.score / categories.documentation.maxScore) * 100) },
+    { subject: "Tech Diversity", A: Math.round((categories.diversity.score / categories.diversity.maxScore) * 100) },
+    { subject: "Project Scale", A: Math.round((categories.projectScale.score / categories.projectScale.maxScore) * 100) },
   ];
-
-  // Benchmark indicator calculations
-  // Ranks: 0 = Beg, 40 = Int, 60 = Adv, 70 = Pro, 80 = Snr, 90 = Elite
-  const getBenchmarkProgress = (scoreVal: number) => {
-    return `${Math.max(0, Math.min(100, scoreVal))}%`;
-  };
 
   return (
     <div className="space-y-6">
@@ -44,20 +52,17 @@ export default function ScoreTab({ data }: ScoreTabProps) {
         
         {/* Left Column: Huge Score Badge */}
         <div className="lg:col-span-4 text-center lg:text-left flex flex-col items-center lg:items-start justify-center">
-          <span className="text-[10px] font-mono text-[#8B949E] uppercase tracking-wider">Aggregate Developer Score</span>
+          <span className="text-[10px] font-mono text-[#8B949E] uppercase tracking-wider">Developer Grade & Index</span>
           <h2 className="text-5xl md:text-6xl font-extrabold font-space-grotesk text-[#F0F6FC] mt-1">
-            {score.overall}
+            {isAvail ? score.overall : "N/A"}
           </h2>
           <div className="mt-3 flex flex-wrap gap-2 justify-center lg:justify-start">
-            <span className={`inline-flex text-[10px] font-bold px-3 py-1 rounded-full border ${classification.color}`}>
-              {classification.label}
-            </span>
-            <span className="inline-flex text-[10px] font-bold font-mono px-3 py-1 rounded-full border border-[#30363D] bg-[#161B22] text-[#8B949E]">
-              {classification.level}
+            <span className={`inline-flex text-xs font-bold px-3 py-1 rounded-full border ${badgeClass}`}>
+              Grade {gradeStr}
             </span>
           </div>
-          <p className="mt-4 text-xs text-[#8B949E] leading-relaxed max-w-[220px]">
-            Aggregated metric mapping version control velocity, community resonance, and codebase hygiene.
+          <p className="mt-4 text-xs text-[#8B949E] leading-relaxed max-w-[240px]">
+            Calculated strictly from live authenticated GitHub telemetry across 7 distinct technical categories.
           </p>
         </div>
 
@@ -68,7 +73,7 @@ export default function ScoreTab({ data }: ScoreTabProps) {
               <PolarGrid stroke="#30363D" />
               <PolarAngleAxis dataKey="subject" stroke="#8B949E" />
               <Radar
-                name="Score"
+                name="Performance Index"
                 dataKey="A"
                 stroke="#58A6FF"
                 fill="#1F6FEB"
@@ -83,127 +88,119 @@ export default function ScoreTab({ data }: ScoreTabProps) {
         </div>
       </div>
 
-      {/* Linear Benchmark gauge */}
-      <div className="rounded-xl border border-[#30363D] bg-[#161B22]/40 p-6 space-y-4">
-        <div>
-          <h3 className="text-xs font-mono font-bold text-[#8B949E] uppercase tracking-wider">
-            Standing Benchmark Scale
-          </h3>
-          <p className="text-[10px] text-[#8B949E] mt-0.5">Ranking gauge from Beginner (10) to Elite Architect (100).</p>
-        </div>
-
-        <div className="space-y-2 pt-2">
-          {/* Gauge Bar */}
-          <div className="relative w-full h-3.5 rounded-full bg-[#0D1117] border border-[#30363D] overflow-visible">
-            {/* Markers */}
-            <div className="absolute left-[40%] top-0 bottom-0 border-l border-[#30363D] z-10" />
-            <div className="absolute left-[60%] top-0 bottom-0 border-l border-[#30363D] z-10" />
-            <div className="absolute left-[70%] top-0 bottom-0 border-l border-[#30363D] z-10" />
-            <div className="absolute left-[80%] top-0 bottom-0 border-l border-[#30363D] z-10" />
-            <div className="absolute left-[90%] top-0 bottom-0 border-l border-[#30363D] z-10" />
-            
-            {/* User score overlay bar */}
-            <div 
-              style={{ width: getBenchmarkProgress(score.overall) }}
-              className="h-full rounded-full bg-gradient-to-r from-[#1F6FEB] to-[#58A6FF] opacity-90 transition-all duration-1000 ease-out flex items-center justify-end pr-1.5"
-            >
-              <div className="h-1.5 w-1.5 rounded-full bg-white animate-ping" />
-            </div>
-          </div>
-
-          {/* Labels */}
-          <div className="flex justify-between text-[8px] font-mono text-[#8B949E] px-1 select-none">
-            <span>Beginner (10)</span>
-            <span>Int (40)</span>
-            <span>Adv (60)</span>
-            <span>Pro (70)</span>
-            <span>Senior (80)</span>
-            <span>Elite (90+)</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Breakdown Evaluation Diagnostics */}
+      {/* Expandable Why this Grade Section */}
       <div className="rounded-xl border border-[#30363D] bg-[#161B22]/60 p-6 space-y-4">
-        <h3 className="text-xs font-mono font-bold text-[#8B949E] uppercase tracking-wider border-b border-[#30363D]/40 pb-3">
-          Developer Diagnostic Breakdowns
-        </h3>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5 font-mono text-xs">
-          
-          {/* Consistency */}
-          <div className="space-y-1">
-            <div className="flex justify-between items-center">
-              <span className="font-bold text-[#F0F6FC]">CONSISTENCY</span>
-              <span className="text-[10px] text-[#8B949E]">{score.consistency} / 100</span>
-            </div>
-            <div className="w-full h-1.5 bg-[#0D1117] rounded-full overflow-hidden">
-              <div className="h-full bg-[#39d353]" style={{ width: `${score.consistency}%` }} />
-            </div>
-            <p className="text-[10px] text-[#8B949E] leading-relaxed pt-1">{score.breakdown.consistencyReason}</p>
+        <div className="flex justify-between items-center border-b border-[#30363D]/40 pb-3">
+          <div>
+            <h3 className="text-xs font-mono font-bold text-[#8B949E] uppercase tracking-wider">
+              Why this Grade? (Transparent Scoring Evaluation)
+            </h3>
+            <p className="text-[10px] text-[#8B949E] mt-0.5">Exact point contributions calculated out of 100 maximum total points.</p>
           </div>
-
-          {/* Repo Quality */}
-          <div className="space-y-1">
-            <div className="flex justify-between items-center">
-              <span className="font-bold text-[#F0F6FC]">REPOSITORY QUALITY</span>
-              <span className="text-[10px] text-[#8B949E]">{score.repoQuality} / 100</span>
-            </div>
-            <div className="w-full h-1.5 bg-[#0D1117] rounded-full overflow-hidden">
-              <div className="h-full bg-[#58A6FF]" style={{ width: `${score.repoQuality}%` }} />
-            </div>
-            <p className="text-[10px] text-[#8B949E] leading-relaxed pt-1">{score.breakdown.repoQualityReason}</p>
-          </div>
-
-          {/* Diversity */}
-          <div className="space-y-1 pt-2 border-t border-[#30363D]/30 md:border-t-0 md:pt-0">
-            <div className="flex justify-between items-center">
-              <span className="font-bold text-[#F0F6FC]">TECHNICAL DIVERSITY</span>
-              <span className="text-[10px] text-[#8B949E]">{score.diversity} / 100</span>
-            </div>
-            <div className="w-full h-1.5 bg-[#0D1117] rounded-full overflow-hidden">
-              <div className="h-full bg-[#8957e5]" style={{ width: `${score.diversity}%` }} />
-            </div>
-            <p className="text-[10px] text-[#8B949E] leading-relaxed pt-1">{score.breakdown.diversityReason}</p>
-          </div>
-
-          {/* Open Source */}
-          <div className="space-y-1 pt-2 border-t border-[#30363D]/30 md:border-t-0 md:pt-0">
-            <div className="flex justify-between items-center">
-              <span className="font-bold text-[#F0F6FC]">OPEN SOURCE ACTIVITY</span>
-              <span className="text-[10px] text-[#8B949E]">{score.openSource} / 100</span>
-            </div>
-            <div className="w-full h-1.5 bg-[#0D1117] rounded-full overflow-hidden">
-              <div className="h-full bg-[#D29922]" style={{ width: `${score.openSource}%` }} />
-            </div>
-            <p className="text-[10px] text-[#8B949E] leading-relaxed pt-1">{score.breakdown.openSourceReason}</p>
-          </div>
-
-          {/* Community Impact */}
-          <div className="space-y-1 pt-2 border-t border-[#30363D]/30">
-            <div className="flex justify-between items-center">
-              <span className="font-bold text-[#F0F6FC]">COMMUNITY IMPACT</span>
-              <span className="text-[10px] text-[#8B949E]">{score.communityImpact} / 100</span>
-            </div>
-            <div className="w-full h-1.5 bg-[#0D1117] rounded-full overflow-hidden">
-              <div className="h-full bg-[#a371f7]" style={{ width: `${score.communityImpact}%` }} />
-            </div>
-            <p className="text-[10px] text-[#8B949E] leading-relaxed pt-1">{score.breakdown.communityImpactReason || "Resonance scores calculated based on total stargazers and followers."}</p>
-          </div>
-
-          {/* Documentation */}
-          <div className="space-y-1 pt-2 border-t border-[#30363D]/30">
-            <div className="flex justify-between items-center">
-              <span className="font-bold text-[#F0F6FC]">DOCUMENTATION HYGIENE</span>
-              <span className="text-[10px] text-[#8B949E]">{score.documentation} / 100</span>
-            </div>
-            <div className="w-full h-1.5 bg-[#0D1117] rounded-full overflow-hidden">
-              <div className="h-full bg-[#3FB950]" style={{ width: `${score.documentation}%` }} />
-            </div>
-            <p className="text-[10px] text-[#8B949E] leading-relaxed pt-1">{score.breakdown.documentationReason || "Repository index documentation density and descriptions coverage."}</p>
-          </div>
-
+          <button
+            onClick={() => setShowWhyGrade(!showWhyGrade)}
+            className="text-xs font-mono text-[#58A6FF] hover:underline cursor-pointer"
+          >
+            {showWhyGrade ? "Hide Details ▲" : "Show Details ▼"}
+          </button>
         </div>
+
+        {showWhyGrade && (
+          <div className="space-y-6 pt-2 font-mono">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5 text-xs">
+              
+              {/* Contribution Consistency */}
+              <div className="space-y-1">
+                <div className="flex justify-between items-center">
+                  <span className="font-bold text-[#F0F6FC]">CONTRIBUTION CONSISTENCY</span>
+                  <span className="text-xs font-bold text-[#3FB950]">{categories.consistency.score} / {categories.consistency.maxScore}</span>
+                </div>
+                <div className="w-full h-1.5 bg-[#0D1117] rounded-full overflow-hidden">
+                  <div className="h-full bg-[#3FB950]" style={{ width: `${(categories.consistency.score / categories.consistency.maxScore) * 100}%` }} />
+                </div>
+                <p className="text-[10px] text-[#8B949E] leading-relaxed pt-1">{categories.consistency.reason}</p>
+              </div>
+
+              {/* Repository Quality */}
+              <div className="space-y-1">
+                <div className="flex justify-between items-center">
+                  <span className="font-bold text-[#F0F6FC]">REPOSITORY QUALITY</span>
+                  <span className="text-xs font-bold text-[#58A6FF]">{categories.repoQuality.score} / {categories.repoQuality.maxScore}</span>
+                </div>
+                <div className="w-full h-1.5 bg-[#0D1117] rounded-full overflow-hidden">
+                  <div className="h-full bg-[#58A6FF]" style={{ width: `${(categories.repoQuality.score / categories.repoQuality.maxScore) * 100}%` }} />
+                </div>
+                <p className="text-[10px] text-[#8B949E] leading-relaxed pt-1">{categories.repoQuality.reason}</p>
+              </div>
+
+              {/* Community Impact */}
+              <div className="space-y-1 pt-2 border-t border-[#30363D]/30 md:border-t-0 md:pt-0">
+                <div className="flex justify-between items-center">
+                  <span className="font-bold text-[#F0F6FC]">COMMUNITY IMPACT</span>
+                  <span className="text-xs font-bold text-[#a371f7]">{categories.communityImpact.score} / {categories.communityImpact.maxScore}</span>
+                </div>
+                <div className="w-full h-1.5 bg-[#0D1117] rounded-full overflow-hidden">
+                  <div className="h-full bg-[#a371f7]" style={{ width: `${(categories.communityImpact.score / categories.communityImpact.maxScore) * 100}%` }} />
+                </div>
+                <p className="text-[10px] text-[#8B949E] leading-relaxed pt-1">{categories.communityImpact.reason}</p>
+              </div>
+
+              {/* Open Source Activity */}
+              <div className="space-y-1 pt-2 border-t border-[#30363D]/30 md:border-t-0 md:pt-0">
+                <div className="flex justify-between items-center">
+                  <span className="font-bold text-[#F0F6FC]">OPEN SOURCE ACTIVITY</span>
+                  <span className="text-xs font-bold text-[#D29922]">{categories.openSource.score} / {categories.openSource.maxScore}</span>
+                </div>
+                <div className="w-full h-1.5 bg-[#0D1117] rounded-full overflow-hidden">
+                  <div className="h-full bg-[#D29922]" style={{ width: `${(categories.openSource.score / categories.openSource.maxScore) * 100}%` }} />
+                </div>
+                <p className="text-[10px] text-[#8B949E] leading-relaxed pt-1">{categories.openSource.reason}</p>
+              </div>
+
+              {/* Documentation */}
+              <div className="space-y-1 pt-2 border-t border-[#30363D]/30">
+                <div className="flex justify-between items-center">
+                  <span className="font-bold text-[#F0F6FC]">DOCUMENTATION HYGIENE</span>
+                  <span className="text-xs font-bold text-[#58A6FF]">{categories.documentation.score} / {categories.documentation.maxScore}</span>
+                </div>
+                <div className="w-full h-1.5 bg-[#0D1117] rounded-full overflow-hidden">
+                  <div className="h-full bg-[#58A6FF]" style={{ width: `${(categories.documentation.score / categories.documentation.maxScore) * 100}%` }} />
+                </div>
+                <p className="text-[10px] text-[#8B949E] leading-relaxed pt-1">{categories.documentation.reason}</p>
+              </div>
+
+              {/* Language Diversity */}
+              <div className="space-y-1 pt-2 border-t border-[#30363D]/30">
+                <div className="flex justify-between items-center">
+                  <span className="font-bold text-[#F0F6FC]">LANGUAGE DIVERSITY</span>
+                  <span className="text-xs font-bold text-[#8957e5]">{categories.diversity.score} / {categories.diversity.maxScore}</span>
+                </div>
+                <div className="w-full h-1.5 bg-[#0D1117] rounded-full overflow-hidden">
+                  <div className="h-full bg-[#8957e5]" style={{ width: `${(categories.diversity.score / categories.diversity.maxScore) * 100}%` }} />
+                </div>
+                <p className="text-[10px] text-[#8B949E] leading-relaxed pt-1">{categories.diversity.reason}</p>
+              </div>
+
+              {/* Project Scale */}
+              <div className="space-y-1 pt-2 border-t border-[#30363D]/30 md:col-span-2">
+                <div className="flex justify-between items-center">
+                  <span className="font-bold text-[#F0F6FC]">PROJECT SCALE</span>
+                  <span className="text-xs font-bold text-[#3FB950]">{categories.projectScale.score} / {categories.projectScale.maxScore}</span>
+                </div>
+                <div className="w-full h-1.5 bg-[#0D1117] rounded-full overflow-hidden">
+                  <div className="h-full bg-[#3FB950]" style={{ width: `${(categories.projectScale.score / categories.projectScale.maxScore) * 100}%` }} />
+                </div>
+                <p className="text-[10px] text-[#8B949E] leading-relaxed pt-1">{categories.projectScale.reason}</p>
+              </div>
+
+            </div>
+
+            <div className="flex justify-between items-center bg-[#0D1117] p-4 rounded-xl border border-[#30363D] text-sm font-bold">
+              <span className="text-[#8B949E]">Total Calculated Score: <span className="text-[#F0F6FC]">{score.overall} / 100</span></span>
+              <span className="text-[#8B949E]">Mapped Grade: <span className="text-[#3FB950]">{gradeStr}</span></span>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

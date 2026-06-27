@@ -1,160 +1,182 @@
 import { GitHubRepository, ContributionStats, DeveloperScore } from "../types";
 
+export function mapScoreToGrade(score: number): string {
+  if (score >= 95) return "S";
+  if (score >= 90) return "A+";
+  if (score >= 85) return "A";
+  if (score >= 80) return "B+";
+  if (score >= 75) return "B";
+  if (score >= 70) return "C+";
+  if (score >= 65) return "C";
+  return "D";
+}
+
 export function calculateDeveloperScore(
   repos: GitHubRepository[],
-  contributions: ContributionStats,
+  contributions: ContributionStats | null,
   followers: number = 0
 ): DeveloperScore {
-  // 1. Consistency (0-100)
-  const commitScore = Math.min(50, (contributions.totalCommits / 250) * 50); // Max 50 points for 250 commits
-  const streakScore = Math.min(50, (contributions.longestStreak / 25) * 50); // Max 50 points for 25-day streak
-  const consistency = Math.round(commitScore + streakScore);
-  
-  let consistencyReason = "";
-  if (consistency >= 85) {
-    consistencyReason = "Exceptional habit loop: continuous contribution streaks and high push volume.";
-  } else if (consistency >= 60) {
-    consistencyReason = "Healthy commit regularity with moderate streak retention.";
-  } else {
-    consistencyReason = " sporadic activity patterns; establish a daily version control push routine.";
+  if (!contributions) {
+    return {
+      overall: 0,
+      grade: "Grade unavailable",
+      isAvailable: false,
+      revalidated: false,
+      categories: {
+        consistency: { score: 0, maxScore: 20, reason: "No contribution telemetry recorded." },
+        repoQuality: { score: 0, maxScore: 20, reason: "No repository metrics indexed." },
+        openSource: { score: 0, maxScore: 15, reason: "No open source telemetry indexed." },
+        communityImpact: { score: 0, maxScore: 15, reason: "No audience or star metrics indexed." },
+        documentation: { score: 0, maxScore: 10, reason: "No documentation telemetry indexed." },
+        diversity: { score: 0, maxScore: 10, reason: "No language diversity metrics indexed." },
+        projectScale: { score: 0, maxScore: 10, reason: "No project volume metrics indexed." },
+      },
+      consistency: 0,
+      repoQuality: 0,
+      diversity: 0,
+      openSource: 0,
+      communityImpact: 0,
+      documentation: 0,
+      projectScale: 0,
+      complexity: 0,
+      breakdown: {
+        consistencyReason: "Data unavailable",
+        repoQualityReason: "Data unavailable",
+        diversityReason: "Data unavailable",
+        openSourceReason: "Data unavailable",
+        complexityReason: "Data unavailable",
+        communityImpactReason: "Data unavailable",
+        documentationReason: "Data unavailable",
+        projectScaleReason: "Data unavailable",
+      },
+    };
   }
 
-  // 2. Repository Quality (0-100)
-  let repoQuality = 0;
-  let repoQualityReason = "";
-  if (repos.length === 0) {
-    repoQualityReason = "No public repositories found to evaluate codebase quality.";
-  } else {
-    const totalStars = repos.reduce((acc, r) => acc + r.stargazers_count, 0);
+  // 1. Contribution Consistency (Max 20 pts)
+  // Commits weight (max 10 pts for 200 commits), streak weight (max 10 pts for 20-day streak)
+  const commitPts = Math.min(10, (contributions.totalCommits / 200) * 10);
+  const streakPts = Math.min(10, (contributions.longestStreak / 20) * 10);
+  const consistencyScore = Math.round(Math.min(20, commitPts + streakPts));
+  const consistencyReason = `Scored ${consistencyScore}/20 based on ${contributions.totalCommits} commits and a ${contributions.longestStreak}-day longest streak.`;
+
+  // 2. Repository Quality (Max 20 pts)
+  // Avg stars per repo (max 10 pts log scale), Original project ratio (max 10 pts)
+  let repoQualityScore = 0;
+  let repoQualityReason = "No public repositories found.";
+  if (repos.length > 0) {
+    const totalStars = repos.reduce((acc, r) => acc + (r.stargazers_count || 0), 0);
     const avgStars = totalStars / repos.length;
-    const starScore = Math.min(50, avgStars > 0 ? Math.log2(avgStars + 1) * 15 : 0); // Max 50 points log scale
+    const starPts = Math.min(10, avgStars > 0 ? Math.log2(avgStars + 1) * 3 : 0);
     const originalRepos = repos.filter(r => !r.fork).length;
     const originalRatio = originalRepos / repos.length;
-    const originalScore = originalRatio * 50; // Max 50 points for original projects ratio
-
-    repoQuality = Math.round(starScore + originalScore);
-    
-    if (repoQuality >= 85) {
-      repoQualityReason = "Premium repository portfolio containing community validation and high-fidelity original builds.";
-    } else if (repoQuality >= 60) {
-      repoQualityReason = "Solid codebase compilation; moderate community interest and original code ratio.";
-    } else {
-      repoQualityReason = "Curate original code projects and share them with the developer community to drive engagement.";
-    }
+    const originalPts = originalRatio * 10;
+    repoQualityScore = Math.round(Math.min(20, starPts + originalPts));
+    repoQualityReason = `Scored ${repoQualityScore}/20 with ${originalRepos}/${repos.length} original builds and ${avgStars.toFixed(1)} average stars/repo.`;
   }
 
-  // 3. Technical Diversity (0-100)
-  let diversity = 0;
-  let diversityReason = "";
-  
-  const languageBytes: Record<string, number> = {};
-  repos.forEach(repo => {
-    if (repo.language) {
-      languageBytes[repo.language] = (languageBytes[repo.language] || 0) + (repo.size || 100);
-    }
+  // 3. Open Source Activity (Max 15 pts)
+  // Pull requests merged/submitted (max 10 pts for 10 PRs), issues raised (max 5 pts for 5 issues)
+  const prPts = Math.min(10, (contributions.totalPRs / 10) * 10);
+  const issuePts = Math.min(5, (contributions.totalIssues / 5) * 5);
+  const openSourceScore = Math.round(Math.min(15, prPts + issuePts));
+  const openSourceReason = `Scored ${openSourceScore}/15 reflecting ${contributions.totalPRs} pull request interactions and ${contributions.totalIssues} issue reports.`;
+
+  // 4. Community Impact (Max 15 pts)
+  // Stargazers earned across repos (max 10 pts log scale), followers count (max 5 pts for 25 followers)
+  const totalStarsEarned = repos.reduce((acc, r) => acc + (r.stargazers_count || 0), 0);
+  const starImpactPts = Math.min(10, totalStarsEarned > 0 ? Math.log2(totalStarsEarned + 1) * 2.5 : 0);
+  const followerPts = Math.min(5, (followers / 25) * 5);
+  const communityImpactScore = Math.round(Math.min(15, starImpactPts + followerPts));
+  const communityImpactReason = `Scored ${communityImpactScore}/15 across ${totalStarsEarned} stargazers earned and ${followers} network followers.`;
+
+  // 5. Documentation Hygiene (Max 10 pts)
+  // Repos with description coverage (max 6 pts), repos with substantial size/structure (max 4 pts)
+  let documentationScore = 0;
+  let documentationReason = "No repositories available for documentation analysis.";
+  if (repos.length > 0) {
+    const withDesc = repos.filter(r => r.description && r.description.trim().length > 0).length;
+    const descPts = (withDesc / repos.length) * 6;
+    const totalKB = repos.reduce((acc, r) => acc + (r.size || 0), 0);
+    const avgKB = totalKB / repos.length;
+    const sizePts = Math.min(4, (avgKB / 5000) * 4);
+    documentationScore = Math.round(Math.min(10, descPts + sizePts));
+    documentationReason = `Scored ${documentationScore}/10 with ${withDesc}/${repos.length} repos featuring indexed descriptions.`;
+  }
+
+  // 6. Technical Diversity (Max 10 pts)
+  // Unique programming languages count (max 5 pts for 5 langs), stack balance (max 5 pts)
+  const languageSet = new Set<string>();
+  repos.forEach(r => {
+    if (r.language) languageSet.add(r.language);
   });
-  
-  const uniqueLanguagesCount = Object.keys(languageBytes).length;
-  const langCountScore = Math.min(50, (uniqueLanguagesCount / 5) * 50); // Max 50 points for 5 languages
+  const uniqueCount = languageSet.size;
+  const langCountPts = Math.min(5, (uniqueCount / 5) * 5);
+  const balancePts = uniqueCount > 1 ? Math.min(5, uniqueCount * 1.25) : (uniqueCount === 1 ? 2.5 : 0);
+  const diversityScore = Math.round(Math.min(10, langCountPts + balancePts));
+  const diversityReason = `Scored ${diversityScore}/10 across ${uniqueCount} active runtime languages.`;
 
-  let balanceScore = 0;
-  if (uniqueLanguagesCount > 0) {
-    const totalBytes = Object.values(languageBytes).reduce((acc, bytes) => acc + bytes, 0);
-    const shares = Object.values(languageBytes).map(bytes => bytes / (totalBytes || 1));
-    const entropy = -shares.reduce((acc, share) => acc + (share > 0 ? share * Math.log(share) : 0), 0);
-    balanceScore = Math.min(50, (entropy / 1.5) * 50); // Max 50 points for balanced stack
-  }
+  // 7. Project Scale (Max 10 pts)
+  // Public repository volume (max 5 pts for 10 repos), cumulative codebase size (max 5 pts for 20MB)
+  const totalKB = repos.reduce((acc, r) => acc + (r.size || 0), 0);
+  const repoVolPts = Math.min(5, (repos.length / 10) * 5);
+  const codeScalePts = Math.min(5, (totalKB / 20000) * 5);
+  const projectScaleScore = Math.round(Math.min(10, repoVolPts + codeScalePts));
+  const projectScaleReason = `Scored ${projectScaleScore}/10 indexing ${repos.length} public codebases totaling ${(totalKB / 1024).toFixed(1)} MB.`;
 
-  diversity = Math.round(langCountScore + balanceScore);
-  
-  if (diversity >= 85) {
-    diversityReason = "Elite polyglot engineer with deep capability spread across multiple systems and runtime environments.";
-  } else if (diversity >= 60) {
-    diversityReason = "Balanced language ecosystem; skilled in one primary stack with several auxiliary languages.";
-  } else {
-    diversityReason = "Highly specialized developer; consider writing secondary microservices in Go, Rust, or Python.";
-  }
-
-  // 4. Open Source Activity (0-100)
-  const prScore = Math.min(60, (contributions.totalPRs / 15) * 60); // Max 60 points for 15 PR merges
-  const issueScore = Math.min(40, (contributions.totalIssues / 10) * 40); // Max 40 points for 10 issues raised
-  const openSource = Math.round(prScore + issueScore);
-
-  let openSourceReason = "";
-  if (openSource >= 85) {
-    openSourceReason = "Excellent community collaborations: numerous open-source pull request merges and reports.";
-  } else if (openSource >= 50) {
-    openSourceReason = "Moderate collaborative reach; has submitted code patches and issues to shared codebases.";
-  } else {
-    openSourceReason = "Focused on closed repositories; start submitting bug fixes or feature requests to public npm/pip packages.";
-  }
-
-  // 5. Community Impact (0-100)
-  const totalStarsEarned = repos.reduce((acc, r) => acc + r.stargazers_count, 0);
-  const starsScore = Math.min(50, totalStarsEarned > 0 ? Math.log2(totalStarsEarned + 1) * 12.5 : 0); // Log scale stars, max 50 points
-  const followersScore = Math.min(50, (followers / 50) * 50); // Max 50 points for 50 followers
-  const communityImpact = Math.round(starsScore + followersScore);
-
-  let communityImpactReason = "";
-  if (communityImpact >= 80) {
-    communityImpactReason = "Exceptional reach: codebase validation through stargazers and developer audience retention.";
-  } else if (communityImpact >= 40) {
-    communityImpactReason = "Moderate public resonance; attracting initial stargazers and network follows.";
-  } else {
-    communityImpactReason = "Early-stage network reach; build modular utilities and write dev blogs to scale public developer network.";
-  }
-
-  // 6. Documentation Quality (0-100)
-  let documentation = 0;
-  let documentationReason = "";
-  if (repos.length === 0) {
-    documentationReason = "No repository data available to index documentation quality.";
-  } else {
-    const reposWithDesc = repos.filter(r => r.description && r.description.trim().length > 0).length;
-    const descRatio = reposWithDesc / repos.length;
-    const descScore = descRatio * 60; // Max 60 points for full description coverage
-
-    const totalSize = repos.reduce((acc, r) => acc + r.size, 0);
-    const avgSize = totalSize / repos.length;
-    const sizeScore = Math.min(40, (avgSize / 15000) * 40 || 10); // Codebase size proxy for content weight, max 40 points
-
-    documentation = Math.round(descScore + sizeScore);
-
-    if (documentation >= 85) {
-      documentationReason = "Impeccable documentation hygiene: 100% repository summary description coverage and configuration files.";
-    } else if (documentation >= 60) {
-      documentationReason = "Good project indexing; most pinned projects feature descriptions and structure.";
-    } else {
-      documentationReason = "Codebases lack indexing descriptions; write concise repository summaries to improve searchability.";
-    }
-  }
-
-  // Aggregate overall developer score as average of the 6 dimensions
-  const overall = Math.round(
-    (consistency + repoQuality + diversity + openSource + communityImpact + documentation) / 6
+  // Total Score (Sum of all 7 categories out of 100)
+  const overall = Math.min(
+    100,
+    consistencyScore +
+      repoQualityScore +
+      openSourceScore +
+      communityImpactScore +
+      documentationScore +
+      diversityScore +
+      projectScaleScore
   );
 
-  // Keep complexity for DB structure / backward compatibility
-  const complexity = repoQuality; // Maps to repo quality out of 100
-  const complexityReason = repoQualityReason;
+  const grade = mapScoreToGrade(overall);
+
+  // Scaled values out of 100 for backward compatibility with progress bar components
+  const legacyConsistency = Math.round((consistencyScore / 20) * 100);
+  const legacyRepoQuality = Math.round((repoQualityScore / 20) * 100);
+  const legacyDiversity = Math.round((diversityScore / 10) * 100);
+  const legacyOpenSource = Math.round((openSourceScore / 15) * 100);
+  const legacyCommunityImpact = Math.round((communityImpactScore / 15) * 100);
+  const legacyDocumentation = Math.round((documentationScore / 10) * 100);
+  const legacyProjectScale = Math.round((projectScaleScore / 10) * 100);
 
   return {
-    overall: Math.max(10, Math.min(100, overall)),
-    consistency,
-    repoQuality,
-    diversity,
-    openSource,
-    complexity,
-    communityImpact,
-    documentation,
+    overall,
+    grade,
+    isAvailable: true,
+    revalidated: true,
+    categories: {
+      consistency: { score: consistencyScore, maxScore: 20, reason: consistencyReason },
+      repoQuality: { score: repoQualityScore, maxScore: 20, reason: repoQualityReason },
+      openSource: { score: openSourceScore, maxScore: 15, reason: openSourceReason },
+      communityImpact: { score: communityImpactScore, maxScore: 15, reason: communityImpactReason },
+      documentation: { score: documentationScore, maxScore: 10, reason: documentationReason },
+      diversity: { score: diversityScore, maxScore: 10, reason: diversityReason },
+      projectScale: { score: projectScaleScore, maxScore: 10, reason: projectScaleReason },
+    },
+    consistency: legacyConsistency,
+    repoQuality: legacyRepoQuality,
+    diversity: legacyDiversity,
+    openSource: legacyOpenSource,
+    communityImpact: legacyCommunityImpact,
+    documentation: legacyDocumentation,
+    projectScale: legacyProjectScale,
+    complexity: legacyRepoQuality,
     breakdown: {
       consistencyReason,
       repoQualityReason,
       diversityReason,
       openSourceReason,
-      complexityReason,
+      complexityReason: repoQualityReason,
       communityImpactReason,
       documentationReason,
+      projectScaleReason,
     },
   };
 }

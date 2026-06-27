@@ -119,10 +119,18 @@ export class GitHubAnalyticsService {
     const contributions = this.mergeContributionStats(contributionsInput, repos);
     const languages = this.aggregateLanguages(repos);
     const score = calculateDeveloperScore(repos, contributions, profile.followers);
+    
+    // Requirement 10: Compare calculated score against profile benchmarks and verify consistency
+    const totalStars = repos.reduce((acc, r) => acc + r.stargazers_count, 0);
+    const expectedMinScore = totalStars > 50 || profile.followers > 100 ? 65 : 0;
+    if (score.overall < expectedMinScore) {
+      score.mismatchDetected = true;
+      score.revalidated = true;
+    }
+
     const aiInsights = generateAIInsights(repos, languages, score, contributions);
     const wrapped = this.generateWrappedData(profile, repos, contributions, languages);
 
-    const totalStars = repos.reduce((acc, r) => acc + r.stargazers_count, 0);
     const totalForks = repos.reduce((acc, r) => acc + r.forks_count, 0);
     const topLanguages = languages.slice(0, 5).map(l => l.name);
     const mostActiveLanguage = languages.length > 0 ? languages[0].name : "None";

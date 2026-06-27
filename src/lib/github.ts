@@ -3,6 +3,7 @@ import { GitHubUserService } from "../services/github/github-user.service";
 import { GitHubRepositoryService } from "../services/github/github-repository.service";
 import { GitHubAnalyticsService } from "../services/github/github-analytics.service";
 import { GitHubContributionService } from "../services/github/github-contribution.service";
+import { calculateDeveloperScore } from "../services/score";
 
 // Language color mapping inspired by GitHub
 const LANGUAGE_COLORS: Record<string, string> = {
@@ -224,25 +225,7 @@ export function getDemoDashboardData(): UserDashboardData {
     dailyContributions,
   };
 
-  const score: DeveloperScore = {
-    overall: 92,
-    consistency: 18,
-    repoQuality: 19,
-    diversity: 17,
-    openSource: 19,
-    complexity: 19,
-    communityImpact: 18,
-    documentation: 19,
-    breakdown: {
-      consistencyReason: "Daily contributions with exceptional commit density and a peak 45-day active streak.",
-      repoQualityReason: "Average stars exceed 500 per project. 100% repository description and documentation coverage.",
-      diversityReason: "Mastery of front-end TypeScript combined with high-performance languages like Go and Rust.",
-      openSourceReason: "Significant community reach with 352 forks and 84 pull requests merged into external repos.",
-      complexityReason: "Manages heavy codebases with large source directories, build actions, and unit tests.",
-      communityImpactReason: "High community impact through external stars, issue threads response times, and forks.",
-      documentationReason: "Outstanding documentation index, keeping READMEs and inline comments updated across projects."
-    }
-  };
+  const score: DeveloperScore = calculateDeveloperScore(repositories, contributions, profile.followers);
 
   const aiInsights: AIInsights = {
     strengths: [

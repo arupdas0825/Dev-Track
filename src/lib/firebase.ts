@@ -239,24 +239,45 @@ export async function syncUserAndReposInFirestore(
   return dashboardData;
 }
 
-export async function getUserFromFirestore(username: string): Promise<UserDashboardData | null> {
+export async function getUserFromFirestore(username: string, targetUid?: string): Promise<UserDashboardData | null> {
   if (!isFirebaseEnabled || !db) {
     return null;
   }
 
   try {
-    // 1. Query users collection by username field
-    const usersRef = collection(db, "users");
-    const q = query(usersRef, where("username", "==", username.toLowerCase()));
-    const querySnapshot = await getDocs(q);
+    let uid = targetUid;
+    let profileData: UserProfileDoc | null = null;
 
-    if (querySnapshot.empty) {
-      return null;
+    // Check if logged in user matches
+    if (!uid && auth?.currentUser) {
+      uid = auth.currentUser.uid;
     }
 
-    const userDoc = querySnapshot.docs[0];
-    const profileData = userDoc.data() as UserProfileDoc;
-    const uid = profileData.uid;
+    if (uid) {
+      // Direct doc lookup by uid to adhere strictly to security rules (request.auth.uid == userId)
+      const userDocRef = doc(db, "users", uid);
+      const userDocSnap = await getDoc(userDocRef);
+      if (userDocSnap.exists()) {
+        profileData = userDocSnap.data() as UserProfileDoc;
+      }
+    }
+
+    // Fallback query by username if direct doc lookup wasn't performed or found
+    if (!profileData) {
+      const usersRef = collection(db, "users");
+      const q = query(usersRef, where("username", "==", username.toLowerCase()));
+      const querySnapshot = await getDocs(q);
+
+      if (querySnapshot.empty) {
+        return null;
+      }
+
+      const userDoc = querySnapshot.docs[0];
+      profileData = userDoc.data() as UserProfileDoc;
+      uid = profileData.uid;
+    }
+
+    if (!uid || !profileData) return null;
 
     // 2. Fetch analytics document from analytics/{uid}
     const analyticsDocRef = doc(db, "analytics", uid);
@@ -276,8 +297,8 @@ export async function getUserFromFirestore(username: string): Promise<UserDashbo
       repositories.push({
         id: repoData.id || Math.floor(Math.random() * 1000000),
         name: repoData.name,
-        full_name: `${profileData.username}/${repoData.name}`,
-        html_url: `https://github.com/${profileData.username}/${repoData.name}`,
+        full_name: `${profileData!.username}/${repoData.name}`,
+        html_url: `https://github.com/${profileData!.username}/${repoData.name}`,
         description: repoData.description,
         fork: repoData.fork || false,
         created_at: repoData.createdDate,
@@ -324,8 +345,11 @@ export async function getUserFromFirestore(username: string): Promise<UserDashbo
     };
 
     return dashboardData;
-  } catch (error) {
-    console.error("Failed to fetch user from Firestore:", error);
+  } catch (error: any) {
+    // Gracefully handle permission errors or missing docs without polluting console
+    if (error?.code !== "permission-denied") {
+      console.warn("Firestore user lookup notice:", error?.message || error);
+    }
     return null;
   }
 }

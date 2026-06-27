@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { UserDashboardData } from "@/types";
 import { formatNumber, calculateAccountAge } from "@/lib/utils";
 
@@ -9,25 +10,24 @@ interface OverviewTabProps {
 
 export default function OverviewTab({ data }: OverviewTabProps) {
   const { profile, contributions, score, languages } = data;
+  const [showWhyGrade, setShowWhyGrade] = useState(false);
 
-  const getGradeInfo = (val: number) => {
-    if (val >= 95) return { grade: "S+", label: "Elite Architect", percentile: "Top 1%", color: "text-[#3FB950]", stroke: "#3FB950" };
-    if (val >= 90) return { grade: "A+", label: "Principal Engineer", percentile: "Top 3%", color: "text-[#3FB950]", stroke: "#3FB950" };
-    if (val >= 85) return { grade: "A", label: "Senior Lead Engineer", percentile: "Top 5%", color: "text-[#58A6FF]", stroke: "#58A6FF" };
-    if (val >= 80) return { grade: "A-", label: "Senior Engineer", percentile: "Top 10%", color: "text-[#58A6FF]", stroke: "#58A6FF" };
-    if (val >= 75) return { grade: "B+", label: "Mid-Level Engineer", percentile: "Top 15%", color: "text-[#D29922]", stroke: "#D29922" };
-    if (val >= 70) return { grade: "B", label: "Mid-Level Engineer", percentile: "Top 25%", color: "text-[#D29922]", stroke: "#D29922" };
-    if (val >= 60) return { grade: "C+", label: "Junior Engineer", percentile: "Top 40%", color: "text-[#F85149]", stroke: "#F85149" };
-    if (val >= 50) return { grade: "C", label: "Associate Builder", percentile: "Top 60%", color: "text-[#F85149]", stroke: "#F85149" };
-    return { grade: "D", label: "Novice Builder", percentile: "Top 80%", color: "text-[#8B949E]", stroke: "#8B949E" };
+  const getGradeStyle = (gradeStr: string, isAvail: boolean) => {
+    if (!isAvail || gradeStr === "Grade unavailable") {
+      return { color: "text-[#8B949E]", stroke: "#8B949E", label: "Grade Unavailable" };
+    }
+    if (gradeStr === "S" || gradeStr === "A+") return { color: "text-[#3FB950]", stroke: "#3FB950", label: `Grade ${gradeStr}` };
+    if (gradeStr === "A" || gradeStr === "B+") return { color: "text-[#58A6FF]", stroke: "#58A6FF", label: `Grade ${gradeStr}` };
+    if (gradeStr === "B" || gradeStr === "C+") return { color: "text-[#D29922]", stroke: "#D29922", label: `Grade ${gradeStr}` };
+    return { color: "text-[#F85149]", stroke: "#F85149", label: `Grade ${gradeStr}` };
   };
 
-  const gradeInfo = getGradeInfo(score.overall);
+  const gradeStyle = getGradeStyle(score.grade || "D", score.isAvailable ?? true);
 
   // SVG Progress Circle math
   const radius = 60;
   const circumference = 2 * Math.PI * radius;
-  const strokeDashoffset = circumference - (score.overall / 100) * circumference;
+  const strokeDashoffset = circumference - ((score.isAvailable ? score.overall : 0) / 100) * circumference;
 
   // Generate GitHub-style contribution cells for the last 365 days (53 weeks)
   const renderContributionGrid = () => {
@@ -171,7 +171,7 @@ export default function OverviewTab({ data }: OverviewTabProps) {
                 cx="56"
                 cy="56"
                 r={radius}
-                stroke={gradeInfo.stroke}
+                stroke={gradeStyle.stroke}
                 strokeWidth="6"
                 fill="transparent"
                 strokeDasharray={circumference}
@@ -180,16 +180,25 @@ export default function OverviewTab({ data }: OverviewTabProps) {
                 className="transition-all duration-1000 ease-out"
               />
             </svg>
-            <div className="text-center z-10">
-              <span className={`text-3xl font-extrabold font-space-grotesk tracking-tight ${gradeInfo.color}`}>
-                {gradeInfo.grade}
+            <div className="text-center z-10 px-1">
+              <span className={`text-2xl font-extrabold font-space-grotesk tracking-tight ${gradeStyle.color}`}>
+                {score.isAvailable !== false ? score.grade || "N/A" : "Grade unavailable"}
               </span>
-              <div className="text-[10px] font-mono text-[#8B949E] mt-0.5">{score.overall}/100</div>
+              {score.isAvailable !== false && (
+                <div className="text-[10px] font-mono text-[#8B949E] mt-0.5">{score.overall} / 100</div>
+              )}
             </div>
           </div>
-          <div className="text-center mt-3">
-            <span className="block text-xs font-bold text-[#F0F6FC]">{gradeInfo.label}</span>
-            <span className="block text-[9px] font-mono text-[#3FB950] font-semibold mt-0.5">{gradeInfo.percentile} Contributor</span>
+          <div className="text-center mt-3 space-y-1">
+            <span className="block text-xs font-bold text-[#F0F6FC]">{gradeStyle.label}</span>
+            {score.isAvailable !== false && (
+              <button
+                onClick={() => setShowWhyGrade(!showWhyGrade)}
+                className="inline-flex items-center gap-1 text-[10px] font-mono text-[#58A6FF] hover:underline cursor-pointer"
+              >
+                <span>{showWhyGrade ? "Hide breakdown ▲" : "Why this Grade? ▼"}</span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -229,8 +238,61 @@ export default function OverviewTab({ data }: OverviewTabProps) {
             <div className="text-xs text-[#8B949E] italic">No language data compiled.</div>
           )}
         </div>
-
       </div>
+
+      {/* Expandable Why this Grade? Section */}
+      {showWhyGrade && score.categories && (
+        <div className="rounded-xl border border-[#30363D] bg-[#161B22] p-6 space-y-4 font-mono text-xs animate-fadeIn">
+          <div className="flex justify-between items-center border-b border-[#30363D] pb-3">
+            <h3 className="text-sm font-bold text-[#F0F6FC] tracking-wide uppercase">
+              Why this Grade? (Transparent Scoring Breakdown)
+            </h3>
+            <span className="text-[10px] text-[#8B949E]">Derived live from authenticated GitHub API</span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 pt-2">
+            <div className="flex justify-between items-center p-2 rounded bg-[#0D1117]/60 border border-[#30363D]/40">
+              <span className="text-[#F0F6FC]">Contribution Consistency</span>
+              <span className="font-bold text-[#3FB950]">{score.categories.consistency?.score || 0} / {score.categories.consistency?.maxScore || 20}</span>
+            </div>
+            <div className="flex justify-between items-center p-2 rounded bg-[#0D1117]/60 border border-[#30363D]/40">
+              <span className="text-[#F0F6FC]">Repository Quality</span>
+              <span className="font-bold text-[#58A6FF]">{score.categories.repoQuality?.score || 0} / {score.categories.repoQuality?.maxScore || 20}</span>
+            </div>
+            <div className="flex justify-between items-center p-2 rounded bg-[#0D1117]/60 border border-[#30363D]/40">
+              <span className="text-[#F0F6FC]">Community Impact</span>
+              <span className="font-bold text-[#a371f7]">{score.categories.communityImpact?.score || 0} / {score.categories.communityImpact?.maxScore || 15}</span>
+            </div>
+            <div className="flex justify-between items-center p-2 rounded bg-[#0D1117]/60 border border-[#30363D]/40">
+              <span className="text-[#F0F6FC]">Open Source Activity</span>
+              <span className="font-bold text-[#D29922]">{score.categories.openSource?.score || 0} / {score.categories.openSource?.maxScore || 15}</span>
+            </div>
+            <div className="flex justify-between items-center p-2 rounded bg-[#0D1117]/60 border border-[#30363D]/40">
+              <span className="text-[#F0F6FC]">Documentation</span>
+              <span className="font-bold text-[#58A6FF]">{score.categories.documentation?.score || 0} / {score.categories.documentation?.maxScore || 10}</span>
+            </div>
+            <div className="flex justify-between items-center p-2 rounded bg-[#0D1117]/60 border border-[#30363D]/40">
+              <span className="text-[#F0F6FC]">Language Diversity</span>
+              <span className="font-bold text-[#8957e5]">{score.categories.diversity?.score || 0} / {score.categories.diversity?.maxScore || 10}</span>
+            </div>
+            <div className="flex justify-between items-center p-2 rounded bg-[#0D1117]/60 border border-[#30363D]/40 md:col-span-2">
+              <span className="text-[#F0F6FC]">Project Scale</span>
+              <span className="font-bold text-[#3FB950]">{score.categories.projectScale?.score || 0} / {score.categories.projectScale?.maxScore || 10}</span>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap justify-between items-center pt-4 border-t border-[#30363D] font-bold text-sm bg-[#0D1117] p-3 rounded-lg">
+            <div>
+              <span className="text-[#8B949E]">Total Score: </span>
+              <span className="text-[#F0F6FC]">{score.overall} / 100</span>
+            </div>
+            <div>
+              <span className="text-[#8B949E]">Final Grade: </span>
+              <span className={`text-base ${gradeStyle.color}`}>{score.grade}</span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Metric Grid (2 Rows of Stat Cards) */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
