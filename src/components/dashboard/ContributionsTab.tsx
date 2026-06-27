@@ -2,6 +2,7 @@
 
 import { UserDashboardData } from "@/types";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, BarChart, Bar, CartesianGrid } from "recharts";
+import ContributionHeatmap from "./ContributionHeatmap";
 
 interface ContributionsTabProps {
   data: UserDashboardData;
@@ -157,6 +158,9 @@ export default function ContributionsTab({ data }: ContributionsTabProps) {
           <p className="text-[9px] text-[#8B949E] mt-1">Bug tickets and feedback logs.</p>
         </div>
       </div>
+
+      {/* GitHub Authentic Contribution Heatmap */}
+      <ContributionHeatmap dailyContributions={contributions.dailyContributions} />
 
       {/* Analytical Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">

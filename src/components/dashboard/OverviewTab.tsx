@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { UserDashboardData } from "@/types";
 import { formatNumber, calculateAccountAge } from "@/lib/utils";
+import ContributionHeatmap from "./ContributionHeatmap";
 
 interface OverviewTabProps {
   data: UserDashboardData;
@@ -29,65 +30,7 @@ export default function OverviewTab({ data }: OverviewTabProps) {
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - ((score.isAvailable ? score.overall : 0) / 100) * circumference;
 
-  // Generate GitHub-style contribution cells for the last 365 days (53 weeks)
-  const renderContributionGrid = () => {
-    const cells: { dateStr: string; count: number; level: number }[] = [];
-    const today = new Date();
-    
-    const startDate = new Date();
-    startDate.setDate(today.getDate() - 364);
 
-    const startDay = startDate.getDay();
-    startDate.setDate(startDate.getDate() - startDay);
-
-    const totalDays = 371; // 53 weeks * 7 days
-    const tempDate = new Date(startDate);
-
-    for (let i = 0; i < totalDays; i++) {
-      const dateStr = tempDate.toISOString().split("T")[0];
-      const count = contributions.dailyContributions[dateStr] || 0;
-      
-      let level = 0;
-      if (count > 0 && count <= 2) level = 1;
-      else if (count > 2 && count <= 4) level = 2;
-      else if (count > 4 && count <= 8) level = 3;
-      else if (count > 8) level = 4;
-
-      cells.push({ dateStr, count, level });
-      tempDate.setDate(tempDate.getDate() + 1);
-    }
-
-    const weeks: typeof cells[] = [];
-    for (let i = 0; i < cells.length; i += 7) {
-      weeks.push(cells.slice(i, i + 7));
-    }
-
-    return (
-      <div className="overflow-x-auto scrollbar-none pb-2">
-        <div className="flex gap-[3px] min-w-[720px]">
-          {weeks.map((week, wIndex) => (
-            <div key={wIndex} className="flex flex-col gap-[3px]">
-              {week.map((day, dIndex) => {
-                let colorClass = "bg-[#161B22]"; // Empty level 0
-                if (day.level === 1) colorClass = "bg-[#0e4429]";
-                if (day.level === 2) colorClass = "bg-[#006d32]";
-                if (day.level === 3) colorClass = "bg-[#26a641]";
-                if (day.level === 4) colorClass = "bg-[#39d353]";
-
-                return (
-                  <div
-                    key={dIndex}
-                    className={`h-[11px] w-[11px] rounded-[1.5px] transition-all hover:scale-125 cursor-pointer ${colorClass}`}
-                    title={`${day.count} contributions on ${day.dateStr}`}
-                  />
-                );
-              })}
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  };
 
   const topLanguages = languages.slice(0, 5);
   const totalLangBytes = topLanguages.reduce((sum, l) => sum + l.bytes, 0);
@@ -409,50 +352,8 @@ export default function OverviewTab({ data }: OverviewTabProps) {
         </div>
       </div>
 
-      {/* Contribution Calendar & Analytics */}
-      <div className="rounded-xl border border-[#30363D] bg-[#161B22]/60 p-6 space-y-6">
-        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#30363D] pb-4">
-          <div>
-            <h3 className="text-sm font-bold font-space-grotesk text-[#F0F6FC]">
-              Contribution Command Center
-            </h3>
-            <p className="text-[10px] text-[#8B949E] mt-0.5">Real-time contribution frequency over the past 365 days.</p>
-          </div>
-          
-          <div className="flex items-center gap-1.5 text-[10px] text-[#8B949E] font-mono">
-            <span>Less</span>
-            <div className="h-2.5 w-2.5 rounded-[1.5px] bg-[#161B22]" />
-            <div className="h-2.5 w-2.5 rounded-[1.5px] bg-[#0e4429]" />
-            <div className="h-2.5 w-2.5 rounded-[1.5px] bg-[#006d32]" />
-            <div className="h-2.5 w-2.5 rounded-[1.5px] bg-[#26a641]" />
-            <div className="h-2.5 w-2.5 rounded-[1.5px] bg-[#39d353]" />
-            <span>More</span>
-          </div>
-        </div>
-
-        {renderContributionGrid()}
-
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-6 border-t border-[#30363D] text-center font-mono text-xs">
-          <div>
-            <div className="text-[10px] text-[#8B949E] uppercase">TOTAL CONTRIBUTIONS</div>
-            <div className="text-base font-bold text-[#F0F6FC] mt-1">
-              {contributions.dailyContributions ? Object.values(contributions.dailyContributions).reduce((a, b) => a + b, 0) : contributions.totalCommits}
-            </div>
-          </div>
-          <div>
-            <div className="text-[10px] text-[#8B949E] uppercase">CONSISTENCY SCORE</div>
-            <div className="text-base font-bold text-[#3FB950] mt-1">{score.consistency} / 100</div>
-          </div>
-          <div>
-            <div className="text-[10px] text-[#8B949E] uppercase">LONGEST STREAK</div>
-            <div className="text-base font-bold text-[#58A6FF] mt-1">{contributions.longestStreak} Days</div>
-          </div>
-          <div>
-            <div className="text-[10px] text-[#8B949E] uppercase">ACTIVE MONTHS</div>
-            <div className="text-base font-bold text-[#D29922] mt-1">{contributions.activeMonthsCount} / 12</div>
-          </div>
-        </div>
-      </div>
+      {/* Contribution Calendar & Telemetry */}
+      <ContributionHeatmap dailyContributions={contributions.dailyContributions} />
     </div>
   );
 }

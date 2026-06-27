@@ -14,9 +14,10 @@ interface NavbarProps {
   onLoginSuccess: (user: DevTrackUser) => void;
   onLogout: () => void;
   onDemoTrigger?: () => void;
+  onOpenSearch?: () => void;
 }
 
-export default function Navbar({ currentUser, onLoginSuccess, onLogout, onDemoTrigger }: NavbarProps) {
+export default function Navbar({ currentUser, onLoginSuccess, onLogout, onDemoTrigger, onOpenSearch }: NavbarProps) {
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { openModal } = useTheme();
@@ -40,6 +41,22 @@ export default function Navbar({ currentUser, onLoginSuccess, onLogout, onDemoTr
 
         {/* Action Controls */}
         <div className="hidden md:flex items-center gap-4">
+          {onOpenSearch && (
+            <button
+              onClick={onOpenSearch}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-border bg-surface text-xs text-text-secondary hover:text-text-primary hover:border-text-secondary/40 transition-all font-mono"
+              title="Search Repositories and Tabs (Ctrl + K)"
+            >
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <span>Search...</span>
+              <kbd className="px-1.5 py-0.5 text-[9px] bg-surface-secondary border border-border rounded text-text-secondary font-bold">
+                Ctrl K
+              </kbd>
+            </button>
+          )}
+
           <button
             onClick={openModal}
             className="rounded-full p-2 hover:bg-surface-secondary transition-colors"
