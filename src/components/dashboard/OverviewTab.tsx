@@ -4,6 +4,10 @@ import { useState } from "react";
 import { UserDashboardData } from "@/types";
 import { formatNumber, calculateAccountAge } from "@/lib/utils";
 import ContributionHeatmap from "./ContributionHeatmap";
+import DashboardCustomizer, { WidgetConfig } from "./DashboardCustomizer";
+import AchievementsSection from "./AchievementsSection";
+import DeveloperMilestones from "./DeveloperMilestones";
+import ActivityTimeline from "./ActivityTimeline";
 
 interface OverviewTabProps {
   data: UserDashboardData;
@@ -12,6 +16,13 @@ interface OverviewTabProps {
 export default function OverviewTab({ data }: OverviewTabProps) {
   const { profile, contributions, score, languages } = data;
   const [showWhyGrade, setShowWhyGrade] = useState(false);
+  const [widgetConfigs, setWidgetConfigs] = useState<WidgetConfig[]>([]);
+
+  const isWidgetVisible = (id: string) => {
+    if (widgetConfigs.length === 0) return true;
+    const item = widgetConfigs.find((w) => w.id === id);
+    return item ? item.visible : true;
+  };
 
   const getGradeStyle = (gradeStr: string, isAvail: boolean) => {
     if (!isAvail || gradeStr === "Grade unavailable") {
@@ -25,216 +36,151 @@ export default function OverviewTab({ data }: OverviewTabProps) {
 
   const gradeStyle = getGradeStyle(score.grade || "D", score.isAvailable ?? true);
 
-  // SVG Progress Circle math
   const radius = 46;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - ((score.isAvailable ? score.overall : 0) / 100) * circumference;
 
-  const topLanguages = languages.slice(0, 5);
-  const totalLangBytes = topLanguages.reduce((sum, l) => sum + l.bytes, 0);
+  const totalContribs = contributions.totalCommits + contributions.totalPRs + contributions.totalIssues;
 
   return (
     <div className="space-y-6">
-      {/* 3-Column Hero Section (Developer Command Center) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 rounded-xl border border-[#30363D] bg-[#161B22]/60 p-6">
-        
-        {/* Left Column: Profile Details */}
-        <div className="lg:col-span-5 flex gap-4 items-start border-b lg:border-b-0 lg:border-r border-[#30363D] pb-6 lg:pb-0 lg:pr-6">
-          {profile.avatar_url && (
-            <img
-              src={profile.avatar_url}
-              alt={profile.name || profile.login}
-              className="h-16 w-16 rounded-full border border-[#30363D] object-cover bg-[#1C2128]"
-            />
-          )}
-          <div className="space-y-1 min-w-0 flex-1">
-            <div className="flex flex-wrap items-baseline gap-2">
-              <h2 className="text-lg font-bold font-space-grotesk text-[#F0F6FC] truncate">
-                {profile.name || profile.login}
-              </h2>
-              <span className="text-[10px] text-[#8B949E] font-mono">
-                @{profile.login}
-              </span>
-            </div>
-            
-            {profile.bio && (
-              <p className="text-xs text-[#8B949E] leading-relaxed max-w-sm line-clamp-3">
-                {profile.bio}
-              </p>
-            )}
+      {/* Dashboard Customizer Bar */}
+      <DashboardCustomizer onLayoutChange={setWidgetConfigs} />
 
-            <div className="space-y-1.5 pt-2 text-[11px] text-[#8B949E]">
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-                {profile.location && (
+      {/* 3-Column Hero Section (Developer Command Center) */}
+      {isWidgetVisible("command_center") && (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 rounded-xl border border-[#30363D] bg-[#161B22]/60 p-6">
+          {/* Left Column: Profile Details */}
+          <div className="lg:col-span-5 flex gap-4 items-start border-b lg:border-b-0 lg:border-r border-[#30363D] pb-6 lg:pb-0 lg:pr-6">
+            {profile.avatar_url && (
+              <img
+                src={profile.avatar_url}
+                alt={profile.name || profile.login}
+                className="h-16 w-16 rounded-full border border-[#30363D] object-cover bg-[#1C2128]"
+              />
+            )}
+            <div className="space-y-1 min-w-0 flex-1">
+              <div className="flex flex-wrap items-baseline gap-2">
+                <h2 className="text-lg font-bold font-space-grotesk text-[#F0F6FC] truncate">
+                  {profile.name || profile.login}
+                </h2>
+                <span className="text-[10px] text-[#8B949E] font-mono">
+                  @{profile.login}
+                </span>
+              </div>
+              
+              {profile.bio && (
+                <p className="text-xs text-[#8B949E] leading-relaxed max-w-sm line-clamp-3">
+                  {profile.bio}
+                </p>
+              )}
+
+              <div className="space-y-1.5 pt-2 text-[11px] text-[#8B949E]">
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                  {profile.location && (
+                    <div className="flex items-center gap-1.5">
+                      <svg className="h-3.5 w-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                      </svg>
+                      <span>{profile.location}</span>
+                    </div>
+                  )}
                   <div className="flex items-center gap-1.5">
-                    <svg className="h-3.5 w-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <svg className="h-3.5 w-3.5 text-[#8B949E]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
-                    <span>{profile.location}</span>
+                    <span>Joined {new Date(profile.created_at).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}</span>
+                  </div>
+                </div>
+
+                {profile.blog && (
+                  <div className="pt-0.5">
+                    <a
+                      href={profile.blog.startsWith("http") ? profile.blog : `https://${profile.blog}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 text-[#58A6FF] hover:underline break-all"
+                    >
+                      <svg className="h-3.5 w-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101" />
+                      </svg>
+                      <span>{profile.blog.startsWith("http") ? profile.blog : `https://${profile.blog}`}</span>
+                    </a>
                   </div>
                 )}
-                <div className="flex items-center gap-1.5">
-                  <svg className="h-3.5 w-3.5 text-[#8B949E]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                  <span>Joined {new Date(profile.created_at).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}</span>
-                </div>
               </div>
-
-              {profile.blog && (
-                <div className="pt-0.5">
-                  <a
-                    href={profile.blog.startsWith("http") ? profile.blog : `https://${profile.blog}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 text-[#58A6FF] hover:underline break-all"
-                  >
-                    <svg className="h-3.5 w-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101" />
-                    </svg>
-                    <span>{profile.blog.startsWith("http") ? profile.blog : `https://${profile.blog}`}</span>
-                  </a>
-                </div>
-              )}
             </div>
           </div>
-        </div>
 
-        {/* Center Column: Developer Grade */}
-        <div className="lg:col-span-3 flex flex-col items-center justify-center border-b lg:border-b-0 lg:border-r border-[#30363D] pb-6 lg:pb-0">
-          <div className="relative flex items-center justify-center h-32 w-32">
-            {/* SVG Progress Arc */}
-            <svg className="absolute transform -rotate-90 w-full h-full" viewBox="0 0 120 120">
-              <circle
-                cx="60"
-                cy="60"
-                r={radius}
-                className="stroke-[#30363D]"
-                strokeWidth="8"
-                fill="transparent"
-              />
-              <circle
-                cx="60"
-                cy="60"
-                r={radius}
-                stroke={gradeStyle.stroke}
-                strokeWidth="8"
-                fill="transparent"
-                strokeDasharray={circumference}
-                strokeDashoffset={strokeDashoffset}
-                strokeLinecap="round"
-                className="transition-all duration-1000 ease-out"
-              />
-            </svg>
-            <div className="text-center z-10 px-1">
-              <span className={`text-2xl font-extrabold font-space-grotesk tracking-tight ${gradeStyle.color}`}>
-                {score.isAvailable !== false ? score.grade || "N/A" : "Grade unavailable"}
-              </span>
-              {score.isAvailable !== false && (
-                <div className="text-[10px] font-mono text-[#8B949E] mt-0.5">{score.overall} / 100</div>
-              )}
-            </div>
-          </div>
-          <div className="text-center mt-3 space-y-1">
-            <span className="block text-xs font-bold text-[#F0F6FC]">{gradeStyle.label}</span>
-            {score.isAvailable !== false && (
-              <button
-                onClick={() => setShowWhyGrade(!showWhyGrade)}
-                className="inline-flex items-center gap-1 text-[10px] font-mono text-[#58A6FF] hover:underline cursor-pointer"
-              >
-                <span>{showWhyGrade ? "Hide breakdown ▲" : "Why this Grade? ▼"}</span>
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Right Column: Most Used Languages */}
-        <div className="lg:col-span-4 flex flex-col justify-center space-y-3">
-          <div>
-            <h3 className="text-xs font-mono font-bold text-[#8B949E] uppercase tracking-wider">Language Ecosystem</h3>
-          </div>
-          {topLanguages.length > 0 ? (
-            <div className="space-y-3">
-              {/* Distribution Bar */}
-              <div className="flex h-2.5 w-full rounded-full overflow-hidden bg-[#161B22]">
-                {topLanguages.map((lang) => {
-                  const widthPct = totalLangBytes > 0 ? (lang.bytes / totalLangBytes) * 100 : 0;
-                  return (
-                    <div
-                      key={lang.name}
-                      style={{ width: `${widthPct}%`, backgroundColor: lang.color }}
-                      title={`${lang.name}: ${lang.percentage}%`}
-                    />
-                  );
-                })}
-              </div>
-
-              {/* Language Legends */}
-              <div className="flex flex-wrap gap-x-3 gap-y-1.5">
-                {topLanguages.map((lang) => (
-                  <div key={lang.name} className="flex items-center gap-1.5 text-[10px] font-mono">
-                    <span className="h-2 w-2 rounded-full flex-shrink-0" style={{ backgroundColor: lang.color }} />
-                    <span className="text-[#F0F6FC] font-semibold">{lang.name}</span>
-                    <span className="text-[#8B949E]">{lang.percentage}%</span>
+          {/* Center Column: Developer Grade */}
+          <div className="lg:col-span-3 flex flex-col items-center justify-center border-b lg:border-b-0 lg:border-r border-[#30363D] pb-6 lg:pb-0">
+            <div className="relative flex items-center justify-center h-32 w-32">
+              <svg className="absolute transform -rotate-90 w-full h-full" viewBox="0 0 120 120">
+                <circle
+                  cx="60"
+                  cy="60"
+                  r={radius}
+                  className="stroke-[#30363D]"
+                  strokeWidth="8"
+                  fill="transparent"
+                />
+                <circle
+                  cx="60"
+                  cy="60"
+                  r={radius}
+                  stroke={gradeStyle.stroke}
+                  strokeWidth="8"
+                  strokeDasharray={circumference}
+                  strokeDashoffset={strokeDashoffset}
+                  strokeLinecap="round"
+                  fill="transparent"
+                  className="transition-all duration-1000 ease-out"
+                />
+              </svg>
+              <div className="text-center z-10">
+                <span className={`text-3xl font-black font-space-grotesk tracking-tight ${gradeStyle.color}`}>
+                  {score.isAvailable ? score.grade : "N/A"}
+                </span>
+                {score.isAvailable && (
+                  <div className="text-[10px] font-mono text-[#8B949E] font-bold">
+                    {score.overall} / 100
                   </div>
-                ))}
+                )}
               </div>
             </div>
-          ) : (
-            <div className="text-xs text-[#8B949E] italic">No language data compiled.</div>
-          )}
-        </div>
-      </div>
-
-      {/* Expandable Why this Grade? Section */}
-      {showWhyGrade && score.categories && (
-        <div className="rounded-xl border border-[#30363D] bg-[#161B22] p-6 space-y-4 font-mono text-xs animate-fadeIn">
-          <div className="flex justify-between items-center border-b border-[#30363D] pb-3">
-            <h3 className="text-sm font-bold text-[#F0F6FC] tracking-wide uppercase">
-              Why this Grade? (Transparent Scoring Breakdown)
-            </h3>
-            <span className="text-[10px] text-[#8B949E]">Derived live from authenticated GitHub API</span>
+            <button
+              onClick={() => setShowWhyGrade(!showWhyGrade)}
+              className="mt-2 text-[10px] font-mono text-[#58A6FF] hover:underline"
+            >
+              {showWhyGrade ? "Hide breakdown ▲" : "Why this grade? ▼"}
+            </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 pt-2">
-            <div className="flex justify-between items-center p-2 rounded bg-[#0D1117]/60 border border-[#30363D]/40">
-              <span className="text-[#F0F6FC]">Contribution Consistency</span>
-              <span className="font-bold text-[#3FB950]">{score.categories.consistency?.score || 0} / {score.categories.consistency?.maxScore || 20}</span>
+          {/* Right Column: Key Metric Grid */}
+          <div className="lg:col-span-4 grid grid-cols-2 gap-3">
+            <div className="p-3 rounded-lg bg-[#0D1117] border border-[#30363D]">
+              <div className="text-[10px] text-[#8B949E] font-mono uppercase font-bold">Contributions</div>
+              <div className="text-base font-bold font-space-grotesk text-[#F0F6FC] mt-1">
+                {formatNumber(totalContribs)}
+              </div>
             </div>
-            <div className="flex justify-between items-center p-2 rounded bg-[#0D1117]/60 border border-[#30363D]/40">
-              <span className="text-[#F0F6FC]">Repository Quality</span>
-              <span className="font-bold text-[#58A6FF]">{score.categories.repoQuality?.score || 0} / {score.categories.repoQuality?.maxScore || 20}</span>
+            <div className="p-3 rounded-lg bg-[#0D1117] border border-[#30363D]">
+              <div className="text-[10px] text-[#8B949E] font-mono uppercase font-bold">Stars Earned</div>
+              <div className="text-base font-bold font-space-grotesk text-[#F0F6FC] mt-1">
+                {formatNumber(contributions.totalStarsEarned)}
+              </div>
             </div>
-            <div className="flex justify-between items-center p-2 rounded bg-[#0D1117]/60 border border-[#30363D]/40">
-              <span className="text-[#F0F6FC]">Community Impact</span>
-              <span className="font-bold text-[#a371f7]">{score.categories.communityImpact?.score || 0} / {score.categories.communityImpact?.maxScore || 15}</span>
+            <div className="p-3 rounded-lg bg-[#0D1117] border border-[#30363D]">
+              <div className="text-[10px] text-[#8B949E] font-mono uppercase font-bold">Public Repos</div>
+              <div className="text-base font-bold font-space-grotesk text-[#F0F6FC] mt-1">
+                {formatNumber(profile.public_repos)}
+              </div>
             </div>
-            <div className="flex justify-between items-center p-2 rounded bg-[#0D1117]/60 border border-[#30363D]/40">
-              <span className="text-[#F0F6FC]">Open Source Activity</span>
-              <span className="font-bold text-[#D29922]">{score.categories.openSource?.score || 0} / {score.categories.openSource?.maxScore || 15}</span>
-            </div>
-            <div className="flex justify-between items-center p-2 rounded bg-[#0D1117]/60 border border-[#30363D]/40">
-              <span className="text-[#F0F6FC]">Documentation</span>
-              <span className="font-bold text-[#58A6FF]">{score.categories.documentation?.score || 0} / {score.categories.documentation?.maxScore || 10}</span>
-            </div>
-            <div className="flex justify-between items-center p-2 rounded bg-[#0D1117]/60 border border-[#30363D]/40">
-              <span className="text-[#F0F6FC]">Language Diversity</span>
-              <span className="font-bold text-[#8957e5]">{score.categories.diversity?.score || 0} / {score.categories.diversity?.maxScore || 10}</span>
-            </div>
-            <div className="flex justify-between items-center p-2 rounded bg-[#0D1117]/60 border border-[#30363D]/40 md:col-span-2">
-              <span className="text-[#F0F6FC]">Project Scale</span>
-              <span className="font-bold text-[#3FB950]">{score.categories.projectScale?.score || 0} / {score.categories.projectScale?.maxScore || 10}</span>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap justify-between items-center pt-4 border-t border-[#30363D] font-bold text-sm bg-[#0D1117] p-3 rounded-lg">
-            <div>
-              <span className="text-[#8B949E]">Total Score: </span>
-              <span className="text-[#F0F6FC]">{score.overall} / 100</span>
-            </div>
-            <div>
-              <span className="text-[#8B949E]">Final Grade: </span>
-              <span className={`text-base ${gradeStyle.color}`}>{score.grade}</span>
+            <div className="p-3 rounded-lg bg-[#0D1117] border border-[#30363D]">
+              <div className="text-[10px] text-[#8B949E] font-mono uppercase font-bold">Commit Velocity</div>
+              <div className="text-base font-bold font-space-grotesk text-[#3FB950] mt-1">
+                High
+              </div>
             </div>
           </div>
         </div>
@@ -242,13 +188,9 @@ export default function OverviewTab({ data }: OverviewTabProps) {
 
       {/* Metric Grid (2 Rows of Stat Cards) */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {/* Stat 1: Repos */}
         <div className="rounded-xl border border-[#30363D] bg-[#161B22]/40 p-4 transition-all hover:border-[#58A6FF]/40">
           <div className="flex justify-between items-start text-[#8B949E]">
             <span className="text-[10px] font-mono font-bold uppercase tracking-wider">Repositories</span>
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-            </svg>
           </div>
           <div className="text-xl font-bold font-space-grotesk text-[#F0F6FC] mt-2">
             {profile.public_repos}
@@ -256,13 +198,9 @@ export default function OverviewTab({ data }: OverviewTabProps) {
           <p className="text-[9px] text-[#8B949E] mt-1">Public codebases indexed.</p>
         </div>
 
-        {/* Stat 2: Total Commits */}
         <div className="rounded-xl border border-[#30363D] bg-[#161B22]/40 p-4 transition-all hover:border-[#58A6FF]/40">
           <div className="flex justify-between items-start text-[#8B949E]">
             <span className="text-[10px] font-mono font-bold uppercase tracking-wider">Total Commits</span>
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-            </svg>
           </div>
           <div className="text-xl font-bold font-space-grotesk text-[#F0F6FC] mt-2">
             {formatNumber(contributions.totalCommits)}
@@ -270,13 +208,9 @@ export default function OverviewTab({ data }: OverviewTabProps) {
           <p className="text-[9px] text-[#8B949E] mt-1">Pushes in public repositories.</p>
         </div>
 
-        {/* Stat 3: Total Stars */}
         <div className="rounded-xl border border-[#30363D] bg-[#161B22]/40 p-4 transition-all hover:border-[#58A6FF]/40">
           <div className="flex justify-between items-start text-[#8B949E]">
             <span className="text-[10px] font-mono font-bold uppercase tracking-wider">Stars Earned</span>
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-            </svg>
           </div>
           <div className="text-xl font-bold font-space-grotesk text-[#F0F6FC] mt-2">
             {formatNumber(contributions.totalStarsEarned)}
@@ -284,79 +218,30 @@ export default function OverviewTab({ data }: OverviewTabProps) {
           <p className="text-[9px] text-[#8B949E] mt-1">Community stars accumulated.</p>
         </div>
 
-        {/* Stat 4: Total Forks */}
-        <div className="rounded-xl border border-[#30363D] bg-[#161B22]/40 p-4 transition-all hover:border-[#58A6FF]/40">
-          <div className="flex justify-between items-start text-[#8B949E]">
-            <span className="text-[10px] font-mono font-bold uppercase tracking-wider">Forks Earned</span>
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4a2 2 0 012 2v2M8 7H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2h-4" />
-            </svg>
-          </div>
-          <div className="text-xl font-bold font-space-grotesk text-[#F0F6FC] mt-2">
-            {formatNumber(contributions.totalForksEarned)}
-          </div>
-          <p className="text-[9px] text-[#8B949E] mt-1">Projects cloned by developers.</p>
-        </div>
-
-        {/* Stat 5: Current Streak */}
         <div className="rounded-xl border border-[#30363D] bg-[#161B22]/40 p-4 transition-all hover:border-[#3FB950]/40">
           <div className="flex justify-between items-start text-[#8B949E]">
             <span className="text-[10px] font-mono font-bold uppercase tracking-wider">Current Streak</span>
-            <svg className="h-4 w-4 text-[#3FB950]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-            </svg>
           </div>
           <div className="text-xl font-bold font-space-grotesk text-[#3FB950] mt-2">
             {contributions.currentStreak} Days
           </div>
           <p className="text-[9px] text-[#8B949E] mt-1">Active consecutive commit days.</p>
         </div>
-
-        {/* Stat 6: Longest Streak */}
-        <div className="rounded-xl border border-[#30363D] bg-[#161B22]/40 p-4 transition-all hover:border-[#58A6FF]/40">
-          <div className="flex justify-between items-start text-[#8B949E]">
-            <span className="text-[10px] font-mono font-bold uppercase tracking-wider">Longest Streak</span>
-            <svg className="h-4 w-4 text-[#58A6FF]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-            </svg>
-          </div>
-          <div className="text-xl font-bold font-space-grotesk text-[#F0F6FC] mt-2">
-            {contributions.longestStreak} Days
-          </div>
-          <p className="text-[9px] text-[#8B949E] mt-1">All-time record streak.</p>
-        </div>
-
-        {/* Stat 7: Followers */}
-        <div className="rounded-xl border border-[#30363D] bg-[#161B22]/40 p-4 transition-all hover:border-[#58A6FF]/40">
-          <div className="flex justify-between items-start text-[#8B949E]">
-            <span className="text-[10px] font-mono font-bold uppercase tracking-wider">Followers</span>
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-            </svg>
-          </div>
-          <div className="text-xl font-bold font-space-grotesk text-[#F0F6FC] mt-2">
-            {formatNumber(profile.followers)}
-          </div>
-          <p className="text-[9px] text-[#8B949E] mt-1">Developers following profile.</p>
-        </div>
-
-        {/* Stat 8: Account Age */}
-        <div className="rounded-xl border border-[#30363D] bg-[#161B22]/40 p-4 transition-all hover:border-[#58A6FF]/40">
-          <div className="flex justify-between items-start text-[#8B949E]">
-            <span className="text-[10px] font-mono font-bold uppercase tracking-wider">Account Age</span>
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </div>
-          <div className="text-sm font-bold font-space-grotesk text-[#F0F6FC] mt-[10px] truncate leading-tight">
-            {calculateAccountAge(profile.created_at)}
-          </div>
-          <p className="text-[9px] text-[#8B949E] mt-1">Time elapsed since register.</p>
-        </div>
       </div>
 
-      {/* Contribution Calendar & Telemetry */}
-      <ContributionHeatmap dailyContributions={contributions.dailyContributions} />
+      {/* Developer Achievements Widget */}
+      {isWidgetVisible("achievements") && <AchievementsSection data={data} />}
+
+      {/* Developer Milestones Widget */}
+      {isWidgetVisible("milestones") && <DeveloperMilestones data={data} />}
+
+      {/* Activity Timeline Feed Widget */}
+      {isWidgetVisible("activity_timeline") && <ActivityTimeline data={data} />}
+
+      {/* Contribution Heatmap Matrix Widget */}
+      {isWidgetVisible("heatmap") && (
+        <ContributionHeatmap dailyContributions={contributions.dailyContributions} />
+      )}
     </div>
   );
 }

@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { GitHubRepository } from "@/types";
+import { useTheme } from "@/components/ui/ThemeContext";
+import { Palette, RefreshCw, Clock, ArrowRight } from "lucide-react";
 
 interface CommandPaletteProps {
   isOpen: boolean;
@@ -9,6 +11,7 @@ interface CommandPaletteProps {
   repositories: GitHubRepository[];
   onSelectTab: (tab: string) => void;
   onSelectRepo: (repoUrl: string) => void;
+  onRefreshData?: () => void;
 }
 
 export default function CommandPalette({
@@ -17,42 +20,70 @@ export default function CommandPalette({
   repositories,
   onSelectTab,
   onSelectRepo,
+  onRefreshData,
 }: CommandPaletteProps) {
   const [query, setQuery] = useState("");
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
+  const { openModal } = useTheme();
 
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
-        e.preventDefault();
-        if (isOpen) onClose();
-        else {
-          setQuery("");
-        }
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("devtrack_recent_searches");
+      if (stored) {
+        try {
+          setRecentSearches(JSON.parse(stored));
+        } catch (e) {}
       }
-      if (e.key === "Escape" && isOpen) {
-        onClose();
-      }
-    };
+    }
+  }, []);
 
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, onClose]);
-
-  if (!isOpen) return null;
+  const addRecentSearch = (term: string) => {
+    if (!term.trim()) return;
+    const updated = [term, ...recentSearches.filter((s) => s !== term)].slice(0, 4);
+    setRecentSearches(updated);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("devtrack_recent_searches", JSON.stringify(updated));
+    }
+  };
 
   const tabs = [
-    { id: "overview", label: "Overview Tab", icon: "📊" },
-    { id: "repos", label: "Repositories Tab", icon: "📦" },
-    { id: "contrib", label: "Contributions Tab", icon: "⚡" },
-    { id: "lang", label: "Language Ecosystem", icon: "🌐" },
-    { id: "score", label: "Developer Index & Score", icon: "🎯" },
-    { id: "ai", label: "AI Insights & Roadmap", icon: "🤖" },
-    { id: "wrapped", label: "GitHub Wrapped", icon: "🎁" },
-    { id: "settings", label: "Settings", icon: "⚙️" },
+    { id: "overview", label: "Overview Tab", icon: "📊", action: () => onSelectTab("overview") },
+    { id: "repos", label: "Repositories Tab", icon: "📦", action: () => onSelectTab("repos") },
+    { id: "contrib", label: "Contributions Tab", icon: "⚡", action: () => onSelectTab("contrib") },
+    { id: "lang", label: "Language Ecosystem", icon: "🌐", action: () => onSelectTab("lang") },
+    { id: "score", label: "Developer Score Engine", icon: "🎯", action: () => onSelectTab("score") },
+    { id: "ai", label: "AI Insights & Roadmap", icon: "🤖", action: () => onSelectTab("ai") },
+    { id: "compare", label: "Developer Comparison Tool", icon: "👥", action: () => onSelectTab("compare") },
+    { id: "wrapped", label: "GitHub Wrapped", icon: "🎁", action: () => onSelectTab("wrapped") },
+    { id: "settings", label: "Settings", icon: "⚙️", action: () => onSelectTab("settings") },
+  ];
+
+  const quickActions = [
+    {
+      id: "action_theme",
+      label: "Switch Theme Settings",
+      icon: "🎨",
+      action: () => {
+        openModal();
+      },
+    },
+    {
+      id: "action_refresh",
+      label: "Refresh GitHub Data Sync",
+      icon: "🔄",
+      action: () => {
+        if (onRefreshData) onRefreshData();
+      },
+    },
   ];
 
   const filteredTabs = tabs.filter((t) =>
     t.label.toLowerCase().includes(query.toLowerCase())
+  );
+
+  const filteredActions = quickActions.filter((a) =>
+    a.label.toLowerCase().includes(query.toLowerCase())
   );
 
   const filteredRepos = repositories.filter(
@@ -60,6 +91,58 @@ export default function CommandPalette({
       r.name.toLowerCase().includes(query.toLowerCase()) ||
       (r.description && r.description.toLowerCase().includes(query.toLowerCase()))
   );
+
+  const allFlatItems = [
+    ...filteredActions.map((a) => ({ type: "action", ...a })),
+    ...filteredTabs.map((t) => ({ type: "tab", ...t })),
+    ...filteredRepos.slice(0, 6).map((r) => ({
+      type: "repo",
+      id: r.id.toString(),
+      label: r.name,
+      icon: "📁",
+      action: () => onSelectRepo(r.html_url),
+    })),
+  ];
+
+  useEffect(() => {
+    setSelectedIndex(0);
+  }, [query]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        if (isOpen) onClose();
+      }
+      if (e.key === "Escape" && isOpen) {
+        onClose();
+      }
+      if (!isOpen || allFlatItems.length === 0) return;
+
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setSelectedIndex((prev) => (prev + 1) % allFlatItems.length);
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setSelectedIndex((prev) => (prev - 1 + allFlatItems.length) % allFlatItems.length);
+      } else if (e.key === "Enter") {
+        e.preventDefault();
+        const item = allFlatItems[selectedIndex];
+        if (item) {
+          if (query) addRecentSearch(query);
+          item.action();
+          onClose();
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose, allFlatItems, selectedIndex, query]);
+
+  if (!isOpen) return null;
+
+  let currentGlobalIndex = 0;
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 bg-black/70 backdrop-blur-sm p-4 animate-fadeIn font-mono">
@@ -74,7 +157,7 @@ export default function CommandPalette({
           </svg>
           <input
             type="text"
-            placeholder="Search repositories, tabs, or metrics (Press Esc to exit)..."
+            placeholder="Search repositories, tabs, actions (Arrow keys to navigate, Enter to run)..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             autoFocus
@@ -87,6 +170,63 @@ export default function CommandPalette({
 
         {/* Results List */}
         <div className="overflow-y-auto p-2 space-y-4 max-h-[60vh] scrollbar-thin">
+          {/* Recent Searches */}
+          {!query && recentSearches.length > 0 && (
+            <div>
+              <div className="px-3 py-1.5 text-[10px] font-bold text-[#8B949E] uppercase tracking-wider flex items-center gap-1.5">
+                <Clock size={12} /> Recent Searches
+              </div>
+              <div className="flex flex-wrap gap-1.5 px-3 py-1">
+                {recentSearches.map((term, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setQuery(term)}
+                    className="px-2 py-1 rounded bg-surface border border-border text-[11px] text-text-secondary hover:text-text-primary transition-colors"
+                  >
+                    {term}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* System Actions */}
+          {filteredActions.length > 0 && (
+            <div>
+              <div className="px-3 py-1.5 text-[10px] font-bold text-[#8B949E] uppercase tracking-wider">
+                System & Quick Actions
+              </div>
+              <div className="space-y-1">
+                {filteredActions.map((act) => {
+                  const isSelected = currentGlobalIndex === selectedIndex;
+                  const indexToUse = currentGlobalIndex++;
+                  return (
+                    <button
+                      key={act.id}
+                      onClick={() => {
+                        if (query) addRecentSearch(query);
+                        act.action();
+                        onClose();
+                      }}
+                      onMouseEnter={() => setSelectedIndex(indexToUse)}
+                      className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs transition-colors cursor-pointer text-left ${
+                        isSelected
+                          ? "bg-[#1C2128] text-[#58A6FF] border border-[#58A6FF]/40"
+                          : "text-[#F0F6FC] hover:bg-[#1C2128] hover:text-[#58A6FF]"
+                      }`}
+                    >
+                      <span className="flex items-center gap-2">
+                        <span>{act.icon}</span>
+                        <span className="font-bold">{act.label}</span>
+                      </span>
+                      <span className="text-[10px] text-[#8B949E]">Run Command</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {/* Navigation Tabs */}
           {filteredTabs.length > 0 && (
             <div>
@@ -94,22 +234,32 @@ export default function CommandPalette({
                 Dashboard Tabs
               </div>
               <div className="space-y-1">
-                {filteredTabs.map((t) => (
-                  <button
-                    key={t.id}
-                    onClick={() => {
-                      onSelectTab(t.id);
-                      onClose();
-                    }}
-                    className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs text-[#F0F6FC] hover:bg-[#1C2128] hover:text-[#58A6FF] transition-colors cursor-pointer text-left"
-                  >
-                    <span className="flex items-center gap-2">
-                      <span>{t.icon}</span>
-                      <span>{t.label}</span>
-                    </span>
-                    <span className="text-[10px] text-[#8B949E]">Jump to tab</span>
-                  </button>
-                ))}
+                {filteredTabs.map((t) => {
+                  const isSelected = currentGlobalIndex === selectedIndex;
+                  const indexToUse = currentGlobalIndex++;
+                  return (
+                    <button
+                      key={t.id}
+                      onClick={() => {
+                        if (query) addRecentSearch(query);
+                        t.action();
+                        onClose();
+                      }}
+                      onMouseEnter={() => setSelectedIndex(indexToUse)}
+                      className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs transition-colors cursor-pointer text-left ${
+                        isSelected
+                          ? "bg-[#1C2128] text-[#58A6FF] border border-[#58A6FF]/40"
+                          : "text-[#F0F6FC] hover:bg-[#1C2128] hover:text-[#58A6FF]"
+                      }`}
+                    >
+                      <span className="flex items-center gap-2">
+                        <span>{t.icon}</span>
+                        <span>{t.label}</span>
+                      </span>
+                      <span className="text-[10px] text-[#8B949E]">Jump to tab</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -121,51 +271,59 @@ export default function CommandPalette({
                 Public Repositories ({filteredRepos.length})
               </div>
               <div className="space-y-1">
-                {filteredRepos.slice(0, 8).map((repo) => (
-                  <button
-                    key={repo.id}
-                    onClick={() => {
-                      onSelectRepo(repo.html_url);
-                      onClose();
-                    }}
-                    className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs text-[#F0F6FC] hover:bg-[#1C2128] hover:text-[#58A6FF] transition-colors cursor-pointer text-left group"
-                  >
-                    <div className="truncate pr-2">
-                      <div className="font-bold text-[#F0F6FC] group-hover:text-[#58A6FF] truncate">
-                        {repo.name}
+                {filteredRepos.slice(0, 6).map((repo) => {
+                  const isSelected = currentGlobalIndex === selectedIndex;
+                  const indexToUse = currentGlobalIndex++;
+                  return (
+                    <button
+                      key={repo.id}
+                      onClick={() => {
+                        if (query) addRecentSearch(query);
+                        onSelectRepo(repo.html_url);
+                        onClose();
+                      }}
+                      onMouseEnter={() => setSelectedIndex(indexToUse)}
+                      className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs transition-colors cursor-pointer text-left group ${
+                        isSelected
+                          ? "bg-[#1C2128] text-[#58A6FF] border border-[#58A6FF]/40"
+                          : "text-[#F0F6FC] hover:bg-[#1C2128] hover:text-[#58A6FF]"
+                      }`}
+                    >
+                      <div className="truncate pr-2">
+                        <div className="font-bold truncate">{repo.name}</div>
+                        {repo.description && (
+                          <div className="text-[10px] text-[#8B949E] truncate">
+                            {repo.description}
+                          </div>
+                        )}
                       </div>
-                      {repo.description && (
-                        <div className="text-[10px] text-[#8B949E] truncate">
-                          {repo.description}
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2 flex-shrink-0 text-[10px] text-[#8B949E]">
-                      {repo.language && (
-                        <span className="px-1.5 py-0.5 bg-[#0D1117] rounded border border-[#30363D]">
-                          {repo.language}
-                        </span>
-                      )}
-                      <span>⭐ {repo.stargazers_count}</span>
-                    </div>
-                  </button>
-                ))}
+                      <div className="flex items-center gap-2 flex-shrink-0 text-[10px] text-[#8B949E]">
+                        {repo.language && (
+                          <span className="px-1.5 py-0.5 bg-[#0D1117] rounded border border-[#30363D]">
+                            {repo.language}
+                          </span>
+                        )}
+                        <span>⭐ {repo.stargazers_count}</span>
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
 
           {/* Zero Results */}
-          {filteredTabs.length === 0 && filteredRepos.length === 0 && (
+          {allFlatItems.length === 0 && (
             <div className="p-8 text-center text-xs text-[#8B949E]">
-              No repositories or tabs matching &quot;{query}&quot;
+              No repositories, actions or tabs matching &quot;{query}&quot;
             </div>
           )}
         </div>
 
         {/* Footer info */}
         <div className="p-3 border-t border-[#30363D] bg-[#0D1117] flex justify-between items-center text-[10px] text-[#8B949E]">
-          <span>Tip: Use Ctrl + K to toggle anytime</span>
-          <span>DevTrack Instant Search</span>
+          <span>Tip: Use ↑ ↓ arrows to select, Enter to confirm</span>
+          <span>Global Raycast Search</span>
         </div>
       </div>
     </div>

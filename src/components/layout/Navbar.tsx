@@ -8,6 +8,7 @@ import AuthModal from "../auth/AuthModal";
 import Logo from "../ui/Logo";
 import { useTheme } from "@/components/ui/ThemeContext";
 import { Palette } from "lucide-react";
+import NotificationCenter from "./NotificationCenter";
 
 interface NavbarProps {
   currentUser: DevTrackUser | null;
@@ -64,6 +65,7 @@ export default function Navbar({ currentUser, onLoginSuccess, onLogout, onDemoTr
           >
             <Palette size={20} className="text-text-secondary" />
           </button>
+          <NotificationCenter />
           {currentUser ? (
             <div className="flex items-center gap-4">
               <Link

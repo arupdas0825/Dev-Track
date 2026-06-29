@@ -14,11 +14,18 @@ import ScoreTab from "./ScoreTab";
 import AIInsightsTab from "./AIInsightsTab";
 import WrappedTab from "./WrappedTab";
 import SettingsTab from "./SettingsTab";
+import ProfileComparisonTab from "./ProfileComparisonTab";
+import DashboardHeader from "./DashboardHeader";
+import QuickActionsFAB from "./QuickActionsFAB";
+import CommandPalette from "./CommandPalette";
+import KeyboardShortcutsModal from "./KeyboardShortcutsModal";
+import ExportCenterModal from "./ExportCenterModal";
 import { useGithubProfile } from "@/hooks/useGithubProfile";
 import { useRepositories } from "@/hooks/useRepositories";
 import { useAnalytics } from "@/hooks/useAnalytics";
+import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 
-type TabId = "overview" | "repos" | "contrib" | "lang" | "score" | "ai" | "wrapped" | "settings";
+type TabId = "overview" | "repos" | "contrib" | "lang" | "score" | "ai" | "compare" | "wrapped" | "settings";
 
 export default function DashboardContent() {
   const searchParams = useSearchParams();
@@ -28,9 +35,13 @@ export default function DashboardContent() {
   const [syncedData, setSyncedData] = useState<UserDashboardData | null>(null);
   const [githubToken, setGithubToken] = useState("");
 
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+  const [isShortcutsModalOpen, setIsShortcutsModalOpen] = useState(false);
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+
   const usernameParam = searchParams.get("user") || "";
 
-  // 1. Subscribe to Auth changes
+  // Subscribe to Auth changes
   useEffect(() => {
     const unsubscribe = subscribeToAuthChanges((user) => {
       setCurrentUser(user);
@@ -38,7 +49,7 @@ export default function DashboardContent() {
     return () => unsubscribe();
   }, []);
 
-  // 2. Load stored token
+  // Load stored token
   useEffect(() => {
     if (typeof window !== "undefined") {
       const storedToken = localStorage.getItem("devtrack_github_token") || "";
@@ -46,18 +57,16 @@ export default function DashboardContent() {
     }
   }, []);
 
-  // Determine actual username to load
+  // Determine target username
   let targetUser = usernameParam.trim();
   if (!targetUser) {
     if (currentUser) {
       targetUser = currentUser.username;
     } else {
-      // Fallback to demo profile if not logged in and no query param
       targetUser = "demo";
     }
   }
 
-  // Reset synced data when user changes
   useEffect(() => {
     setSyncedData(null);
   }, [targetUser]);
@@ -101,24 +110,17 @@ export default function DashboardContent() {
     } : null
   );
 
-  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
-  const [commandSearchQuery, setCommandSearchQuery] = useState("");
-
-  // 3. Listen for Ctrl+K
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
-        e.preventDefault();
-        setIsCommandPaletteOpen(prev => !prev);
-        setCommandSearchQuery("");
-      }
-      if (e.key === "Escape") {
-        setIsCommandPaletteOpen(false);
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  // Keyboard Shortcuts Hook
+  useKeyboardShortcuts({
+    onOpenCommandPalette: () => setIsCommandPaletteOpen(true),
+    onSelectTab: (tabId) => setActiveTab(tabId as TabId),
+    onOpenShortcutsHelp: () => setIsShortcutsModalOpen(true),
+    onCloseDialogs: () => {
+      setIsCommandPaletteOpen(false);
+      setIsShortcutsModalOpen(false);
+      setIsExportModalOpen(false);
+    },
+  });
 
   const isLoading = !dashboardData && (profileLoading || reposLoading || analyticsLoading);
   const error = !dashboardData ? (profileError || reposError || analyticsError) : null;
@@ -154,6 +156,8 @@ export default function DashboardContent() {
         return <ScoreTab data={dashboardData} />;
       case "ai":
         return <AIInsightsTab data={dashboardData} />;
+      case "compare":
+        return <ProfileComparisonTab currentUserData={dashboardData} />;
       case "wrapped":
         return <WrappedTab data={dashboardData} />;
       case "settings":
@@ -201,7 +205,6 @@ export default function DashboardContent() {
     );
   }
 
-  // Tab definitions for Sidebar/Header
   const tabsList: { id: TabId; label: string; icon: string }[] = [
     { id: "overview", label: "Overview", icon: "M4 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" },
     { id: "repos", label: "Repositories", icon: "M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" },
@@ -209,28 +212,18 @@ export default function DashboardContent() {
     { id: "lang", label: "Languages", icon: "M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" },
     { id: "score", label: "Developer Score", icon: "M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" },
     { id: "ai", label: "AI Insights", icon: "M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" },
+    { id: "compare", label: "Compare Profile", icon: "M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" },
     { id: "wrapped", label: "Wrapped", icon: "M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" },
     { id: "settings", label: "Settings", icon: "M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" },
   ];
 
-  // Filtering for Command Palette
-  const filteredCommands = tabsList.filter(tab => 
-    tab.label.toLowerCase().includes(commandSearchQuery.toLowerCase())
-  );
-
-  const filteredRepos = dashboardData?.repositories ? 
-    dashboardData.repositories.filter(repo => 
-      repo.name.toLowerCase().includes(commandSearchQuery.toLowerCase())
-    ).slice(0, 5) : [];
-
   return (
-    <div className="flex min-h-screen flex-col bg-background">
+    <div className="flex min-h-screen flex-col bg-background relative">
       <Navbar currentUser={currentUser} onLoginSuccess={handleLoginSuccess} onLogout={handleLogout} onOpenSearch={() => setIsCommandPaletteOpen(true)} />
 
       <div className="flex-1 mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8 flex flex-col md:flex-row gap-8">
         {/* Sidebar Nav */}
         <aside className="md:w-64 flex-shrink-0">
-          {/* Ctrl+K Trigger Search Bar */}
           <div className="mb-4 hidden md:block">
             <button
               onClick={() => setIsCommandPaletteOpen(true)}
@@ -268,109 +261,46 @@ export default function DashboardContent() {
 
         {/* Tab Content window */}
         <div className="flex-1 min-w-0">
+          {dashboardData && <DashboardHeader data={dashboardData} />}
           <div className="border border-border bg-surface/20 rounded-xl p-6">
             {renderActiveTabContent()}
           </div>
         </div>
       </div>
 
-      {/* Raycast-style Command Palette Modal */}
-      {isCommandPaletteOpen && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center pt-[15vh] px-4">
-          {/* Backdrop */}
-          <div 
-            onClick={() => setIsCommandPaletteOpen(false)}
-            className="fixed inset-0 bg-background/80 backdrop-blur-sm"
-          />
-
-          {/* Dialog Container */}
-          <div className="relative w-full max-w-lg rounded-xl border border-border bg-[#161B22] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-100">
-            {/* Search Input */}
-            <div className="flex items-center gap-3 px-4 border-b border-border">
-              <svg className="h-4.5 w-4.5 text-text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              <input
-                type="text"
-                autoFocus
-                placeholder="Search tabs, repositories, or commands..."
-                value={commandSearchQuery}
-                onChange={(e) => setCommandSearchQuery(e.target.value)}
-                className="w-full py-4 text-sm bg-transparent border-0 outline-none text-text-primary placeholder:text-text-secondary"
-              />
-            </div>
-
-            {/* Results */}
-            <div className="max-h-[300px] overflow-y-auto p-2 scrollbar-thin space-y-3">
-              {/* Navigation Commands */}
-              <div>
-                <div className="px-2 pb-1 text-[10px] font-bold text-text-secondary tracking-wider uppercase font-mono">Navigation</div>
-                {filteredCommands.length > 0 ? (
-                  <div className="space-y-0.5">
-                    {filteredCommands.map(tab => (
-                      <button
-                        key={tab.id}
-                        onClick={() => {
-                          setActiveTab(tab.id);
-                          setIsCommandPaletteOpen(false);
-                        }}
-                        className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs hover:bg-surface-secondary text-text-secondary hover:text-text-primary transition-all text-left"
-                      >
-                        <span className="flex items-center gap-3">
-                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                            <path strokeLinecap="round" strokeLinejoin="round" d={tab.icon} />
-                          </svg>
-                          {tab.label}
-                        </span>
-                        <span className="font-mono text-[9px] text-text-secondary opacity-60">Go to tab</span>
-                      </button>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="px-3 py-2 text-xs text-text-secondary italic">No matching tabs</div>
-                )}
-              </div>
-
-              {/* Repository Searches */}
-              {dashboardData?.repositories && (
-                <div>
-                  <div className="px-2 pb-1 text-[10px] font-bold text-text-secondary tracking-wider uppercase font-mono">Repositories</div>
-                  {filteredRepos.length > 0 ? (
-                    <div className="space-y-0.5">
-                      {filteredRepos.map(repo => (
-                        <a
-                          key={repo.name}
-                          href={repo.html_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={() => setIsCommandPaletteOpen(false)}
-                          className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs hover:bg-surface-secondary text-text-secondary hover:text-text-primary transition-all text-left"
-                        >
-                          <span className="flex items-center gap-3 font-mono truncate">
-                            <svg className="h-4 w-4 text-text-secondary flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-                            </svg>
-                            <span className="truncate">{repo.name}</span>
-                          </span>
-                          <span className="font-mono text-[9px] text-accent flex-shrink-0">Open on GitHub</span>
-                        </a>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="px-3 py-2 text-xs text-text-secondary italic">No matching repositories</div>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Footer */}
-            <div className="px-4 py-2 bg-[#0D1117] border-t border-border flex items-center justify-between text-[10px] text-text-secondary font-mono">
-              <span>Use <kbd className="border border-border px-1 rounded bg-surface">Esc</kbd> to close</span>
-              <span>Command Palette v2</span>
-            </div>
-          </div>
-        </div>
+      {/* Floating Quick Actions FAB */}
+      {dashboardData && (
+        <QuickActionsFAB
+          githubUsername={dashboardData.profile.login}
+          onSelectTab={(t) => setActiveTab(t as TabId)}
+          onRefreshData={() => setSyncedData(null)}
+          onOpenExportModal={() => setIsExportModalOpen(true)}
+          onOpenShortcutsModal={() => setIsShortcutsModalOpen(true)}
+        />
       )}
+
+      {/* Global Command Palette */}
+      <CommandPalette
+        isOpen={isCommandPaletteOpen}
+        onClose={() => setIsCommandPaletteOpen(false)}
+        repositories={dashboardData?.repositories || []}
+        onSelectTab={(t) => setActiveTab(t as TabId)}
+        onSelectRepo={(url) => window.open(url, "_blank")}
+        onRefreshData={() => setSyncedData(null)}
+      />
+
+      {/* Keyboard Shortcuts Modal */}
+      <KeyboardShortcutsModal
+        isOpen={isShortcutsModalOpen}
+        onClose={() => setIsShortcutsModalOpen(false)}
+      />
+
+      {/* Export Center Modal */}
+      <ExportCenterModal
+        isOpen={isExportModalOpen}
+        onClose={() => setIsExportModalOpen(false)}
+        data={dashboardData}
+      />
     </div>
   );
 }
