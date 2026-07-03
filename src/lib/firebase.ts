@@ -176,10 +176,18 @@ export async function syncUserAndReposInFirestore(
   const userDocSnap = await getDoc(userDocRef);
   const now = new Date().toISOString();
   let createdAt = now;
+  let privacy: "public" | "unlisted" | "private" = "public";
+  let pinnedRepos: string[] = [];
   if (userDocSnap.exists()) {
     const existing = userDocSnap.data();
     if (existing.createdAt) {
       createdAt = existing.createdAt;
+    }
+    if (existing.privacy) {
+      privacy = existing.privacy;
+    }
+    if (existing.pinnedRepos) {
+      pinnedRepos = existing.pinnedRepos;
     }
   }
 
@@ -199,6 +207,8 @@ export async function syncUserAndReposInFirestore(
     publicRepos: profile.public_repos,
     createdAt,
     lastLogin: now,
+    privacy,
+    pinnedRepos
   };
 
   await setDoc(userDocRef, profilePayload, { merge: true });
@@ -342,6 +352,8 @@ export async function getUserFromFirestore(username: string, targetUid?: string)
       score: analyticsData.scoreBreakdown,
       aiInsights: analyticsData.aiInsights,
       wrapped: analyticsData.wrapped,
+      privacy: profileData.privacy || "public",
+      pinnedRepos: profileData.pinnedRepos || [],
     };
 
     return dashboardData;
@@ -382,4 +394,14 @@ export async function getSavedDeveloperMetrics(username: string): Promise<any | 
     }
   }
   return null;
+}
+
+export async function updatePublicProfileSettings(
+  uid: string,
+  privacy: "public" | "unlisted" | "private",
+  pinnedRepos: string[]
+): Promise<void> {
+  if (!isFirebaseEnabled || !db) return;
+  const userDocRef = doc(db, "users", uid);
+  await setDoc(userDocRef, { privacy, pinnedRepos }, { merge: true });
 }

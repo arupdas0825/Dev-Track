@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { UserDashboardData } from "@/types";
 import { useTheme } from "@/components/ui/ThemeContext";
+import { getAuth } from "firebase/auth";
+import { updatePublicProfileSettings } from "@/lib/firebase";
 
 interface SettingsTabProps {
   data: UserDashboardData;
@@ -25,6 +27,39 @@ export default function SettingsTab({ data, onTokenUpdate }: SettingsTabProps) {
   const [enableAnimations, setEnableAnimations] = useState(true);
   const [highContrast, setHighContrast] = useState(false);
   const [isRefreshingData, setIsRefreshingData] = useState(false);
+
+  const [privacy, setPrivacy] = useState<"public" | "unlisted" | "private">(data.privacy || "public");
+  const [pinnedRepos, setPinnedRepos] = useState<string[]>(data.pinnedRepos || []);
+  const [privacySavedMsg, setPrivacySavedMsg] = useState(false);
+
+  const handleTogglePinRepo = (repoName: string) => {
+    if (pinnedRepos.includes(repoName)) {
+      setPinnedRepos(pinnedRepos.filter(name => name !== repoName));
+    } else {
+      if (pinnedRepos.length >= 4) {
+        alert("Maximum of 4 projects can be showcased.");
+        return;
+      }
+      setPinnedRepos([...pinnedRepos, repoName]);
+    }
+  };
+
+  const handleSavePrivacy = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const auth = getAuth();
+      const uid = auth.currentUser?.uid;
+      if (uid) {
+        await updatePublicProfileSettings(uid, privacy, pinnedRepos);
+        setPrivacySavedMsg(true);
+        setTimeout(() => setPrivacySavedMsg(false), 3000);
+      } else {
+        alert("You must be logged in to sync these settings to Firestore.");
+      }
+    } catch (err: any) {
+      alert("Error saving privacy settings: " + err.message);
+    }
+  };
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -287,6 +322,87 @@ export default function SettingsTab({ data, onTokenUpdate }: SettingsTabProps) {
                 </div>
               </label>
             </div>
+          </div>
+
+          {/* Public Profile & Privacy Settings Panel */}
+          <div className="rounded-xl border border-[#30363D] bg-[#161B22]/40 p-6 space-y-4">
+            <div>
+              <h3 className="text-base font-bold font-space-grotesk text-[#F0F6FC]">
+                Public Profile & Privacy Settings
+              </h3>
+              <p className="text-xs text-[#8B949E] mt-0.5">
+                Configure your public portfolio page. Choose who can see your telemetry and which codebases you showcase.
+              </p>
+            </div>
+
+            <form onSubmit={handleSavePrivacy} className="space-y-4 pt-2">
+              <div>
+                <label className="block text-[10px] font-bold text-[#8B949E] uppercase mb-1.5">
+                  Profile Privacy Level
+                </label>
+                <select
+                  value={privacy}
+                  onChange={(e) => setPrivacy(e.target.value as any)}
+                  className="w-full max-w-xs px-3 py-2 rounded-lg border border-[#30363D] bg-[#0D1117] text-[#F0F6FC] text-xs font-semibold focus:border-[#58A6FF] focus:outline-none"
+                >
+                  <option value="public">🌍 Public (Visible to everyone & search engines)</option>
+                  <option value="unlisted">🔗 Unlisted (Only accessible via direct link)</option>
+                  <option value="private">🔒 Private (Only visible to you)</option>
+                </select>
+                <p className="text-[10px] text-[#8B949E] mt-1">
+                  Public profile URL: <span className="text-[#58A6FF] font-mono select-all">/u/{profile.login}</span>
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-bold text-[#8B949E] uppercase mb-1.5 flex justify-between items-center">
+                  <span>Pin Repositories to Showcase</span>
+                  <span className="text-accent">({pinnedRepos.length} / 4 Pinned)</span>
+                </label>
+                
+                <div className="max-h-40 overflow-y-auto border border-[#30363D] bg-[#0D1117] rounded-lg p-2.5 space-y-1.5 scrollbar-thin">
+                  {data.repositories.map(repo => {
+                    const isPinned = pinnedRepos.includes(repo.name);
+                    return (
+                      <label key={repo.name} className="flex items-center gap-2.5 text-xs text-[#F0F6FC] cursor-pointer hover:bg-surface/30 p-1 rounded transition-all">
+                        <input
+                          type="checkbox"
+                          checked={isPinned}
+                          onChange={() => handleTogglePinRepo(repo.name)}
+                          className="rounded border-[#30363D] bg-[#0D1117] text-[#1F6FEB]"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <span className="font-bold truncate block">{repo.name}</span>
+                          {repo.description && (
+                            <span className="text-[9px] text-[#8B949E] truncate block">{repo.description}</span>
+                          )}
+                        </div>
+                        {repo.language && (
+                          <span className="text-[9px] border border-[#30363D] px-1.5 py-0.5 rounded bg-background font-mono text-[#8B949E]">{repo.language}</span>
+                        )}
+                      </label>
+                    );
+                  })}
+                  {data.repositories.length === 0 && (
+                    <div className="text-xs text-[#8B949E] italic text-center py-4">No repositories available to pin.</div>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 pt-2">
+                <button
+                  type="submit"
+                  className="rounded-lg bg-[#1F6FEB] hover:bg-[#58A6FF] px-4 py-2 text-xs font-bold text-white transition-colors cursor-pointer"
+                >
+                  Sync Profile Settings
+                </button>
+                {privacySavedMsg && (
+                  <span className="text-xs text-[#3FB950] font-semibold animate-pulse">
+                    ✓ Public profile settings updated in Firestore!
+                  </span>
+                )}
+              </div>
+            </form>
           </div>
         </div>
 

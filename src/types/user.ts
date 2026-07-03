@@ -23,4 +23,6 @@ export interface UserProfileDoc {
   publicRepos: number;
   createdAt: string;
   lastLogin: string;
+  privacy?: "public" | "unlisted" | "private";
+  pinnedRepos?: string[];
 }

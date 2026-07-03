@@ -94,6 +94,8 @@ export interface UserDashboardData {
   score: DeveloperScore;
   aiInsights: AIInsights;
   wrapped: GitHubWrapped;
+  privacy?: "public" | "unlisted" | "private";
+  pinnedRepos?: string[];
 }
 
 export interface UserAnalyticsDoc {
