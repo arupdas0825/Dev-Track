@@ -13,11 +13,13 @@ export interface WidgetConfig {
 
 const DEFAULT_WIDGETS: WidgetConfig[] = [
   { id: "command_center", name: "Profile Command Center", visible: true, pinned: true },
+  { id: "profile_insights", name: "AI Profile Insights", visible: true, pinned: false },
+  { id: "project_showcase", name: "Project Highlights Showcase", visible: true, pinned: false },
+  { id: "starred_charts", name: "Starred Charts Hub", visible: true, pinned: false },
   { id: "achievements", name: "Developer Achievements", visible: true, pinned: false },
   { id: "milestones", name: "Developer Milestones Roadmap", visible: true, pinned: false },
   { id: "activity_timeline", name: "Recent Activity Feed", visible: true, pinned: false },
   { id: "heatmap", name: "Contribution Matrix Heatmap", visible: true, pinned: false },
-  { id: "languages", name: "Top Tech Ecosystem", visible: true, pinned: false },
 ];
 
 interface DashboardCustomizerProps {

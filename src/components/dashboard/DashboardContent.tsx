@@ -2,19 +2,21 @@
 
 import { useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { fetchGitHubDashboardData } from "@/lib/github";
-import { saveDeveloperMetrics, getSavedDeveloperMetrics, subscribeToAuthChanges, logOutUser, DevTrackUser, syncUserAndReposInFirestore, getUserFromFirestore } from "@/lib/firebase";
+import { DevTrackUser, subscribeToAuthChanges, logOutUser, syncUserAndReposInFirestore } from "@/lib/firebase";
 import { UserDashboardData } from "@/types";
 import Navbar from "../layout/Navbar";
 import OverviewTab from "./OverviewTab";
 import RepositoriesTab from "./RepositoriesTab";
 import ContributionsTab from "./ContributionsTab";
+import CodingCalendarTab from "./CodingCalendarTab";
+import RepositoryHealthTab from "./RepositoryHealthTab";
+import GrowthTimelineTab from "./GrowthTimelineTab";
 import LanguagesTab from "./LanguagesTab";
 import ScoreTab from "./ScoreTab";
 import AIInsightsTab from "./AIInsightsTab";
-import WrappedTab from "./WrappedTab";
-import SettingsTab from "./SettingsTab";
 import ProfileComparisonTab from "./ProfileComparisonTab";
+import SettingsTab from "./SettingsTab";
+import WrappedTab from "./WrappedTab";
 import DashboardHeader from "./DashboardHeader";
 import QuickActionsFAB from "./QuickActionsFAB";
 import CommandPalette from "./CommandPalette";
@@ -24,8 +26,37 @@ import { useGithubProfile } from "@/hooks/useGithubProfile";
 import { useRepositories } from "@/hooks/useRepositories";
 import { useAnalytics } from "@/hooks/useAnalytics";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  LayoutGrid,
+  Folder,
+  Calendar,
+  Activity,
+  Award,
+  Code,
+  Star,
+  Sparkles,
+  Users,
+  Gift,
+  Settings,
+  ChevronLeft,
+  ChevronRight,
+  Search
+} from "lucide-react";
 
-type TabId = "overview" | "repos" | "contrib" | "lang" | "score" | "ai" | "compare" | "wrapped" | "settings";
+type TabId =
+  | "overview"
+  | "repos"
+  | "contrib"
+  | "calendar"
+  | "health"
+  | "growth"
+  | "lang"
+  | "score"
+  | "ai"
+  | "compare"
+  | "wrapped"
+  | "settings";
 
 export default function DashboardContent() {
   const searchParams = useSearchParams();
@@ -39,6 +70,9 @@ export default function DashboardContent() {
   const [isShortcutsModalOpen, setIsShortcutsModalOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
+  // Sidebar customizations
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+
   const usernameParam = searchParams.get("user") || "";
 
   // Subscribe to Auth changes
@@ -49,11 +83,16 @@ export default function DashboardContent() {
     return () => unsubscribe();
   }, []);
 
-  // Load stored token
+  // Load stored token & sidebar preferences
   useEffect(() => {
     if (typeof window !== "undefined") {
       const storedToken = localStorage.getItem("devtrack_github_token") || "";
       setGithubToken(storedToken);
+
+      const sidebarPref = localStorage.getItem("devtrack_sidebar_collapsed");
+      if (sidebarPref) {
+        setIsSidebarCollapsed(sidebarPref === "true");
+      }
     }
   }, []);
 
@@ -140,6 +179,56 @@ export default function DashboardContent() {
     router.push(`/dashboard?user=${user.username}`);
   };
 
+  const toggleSidebar = () => {
+    const nextState = !isSidebarCollapsed;
+    setIsSidebarCollapsed(nextState);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("devtrack_sidebar_collapsed", String(nextState));
+    }
+  };
+
+  const tabsList = [
+    { id: "overview", label: "Overview", icon: LayoutGrid },
+    { id: "repos", label: "Repositories", icon: Folder },
+    { id: "calendar", label: "Coding Calendar", icon: Calendar },
+    { id: "health", label: "Repo Health", icon: Activity },
+    { id: "growth", label: "Growth Timeline", icon: Award },
+    { id: "lang", label: "Languages", icon: Code },
+    { id: "score", label: "Developer Score", icon: Star },
+    { id: "ai", label: "AI Insights", icon: Sparkles },
+    { id: "compare", label: "Compare Profile", icon: Users },
+    { id: "wrapped", label: "Wrapped", icon: Gift },
+    { id: "settings", label: "Settings", icon: Settings },
+  ] as const;
+
+  // Keyboard navigation listener (Arrow keys to switch tabs)
+  useEffect(() => {
+    const handleArrowNavigation = (e: KeyboardEvent) => {
+      if (
+        document.activeElement?.tagName === "INPUT" ||
+        document.activeElement?.tagName === "TEXTAREA" ||
+        (document.activeElement as HTMLElement)?.isContentEditable
+      ) {
+        return;
+      }
+
+      if (e.key === "ArrowDown" || e.key === "ArrowRight") {
+        e.preventDefault();
+        const currentIdx = tabsList.findIndex(t => t.id === activeTab);
+        const nextIdx = (currentIdx + 1) % tabsList.length;
+        setActiveTab(tabsList[nextIdx].id as TabId);
+      } else if (e.key === "ArrowUp" || e.key === "ArrowLeft") {
+        e.preventDefault();
+        const currentIdx = tabsList.findIndex(t => t.id === activeTab);
+        const prevIdx = (currentIdx - 1 + tabsList.length) % tabsList.length;
+        setActiveTab(tabsList[prevIdx].id as TabId);
+      }
+    };
+
+    window.addEventListener("keydown", handleArrowNavigation);
+    return () => window.removeEventListener("keydown", handleArrowNavigation);
+  }, [activeTab]);
+
   const renderActiveTabContent = () => {
     if (!dashboardData) return null;
 
@@ -147,7 +236,13 @@ export default function DashboardContent() {
       case "overview":
         return <OverviewTab data={dashboardData} />;
       case "repos":
-        return <RepositoriesTab data={dashboardData} />;
+        return <RepositoriesTab data={dashboardData} githubToken={githubToken} />;
+      case "calendar":
+        return <CodingCalendarTab data={dashboardData} />;
+      case "health":
+        return <RepositoryHealthTab data={dashboardData} />;
+      case "growth":
+        return <GrowthTimelineTab data={dashboardData} />;
       case "contrib":
         return <ContributionsTab data={dashboardData} />;
       case "lang":
@@ -205,65 +300,115 @@ export default function DashboardContent() {
     );
   }
 
-  const tabsList: { id: TabId; label: string; icon: string }[] = [
-    { id: "overview", label: "Overview", icon: "M4 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" },
-    { id: "repos", label: "Repositories", icon: "M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" },
-    { id: "contrib", label: "Contributions", icon: "M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" },
-    { id: "lang", label: "Languages", icon: "M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" },
-    { id: "score", label: "Developer Score", icon: "M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" },
-    { id: "ai", label: "AI Insights", icon: "M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" },
-    { id: "compare", label: "Compare Profile", icon: "M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" },
-    { id: "wrapped", label: "Wrapped", icon: "M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" },
-    { id: "settings", label: "Settings", icon: "M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" },
-  ];
-
   return (
-    <div className="flex min-h-screen flex-col bg-background relative">
+    <div className="flex min-h-screen flex-col bg-background relative selection:bg-accent/30">
       <Navbar currentUser={currentUser} onLoginSuccess={handleLoginSuccess} onLogout={handleLogout} onOpenSearch={() => setIsCommandPaletteOpen(true)} />
 
       <div className="flex-1 mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8 flex flex-col md:flex-row gap-8">
-        {/* Sidebar Nav */}
-        <aside className="md:w-64 flex-shrink-0">
-          <div className="mb-4 hidden md:block">
+        
+        {/* Collapsible Sidebar Nav */}
+        <aside className={`flex-shrink-0 transition-all duration-300 md:block hidden ${isSidebarCollapsed ? "w-16" : "w-64"}`}>
+          <div className="mb-4">
             <button
               onClick={() => setIsCommandPaletteOpen(true)}
               className="w-full flex items-center justify-between px-3 py-2 rounded-lg border border-border bg-[#161B22]/50 hover:bg-[#161B22] text-xs text-text-secondary cursor-pointer transition-all"
             >
               <div className="flex items-center gap-2">
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-                <span>Search dashboard...</span>
+                <Search size={14} className="text-text-secondary flex-shrink-0" />
+                {!isSidebarCollapsed && <span>Search dashboard...</span>}
               </div>
-              <span className="font-mono text-[9px] border border-border px-1.5 py-0.5 rounded bg-surface">Ctrl K</span>
+              {!isSidebarCollapsed && (
+                <span className="font-mono text-[9px] border border-border px-1.5 py-0.5 rounded bg-surface">Ctrl K</span>
+              )}
             </button>
           </div>
 
-          <nav className="flex flex-row md:flex-col overflow-x-auto md:overflow-visible gap-1.5 border-b md:border-b-0 border-border pb-3 md:pb-0 scrollbar-none">
-            {tabsList.map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all focus:outline-none ${
-                  activeTab === tab.id
-                    ? "bg-surface-secondary border border-border text-text-primary"
-                    : "border border-transparent text-text-secondary hover:text-text-primary hover:bg-surface/50"
-                }`}
-              >
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                  <path strokeLinecap="round" strokeLinejoin="round" d={tab.icon} />
-                </svg>
-                <span>{tab.label}</span>
-              </button>
-            ))}
+          <nav className="flex flex-col gap-1.5 border-border relative select-none">
+            {tabsList.map(tab => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
+
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id as TabId)}
+                  className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all focus:outline-none w-full relative group cursor-pointer ${
+                    isActive
+                      ? "text-text-primary bg-surface-secondary border border-border"
+                      : "border border-transparent text-text-secondary hover:text-text-primary hover:bg-surface/50"
+                  }`}
+                  title={isSidebarCollapsed ? tab.label : undefined}
+                >
+                  <Icon size={16} className={`flex-shrink-0 ${isActive ? "text-accent" : "text-text-secondary group-hover:text-text-primary"}`} />
+                  
+                  {!isSidebarCollapsed && (
+                    <span className="transition-all duration-200">{tab.label}</span>
+                  )}
+
+                  {/* Collapsed Tooltip helper */}
+                  {isSidebarCollapsed && (
+                    <div className="absolute left-full ml-3 px-2.5 py-1.5 bg-[#161B22] border border-border text-[10px] text-text-primary font-bold rounded-lg shadow-xl opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100 transition-all pointer-events-none z-50">
+                      {tab.label}
+                    </div>
+                  )}
+                </button>
+              );
+            })}
+
+            {/* Collapse toggle button */}
+            <button
+              onClick={toggleSidebar}
+              className="mt-4 flex items-center justify-center gap-3 px-4 py-2.5 rounded-lg text-xs font-bold border border-border bg-[#161B22]/30 text-text-secondary hover:text-text-primary hover:bg-surface/50 transition-all focus:outline-none w-full cursor-pointer"
+            >
+              {isSidebarCollapsed ? <ChevronRight size={14} /> : (
+                <>
+                  <ChevronLeft size={14} />
+                  <span>Collapse Navigation</span>
+                </>
+              )}
+            </button>
+          </nav>
+        </aside>
+
+        {/* Mobile Horizontal scrollbar nav */}
+        <aside className="md:hidden flex-shrink-0 border-b border-border pb-3">
+          <nav className="flex flex-row overflow-x-auto gap-1.5 scrollbar-none pb-1">
+            {tabsList.map(tab => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id as TabId)}
+                  className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-bold whitespace-nowrap transition-all focus:outline-none ${
+                    isActive
+                      ? "bg-surface-secondary border border-border text-text-primary"
+                      : "border border-transparent text-text-secondary hover:text-text-primary hover:bg-surface/50"
+                  }`}
+                >
+                  <Icon size={14} className={isActive ? "text-accent" : "text-text-secondary"} />
+                  <span>{tab.label}</span>
+                </button>
+              );
+            })}
           </nav>
         </aside>
 
         {/* Tab Content window */}
         <div className="flex-1 min-w-0">
           {dashboardData && <DashboardHeader data={dashboardData} />}
-          <div className="border border-border bg-surface/20 rounded-xl p-6">
-            {renderActiveTabContent()}
+          <div className="border border-border bg-surface/20 rounded-xl p-6 transition-all duration-300">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeTab}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+              >
+                {renderActiveTabContent()}
+              </motion.div>
+            </AnimatePresence>
           </div>
         </div>
       </div>

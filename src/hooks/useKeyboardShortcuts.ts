@@ -70,6 +70,15 @@ export function useKeyboardShortcuts({
         } else if (key === "c") {
           e.preventDefault();
           onSelectTab("contrib");
+        } else if (key === "p") {
+          e.preventDefault();
+          onSelectTab("calendar");
+        } else if (key === "h") {
+          e.preventDefault();
+          onSelectTab("health");
+        } else if (key === "t") {
+          e.preventDefault();
+          onSelectTab("growth");
         } else if (key === "l") {
           e.preventDefault();
           onSelectTab("lang");

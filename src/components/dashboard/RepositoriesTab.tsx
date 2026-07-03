@@ -1,11 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { UserDashboardData, GitHubRepository } from "@/types";
 import { formatBytes } from "@/lib/utils";
+import { Pin, Star, GitFork, AlertCircle, Heart, Eye } from "lucide-react";
+import RepoDetailPanel from "./RepoDetailPanel";
 
 interface RepositoriesTabProps {
   data: UserDashboardData;
+  githubToken?: string;
 }
 
 function getRelativeTime(dateStr?: string): string {
@@ -26,13 +29,30 @@ function getRelativeTime(dateStr?: string): string {
   return `${Math.floor(diffInMonths / 12)}y ago`;
 }
 
-export default function RepositoriesTab({ data }: RepositoriesTabProps) {
-  const { repositories } = data;
+export default function RepositoriesTab({ data, githubToken }: RepositoriesTabProps) {
+  const { repositories, profile } = data;
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedLanguage, setSelectedLanguage] = useState("All");
-  const [activeModalRepo, setActiveModalRepo] = useState<GitHubRepository | null>(null);
+  
+  // Customization & Pinned states
+  const [pinnedRepoIds, setPinnedRepoIds] = useState<number[]>([]);
+  const [expandedRepoId, setExpandedRepoId] = useState<number | null>(null);
 
-  // Get unique languages for filter
+  // Load pinned state on mount
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("devtrack_pinned_repos");
+      if (saved) {
+        try {
+          setPinnedRepoIds(JSON.parse(saved));
+        } catch (e) {
+          console.error("Failed parsing pinned repos", e);
+        }
+      }
+    }
+  }, []);
+
+  // Helper to unique languages list
   const languagesList = ["All", ...Array.from(new Set(repositories.map(r => r.language).filter(Boolean))) as string[]];
 
   // Helper to compute individual repo quality score (0-100)
@@ -57,12 +77,44 @@ export default function RepositoriesTab({ data }: RepositoriesTabProps) {
     return { label: "Fair", color: "text-[#F85149] border-[#F85149]/30 bg-[#F85149]/10", dot: "bg-[#F85149]" };
   };
 
-  const filteredRepos = repositories.filter(repo => {
-    const matchesSearch = repo.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-      (repo.description && repo.description.toLowerCase().includes(searchTerm.toLowerCase()));
-    const matchesLanguage = selectedLanguage === "All" || repo.language === selectedLanguage;
-    return matchesSearch && matchesLanguage;
-  });
+  const togglePin = (repoId: number, e: React.MouseEvent) => {
+    e.stopPropagation(); // Avoid expanding card when pinning
+    const updated = pinnedRepoIds.includes(repoId)
+      ? pinnedRepoIds.filter(id => id !== repoId)
+      : [...pinnedRepoIds, repoId];
+    
+    setPinnedRepoIds(updated);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("devtrack_pinned_repos", JSON.stringify(updated));
+    }
+  };
+
+  const toggleExpand = (repoId: number) => {
+    setExpandedRepoId(expandedRepoId === repoId ? null : repoId);
+  };
+
+  // Sort and filter repositories
+  const sortedAndFilteredRepos = [...repositories]
+    .filter(repo => {
+      const matchesSearch = repo.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+        (repo.description && repo.description.toLowerCase().includes(searchTerm.toLowerCase()));
+      const matchesLanguage = selectedLanguage === "All" || repo.language === selectedLanguage;
+      return matchesSearch && matchesLanguage;
+    })
+    .sort((a, b) => {
+      const aPinned = pinnedRepoIds.includes(a.id);
+      const bPinned = pinnedRepoIds.includes(b.id);
+      
+      // Pin priority
+      if (aPinned && !bPinned) return -1;
+      if (!aPinned && bPinned) return 1;
+      
+      // Default: sort by stargazers count desc, then date
+      if (b.stargazers_count !== a.stargazers_count) {
+        return b.stargazers_count - a.stargazers_count;
+      }
+      return new Date(b.pushed_at || b.updated_at).getTime() - new Date(a.pushed_at || a.updated_at).getTime();
+    });
 
   // Health Panel Derivations
   const mostStarred = repositories.length > 0 ? 
@@ -76,7 +128,7 @@ export default function RepositoriesTab({ data }: RepositoriesTabProps) {
 
   return (
     <div className="space-y-6 font-mono">
-      {/* Repository Health Panel */}
+      {/* Repository Health Overview Panel */}
       {repositories.length > 0 && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {mostStarred && (
@@ -150,31 +202,39 @@ export default function RepositoriesTab({ data }: RepositoriesTabProps) {
         </div>
       </div>
 
-      {/* Repositories Grid */}
-      {filteredRepos.length === 0 ? (
+      {/* Repositories List */}
+      {sortedAndFilteredRepos.length === 0 ? (
         <div className="rounded-xl border border-[#30363D] bg-[#161B22]/40 p-12 text-center text-[#8B949E] text-xs">
           No repositories found matching current filters.
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {filteredRepos.map(repo => {
+        <div className="space-y-4">
+          {sortedAndFilteredRepos.map(repo => {
             const score = getQualityScore(repo);
             const classInfo = getScoreClassification(score);
             const updatedTime = getRelativeTime(repo.pushed_at || repo.updated_at);
+            const isPinned = pinnedRepoIds.includes(repo.id);
+            const isExpanded = expandedRepoId === repo.id;
 
             return (
               <div
                 key={repo.id}
-                className="rounded-xl border border-[#30363D] bg-[#161B22]/30 hover:bg-[#161B22]/60 hover:border-[#58A6FF]/50 transition-all p-5 flex flex-col justify-between group shadow-sm"
+                onClick={() => toggleExpand(repo.id)}
+                className={`rounded-xl border transition-all p-5 flex flex-col justify-between group shadow-sm cursor-pointer ${
+                  isExpanded
+                    ? "bg-[#161B22]/85 border-[#58A6FF]"
+                    : "bg-[#161B22]/30 border-[#30363D] hover:bg-[#161B22]/60 hover:border-[#58A6FF]/40"
+                }`}
               >
-                <div className="space-y-3">
-                  <div className="flex items-start justify-between gap-2">
+                <div className="w-full">
+                  <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
                         <a
                           href={repo.html_url}
                           target="_blank"
                           rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()} // Avoid expanding card when clicking direct link
                           className="font-bold font-space-grotesk text-sm text-[#F0F6FC] hover:text-[#58A6FF] transition-colors truncate"
                         >
                           {repo.name}
@@ -187,24 +247,44 @@ export default function RepositoriesTab({ data }: RepositoriesTabProps) {
                             Forked
                           </span>
                         )}
+                        {isPinned && (
+                          <span className="text-[9px] px-1.5 py-0.5 rounded border border-amber-500/20 bg-amber-500/10 text-amber-400 font-bold flex items-center gap-1">
+                            <Pin size={8} className="fill-amber-400" />
+                            Pinned
+                          </span>
+                        )}
                       </div>
                       <div className="text-[9px] text-[#8B949E] mt-0.5">
                         Updated {updatedTime}
                       </div>
                     </div>
 
-                    <div className={`flex items-center gap-1.5 text-[9px] font-bold px-2 py-0.5 rounded-full border ${classInfo.color}`}>
-                      <span className={`h-1.5 w-1.5 rounded-full ${classInfo.dot}`} />
-                      <span>QA {score}%</span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={(e) => togglePin(repo.id, e)}
+                        className={`p-1.5 rounded-lg border transition-all cursor-pointer ${
+                          isPinned
+                            ? "bg-amber-500/10 border-amber-500/30 text-amber-400"
+                            : "bg-[#0D1117] border-[#30363D] text-[#8B949E] hover:text-amber-400 hover:border-amber-500/30"
+                        }`}
+                        title={isPinned ? "Unpin Repository" : "Pin Repository to Top"}
+                      >
+                        <Pin size={11} className={isPinned ? "fill-amber-400" : ""} />
+                      </button>
+
+                      <div className={`flex items-center gap-1.5 text-[9px] font-bold px-2 py-0.5 rounded-full border ${classInfo.color}`}>
+                        <span className={`h-1.5 w-1.5 rounded-full ${classInfo.dot}`} />
+                        <span>QA {score}%</span>
+                      </div>
                     </div>
                   </div>
 
                   {repo.description ? (
-                    <p className="text-xs text-[#8B949E] leading-relaxed line-clamp-2 min-h-[32px]">
+                    <p className="text-xs text-[#8B949E] leading-relaxed mt-2 line-clamp-2">
                       {repo.description}
                     </p>
                   ) : (
-                    <p className="text-xs text-[#8B949E]/40 italic leading-relaxed min-h-[32px]">
+                    <p className="text-xs text-[#8B949E]/40 italic leading-relaxed mt-2">
                       No description provided.
                     </p>
                   )}
@@ -234,88 +314,25 @@ export default function RepositoriesTab({ data }: RepositoriesTabProps) {
                         🔴 {repo.open_issues_count}
                       </span>
                     )}
-                    <button
-                      onClick={() => setActiveModalRepo(repo)}
-                      className="px-2 py-0.5 rounded border border-[#30363D] bg-[#0D1117] text-[#58A6FF] hover:border-[#58A6FF] transition-colors cursor-pointer"
-                    >
-                      Inspect
-                    </button>
+                    <span className="text-[#58A6FF] hover:underline transition-colors flex items-center gap-0.5 text-[10px] font-bold">
+                      {isExpanded ? "Collapse ▲" : "Explore Repository ▼"}
+                    </span>
                   </div>
                 </div>
+
+                {/* Expanded Repo Detail Panel */}
+                {isExpanded && (
+                  <div onClick={(e) => e.stopPropagation()}>
+                    <RepoDetailPanel
+                      repository={repo}
+                      githubToken={githubToken}
+                      username={profile.login}
+                    />
+                  </div>
+                )}
               </div>
             );
           })}
-        </div>
-      )}
-
-      {/* Quick Inspection Modal */}
-      {activeModalRepo && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-fadeIn">
-          <div className="w-full max-w-lg bg-[#161B22] border border-[#30363D] rounded-xl p-6 space-y-5 shadow-2xl relative">
-            <div className="flex justify-between items-start">
-              <div>
-                <span className="text-[10px] text-[#58A6FF] uppercase font-bold tracking-wider">Repository Inspection</span>
-                <h3 className="text-lg font-bold text-[#F0F6FC] mt-1">{activeModalRepo.name}</h3>
-                <a
-                  href={activeModalRepo.html_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs text-[#58A6FF] hover:underline flex items-center gap-1 mt-0.5"
-                >
-                  <span>View on GitHub</span>
-                  <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                  </svg>
-                </a>
-              </div>
-              <button
-                onClick={() => setActiveModalRepo(null)}
-                className="text-[#8B949E] hover:text-[#F0F6FC] p-1 text-sm font-bold cursor-pointer"
-              >
-                ✕
-              </button>
-            </div>
-
-            <p className="text-xs text-[#8B949E] leading-relaxed">
-              {activeModalRepo.description || "No description provided for this codebase."}
-            </p>
-
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-2 text-xs">
-              <div className="p-3 bg-[#0D1117] rounded-lg border border-[#30363D]">
-                <span className="text-[10px] text-[#8B949E] uppercase block">Primary Stack</span>
-                <span className="font-bold text-[#F0F6FC] mt-0.5 block">{activeModalRepo.language || "Markdown"}</span>
-              </div>
-              <div className="p-3 bg-[#0D1117] rounded-lg border border-[#30363D]">
-                <span className="text-[10px] text-[#8B949E] uppercase block">Codebase Size</span>
-                <span className="font-bold text-[#F0F6FC] mt-0.5 block">{formatBytes((activeModalRepo.size || 0) * 1024)}</span>
-              </div>
-              <div className="p-3 bg-[#0D1117] rounded-lg border border-[#30363D]">
-                <span className="text-[10px] text-[#8B949E] uppercase block">Stargazers</span>
-                <span className="font-bold text-[#D29922] mt-0.5 block">⭐ {activeModalRepo.stargazers_count}</span>
-              </div>
-              <div className="p-3 bg-[#0D1117] rounded-lg border border-[#30363D]">
-                <span className="text-[10px] text-[#8B949E] uppercase block">Forks</span>
-                <span className="font-bold text-[#58A6FF] mt-0.5 block">🍴 {activeModalRepo.forks_count}</span>
-              </div>
-              <div className="p-3 bg-[#0D1117] rounded-lg border border-[#30363D]">
-                <span className="text-[10px] text-[#8B949E] uppercase block">Open Issues</span>
-                <span className="font-bold text-[#F85149] mt-0.5 block">🔴 {activeModalRepo.open_issues_count || 0}</span>
-              </div>
-              <div className="p-3 bg-[#0D1117] rounded-lg border border-[#30363D]">
-                <span className="text-[10px] text-[#8B949E] uppercase block">Last Updated</span>
-                <span className="font-bold text-[#3FB950] mt-0.5 block">{getRelativeTime(activeModalRepo.pushed_at || activeModalRepo.updated_at)}</span>
-              </div>
-            </div>
-
-            <div className="pt-3 flex justify-end">
-              <button
-                onClick={() => setActiveModalRepo(null)}
-                className="px-4 py-2 bg-[#1F6FEB] text-white rounded-lg text-xs font-bold hover:bg-[#1F6FEB]/90 cursor-pointer"
-              >
-                Close Inspection
-              </button>
-            </div>
-          </div>
         </div>
       )}
     </div>
