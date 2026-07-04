@@ -17,6 +17,7 @@ import AIInsightsTab from "./AIInsightsTab";
 import ProfileComparisonTab from "./ProfileComparisonTab";
 import SettingsTab from "./SettingsTab";
 import WrappedTab from "./WrappedTab";
+import TimeMachineTab from "./TimeMachineTab";
 import DashboardHeader from "./DashboardHeader";
 import QuickActionsFAB from "./QuickActionsFAB";
 import CommandPalette from "./CommandPalette";
@@ -41,7 +42,8 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
-  Search
+  Search,
+  History
 } from "lucide-react";
 
 type TabId =
@@ -51,6 +53,7 @@ type TabId =
   | "calendar"
   | "health"
   | "growth"
+  | "time-machine"
   | "lang"
   | "score"
   | "ai"
@@ -193,6 +196,7 @@ export default function DashboardContent() {
     { id: "calendar", label: "Coding Calendar", icon: Calendar },
     { id: "health", label: "Repo Health", icon: Activity },
     { id: "growth", label: "Growth Timeline", icon: Award },
+    { id: "time-machine", label: "Developer Time Machine", icon: History },
     { id: "lang", label: "Languages", icon: Code },
     { id: "score", label: "Developer Score", icon: Star },
     { id: "ai", label: "AI Insights", icon: Sparkles },
@@ -243,6 +247,8 @@ export default function DashboardContent() {
         return <RepositoryHealthTab data={dashboardData} />;
       case "growth":
         return <GrowthTimelineTab data={dashboardData} />;
+      case "time-machine":
+        return <TimeMachineTab data={dashboardData} githubToken={githubToken} />;
       case "contrib":
         return <ContributionsTab data={dashboardData} />;
       case "lang":
