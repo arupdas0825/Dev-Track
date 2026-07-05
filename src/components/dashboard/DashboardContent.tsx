@@ -436,7 +436,10 @@ export default function DashboardContent() {
         onClose={() => setIsCommandPaletteOpen(false)}
         repositories={dashboardData?.repositories || []}
         onSelectTab={(t) => setActiveTab(t as TabId)}
-        onSelectRepo={(url) => window.open(url, "_blank")}
+        onSelectRepo={(name) => {
+          const owner = dashboardData?.profile.login || "demo";
+          router.push(`/repository/${name}?owner=${owner}`);
+        }}
         onRefreshData={() => setSyncedData(null)}
       />
 

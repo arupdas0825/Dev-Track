@@ -34,6 +34,20 @@ export interface GitHubRepository {
   open_issues_count: number;
   private?: boolean;
   visibility?: string;
+  default_branch?: string;
+  topics?: string[];
+  homepage?: string | null;
+  license?: {
+    key: string;
+    name: string;
+    spdx_id: string | null;
+    url: string | null;
+  } | null;
+  permissions?: {
+    admin: boolean;
+    push: boolean;
+    pull: boolean;
+  } | null;
   languages?: Record<string, number>;
   qualityScore?: number;
 }

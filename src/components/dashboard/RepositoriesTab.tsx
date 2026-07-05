@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { UserDashboardData, GitHubRepository } from "@/types";
 import { formatBytes } from "@/lib/utils";
 import { Pin, Star, GitFork, AlertCircle, Heart, Eye } from "lucide-react";
-import RepoDetailPanel from "./RepoDetailPanel";
 
 interface RepositoriesTabProps {
   data: UserDashboardData;
@@ -31,12 +31,12 @@ function getRelativeTime(dateStr?: string): string {
 
 export default function RepositoriesTab({ data, githubToken }: RepositoriesTabProps) {
   const { repositories, profile } = data;
+  const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedLanguage, setSelectedLanguage] = useState("All");
   
   // Customization & Pinned states
   const [pinnedRepoIds, setPinnedRepoIds] = useState<number[]>([]);
-  const [expandedRepoId, setExpandedRepoId] = useState<number | null>(null);
 
   // Load pinned state on mount
   useEffect(() => {
@@ -87,10 +87,6 @@ export default function RepositoriesTab({ data, githubToken }: RepositoriesTabPr
     if (typeof window !== "undefined") {
       localStorage.setItem("devtrack_pinned_repos", JSON.stringify(updated));
     }
-  };
-
-  const toggleExpand = (repoId: number) => {
-    setExpandedRepoId(expandedRepoId === repoId ? null : repoId);
   };
 
   // Sort and filter repositories
@@ -214,17 +210,13 @@ export default function RepositoriesTab({ data, githubToken }: RepositoriesTabPr
             const classInfo = getScoreClassification(score);
             const updatedTime = getRelativeTime(repo.pushed_at || repo.updated_at);
             const isPinned = pinnedRepoIds.includes(repo.id);
-            const isExpanded = expandedRepoId === repo.id;
+            const owner = profile.login || "demo";
 
             return (
               <div
                 key={repo.id}
-                onClick={() => toggleExpand(repo.id)}
-                className={`rounded-xl border transition-all p-5 flex flex-col justify-between group shadow-sm cursor-pointer ${
-                  isExpanded
-                    ? "bg-[#161B22]/85 border-[#58A6FF]"
-                    : "bg-[#161B22]/30 border-[#30363D] hover:bg-[#161B22]/60 hover:border-[#58A6FF]/40"
-                }`}
+                onClick={() => router.push(`/repository/${repo.name}?owner=${owner}`)}
+                className="rounded-xl border transition-all p-5 flex flex-col justify-between group shadow-sm cursor-pointer bg-[#161B22]/30 border-[#30363D] hover:bg-[#161B22]/60 hover:border-[#58A6FF]/40"
               >
                 <div className="w-full">
                   <div className="flex items-start justify-between gap-4">
@@ -234,7 +226,7 @@ export default function RepositoriesTab({ data, githubToken }: RepositoriesTabPr
                           href={repo.html_url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          onClick={(e) => e.stopPropagation()} // Avoid expanding card when clicking direct link
+                          onClick={(e) => e.stopPropagation()} // Avoid navigation when clicking direct GitHub link
                           className="font-bold font-space-grotesk text-sm text-[#F0F6FC] hover:text-[#58A6FF] transition-colors truncate"
                         >
                           {repo.name}
@@ -314,22 +306,11 @@ export default function RepositoriesTab({ data, githubToken }: RepositoriesTabPr
                         🔴 {repo.open_issues_count}
                       </span>
                     )}
-                    <span className="text-[#58A6FF] hover:underline transition-colors flex items-center gap-0.5 text-[10px] font-bold">
-                      {isExpanded ? "Collapse ▲" : "Explore Repository ▼"}
+                    <span className="text-[#58A6FF] group-hover:text-white transition-colors flex items-center gap-0.5 text-[10px] font-bold">
+                      Inspect Intelligence →
                     </span>
                   </div>
                 </div>
-
-                {/* Expanded Repo Detail Panel */}
-                {isExpanded && (
-                  <div onClick={(e) => e.stopPropagation()}>
-                    <RepoDetailPanel
-                      repository={repo}
-                      githubToken={githubToken}
-                      username={profile.login}
-                    />
-                  </div>
-                )}
               </div>
             );
           })}

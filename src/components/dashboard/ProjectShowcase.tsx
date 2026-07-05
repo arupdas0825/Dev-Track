@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import Link from "next/link";
 import { GitHubRepository } from "@/types";
 import { formatBytes } from "@/lib/utils";
 import { Star, GitFork, BookOpen, Clock, Zap, Shield, Sparkles, Folder } from "lucide-react";
@@ -148,6 +149,7 @@ export default function ProjectShowcase({ repositories }: ProjectShowcaseProps) 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {showcaseItems.map((item, idx) => {
           const Icon = item.icon;
+          const owner = item.repo.full_name?.split("/")[0] || "demo";
 
           return (
             <div
@@ -163,14 +165,12 @@ export default function ProjectShowcase({ repositories }: ProjectShowcaseProps) 
                 </div>
 
                 <div>
-                  <a
-                    href={item.repo.html_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <Link
+                    href={`/repository/${item.repo.name}?owner=${owner}`}
                     className="font-bold font-space-grotesk text-sm text-[#F0F6FC] hover:text-[#58A6FF] transition-colors truncate block"
                   >
                     {item.repo.name}
-                  </a>
+                  </Link>
                   <p className="text-[10px] text-text-secondary italic mt-0.5 leading-relaxed font-mono">
                     {item.reason}
                   </p>

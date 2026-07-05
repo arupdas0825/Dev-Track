@@ -10,7 +10,7 @@ interface CommandPaletteProps {
   onClose: () => void;
   repositories: GitHubRepository[];
   onSelectTab: (tab: string) => void;
-  onSelectRepo: (repoUrl: string) => void;
+  onSelectRepo: (repoName: string) => void;
   onRefreshData?: () => void;
 }
 
@@ -100,7 +100,7 @@ export default function CommandPalette({
       id: r.id.toString(),
       label: r.name,
       icon: "📁",
-      action: () => onSelectRepo(r.html_url),
+      action: () => onSelectRepo(r.name),
     })),
   ];
 
@@ -279,7 +279,7 @@ export default function CommandPalette({
                       key={repo.id}
                       onClick={() => {
                         if (query) addRecentSearch(query);
-                        onSelectRepo(repo.html_url);
+                        onSelectRepo(repo.name);
                         onClose();
                       }}
                       onMouseEnter={() => setSelectedIndex(indexToUse)}
