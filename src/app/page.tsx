@@ -6,7 +6,60 @@ import Link from "next/link";
 import { subscribeToAuthChanges, logOutUser, DevTrackUser } from "@/lib/firebase";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Sparkles,
+  Terminal,
+  Activity,
+  Award,
+  Brain,
+  Calendar,
+  Folder,
+  GitCommit,
+  GitPullRequest,
+  Users,
+  Gift,
+  Shield,
+  Compass,
+  Clock,
+  ArrowRight,
+  Laptop,
+  Tablet,
+  Smartphone,
+  CheckCircle2,
+  ChevronRight,
+  TrendingUp,
+  AlertCircle
+} from "lucide-react";
+
+// Intersection Counter helper component
+function CounterUp({ target, suffix = "" }: { target: number; suffix?: string }) {
+  const [count, setCount] = useState(0);
+  const [hasRun, setHasRun] = useState(false);
+
+  return (
+    <motion.span
+      onViewportEnter={() => {
+        if (hasRun) return;
+        setHasRun(true);
+        let start = 0;
+        const end = target;
+        const totalDuration = 1200; // ms
+        const stepTime = Math.max(10, Math.floor(totalDuration / end));
+        const timer = setInterval(() => {
+          start += Math.ceil(end / 40);
+          if (start >= end) {
+            start = end;
+            clearInterval(timer);
+          }
+          setCount(start);
+        }, stepTime);
+      }}
+    >
+      {count.toLocaleString()}{suffix}
+    </motion.span>
+  );
+}
 
 export default function LandingPage() {
   const router = useRouter();
@@ -14,13 +67,58 @@ export default function LandingPage() {
   const [searchUsername, setSearchUsername] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [previewDevice, setPreviewDevice] = useState<"desktop" | "tablet" | "mobile">("desktop");
+  const [typedCommand, setTypedCommand] = useState("");
 
-  // Subscribe to Firebase Auth
+  // Firebase auth sync
   useEffect(() => {
     const unsubscribe = subscribeToAuthChanges((user) => {
       setCurrentUser(user);
     });
     return () => unsubscribe();
+  }, []);
+
+  // Terminal simulated typing loop
+  useEffect(() => {
+    const commands = [
+      "git log --author=alex",
+      "devtrack-dna calculate @alex-dev",
+      "fetch-repo-intelligence dev-track --sync"
+    ];
+    let cmdIdx = 0;
+    let charIdx = 0;
+    let currentCmd = commands[cmdIdx];
+    let isDeleting = false;
+
+    const interval = setInterval(() => {
+      if (!isDeleting) {
+        setTypedCommand(currentCmd.substring(0, charIdx + 1));
+        charIdx++;
+        if (charIdx === currentCmd.length) {
+          isDeleting = true;
+          // Pause before deleting
+          clearInterval(interval);
+          setTimeout(() => {
+            // Restart typing interval
+            const restart = setInterval(() => {
+              isDeleting = true;
+              if (charIdx > 0) {
+                setTypedCommand(currentCmd.substring(0, charIdx - 1));
+                charIdx--;
+              } else {
+                isDeleting = false;
+                cmdIdx = (cmdIdx + 1) % commands.length;
+                currentCmd = commands[cmdIdx];
+                clearInterval(restart);
+                // Trigger next loop
+              }
+            }, 50);
+          }, 2500);
+        }
+      }
+    }, 80);
+
+    return () => clearInterval(interval);
   }, []);
 
   const handleLogout = async () => {
@@ -33,8 +131,6 @@ export default function LandingPage() {
     if (!searchUsername.trim()) return;
     setIsSearching(true);
     setErrorMessage(null);
-    
-    // Redirect to dashboard with the query parameter
     router.push(`/dashboard?user=${encodeURIComponent(searchUsername.trim().toLowerCase())}`);
   };
 
@@ -44,180 +140,208 @@ export default function LandingPage() {
 
   const handleLoginSuccess = (user: DevTrackUser) => {
     setCurrentUser(user);
-    // Redirect to their logged-in dashboard profile
     router.push(`/dashboard?user=${user.username}`);
   };
 
+  // Stagger container animation
+  const containerVariants = {
+    hidden: {},
+    visible: {
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const childVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0, transition: { type: "spring" as const, stiffness: 100 } }
+  };
+
   return (
-    <div className="flex min-h-screen flex-col bg-background selection:bg-accent/30 selection:text-text-primary">
-      {/* Navigation Header */}
+    <div className="flex min-h-screen flex-col bg-[#0D1117] selection:bg-accent/30 selection:text-text-primary overflow-x-hidden font-mono">
+      {/* Dynamic Navigation */}
       <Navbar
         currentUser={currentUser}
         onLoginSuccess={handleLoginSuccess}
         onLogout={handleLogout}
         onDemoTrigger={handleDemoTrigger}
+        onOpenSearch={() => router.push("/dashboard?user=demo")}
       />
 
       {/* Main Container */}
-      <main className="flex-1">
+      <main className="flex-1 pt-16">
         {/* 1. Hero Section */}
-        <section className="relative overflow-hidden pt-20 pb-16 md:pt-32 md:pb-28">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <section className="relative overflow-hidden pt-24 pb-20 md:pt-36 md:pb-32 flex items-center min-h-[90vh]">
+          {/* Subtle grid mesh background */}
+          <div className="absolute inset-0 bg-[linear-gradient(to_right,#161B22_1px,transparent_1px),linear-gradient(to_bottom,#161B22_1px,transparent_1px)] bg-[size:4rem_4rem] opacity-35" />
+          <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-accent/5 rounded-full blur-3xl pointer-events-none" />
+
+          <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 z-10 w-full">
             <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:gap-8 items-center">
-              {/* Left Column: CTAs and Copy */}
+              {/* Left copy */}
               <div className="lg:col-span-7 flex flex-col justify-center text-left">
                 <motion.div
-                  initial={{ opacity: 0, y: 15 }}
+                  initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5 }}
+                  transition={{ duration: 0.6 }}
                 >
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1 text-xs font-semibold text-accent mb-6">
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-[#30363D] bg-[#161B22]/60 px-3 py-1 text-[10px] font-bold text-accent mb-6 uppercase tracking-wider">
                     <span className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse" />
-                    v1.0 Developer Analytics
+                    v3.5 Engine Sequencer
                   </span>
                   
-                  <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight font-space-grotesk text-text-primary leading-[1.1]">
-                    Understand Your <br className="hidden sm:inline" />
-                    <span className="text-accent">Developer Journey.</span>
+                  <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight font-space-grotesk text-text-primary leading-[1.15]">
+                    Understand the <br />
+                    <span className="bg-gradient-to-r from-accent to-[#3FB950] bg-clip-text text-transparent">Story Behind Your Code.</span>
                   </h1>
                   
-                  <p className="mt-4 text-base sm:text-lg md:text-xl text-text-secondary max-w-xl leading-relaxed">
-                    DevTrack analyzes GitHub activity and transforms it into actionable developer intelligence. Grade consistency, score repositories, and outline roadmaps.
+                  <p className="mt-4 text-xs sm:text-sm text-text-secondary max-w-lg leading-relaxed font-mono">
+                    DevTrack analyzes repository architectures, coding velocities, and event timelines to sequence your Developer DNA. Understand your technical footprint with Sonar-level checks.
                   </p>
                 </motion.div>
 
                 {/* Direct Search Input */}
                 <motion.form
                   onSubmit={handleSearch}
-                  className="mt-8 max-w-lg"
-                  initial={{ opacity: 0, y: 15 }}
+                  className="mt-8 max-w-md w-full"
+                  initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.15 }}
+                  transition={{ duration: 0.6, delay: 0.15 }}
                 >
-                  <div className="flex flex-col sm:flex-row gap-3">
+                  <div className="flex flex-col sm:flex-row gap-2">
                     <div className="relative flex-1">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-text-secondary">
-                        <span className="text-sm font-semibold">github.com/</span>
+                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-text-secondary text-xs">
+                        <span>github.com/</span>
                       </div>
                       <input
                         type="text"
                         placeholder="username"
                         value={searchUsername}
                         onChange={(e) => setSearchUsername(e.target.value)}
-                        className="w-full pl-28 pr-4 py-3 rounded-lg border border-border bg-surface text-text-primary placeholder:text-text-secondary/50 focus:border-accent focus:outline-none transition-all text-sm font-semibold"
+                        className="w-full pl-28 pr-4 py-3 rounded-lg border border-border bg-[#161B22]/50 text-text-primary placeholder:text-text-secondary/50 focus:border-accent focus:outline-none transition-all text-xs font-semibold"
                         required
                       />
                     </div>
                     <button
                       type="submit"
                       disabled={isSearching}
-                      className="px-6 py-3 rounded-lg bg-primary hover:bg-success text-white font-semibold text-sm transition-all focus:outline-none flex items-center justify-center gap-2 disabled:opacity-50"
+                      className="px-6 py-3 rounded-lg bg-accent text-white font-bold text-xs transition-all hover:bg-accent/90 focus:outline-none flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer shadow-lg shadow-accent/15"
                     >
                       {isSearching ? (
                         <>
-                          <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                          <svg className="animate-spin h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24">
                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                           </svg>
-                          <span>Analyzing...</span>
+                          <span>Sequencing...</span>
                         </>
                       ) : (
                         <>
-                          <span>Analyze Profile</span>
-                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                          </svg>
+                          <span>Sequence DNA</span>
+                          <ArrowRight size={13} />
                         </>
                       )}
                     </button>
                   </div>
                   {errorMessage && (
-                    <p className="mt-2 text-xs text-danger">{errorMessage}</p>
+                    <p className="mt-2 text-xs text-danger flex items-center gap-1">
+                      <AlertCircle size={11} /> {errorMessage}
+                    </p>
                   )}
                 </motion.form>
 
-                {/* Sub CTA Links */}
+                {/* Sub Demo triggers */}
                 <motion.div
-                  className="mt-4 flex items-center gap-4 text-xs text-text-secondary font-medium"
+                  className="mt-5 flex items-center gap-3.5 text-[10px] text-text-secondary font-medium"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  transition={{ duration: 0.5, delay: 0.3 }}
+                  transition={{ duration: 0.6, delay: 0.3 }}
                 >
-                  <span>Or explore:</span>
-                  <button onClick={handleDemoTrigger} className="text-accent hover:underline font-semibold text-left">
-                    View gaearon (React)
+                  <span>Or view sandbox profiles:</span>
+                  <button onClick={handleDemoTrigger} className="text-accent hover:text-accent/80 hover:underline transition-colors font-bold text-left cursor-pointer">
+                    gaearon (React)
                   </button>
                   <span>•</span>
-                  <button onClick={handleDemoTrigger} className="text-accent hover:underline font-semibold text-left">
-                    View torvalds (Linux)
+                  <button onClick={handleDemoTrigger} className="text-accent hover:text-accent/80 hover:underline transition-colors font-bold text-left cursor-pointer">
+                    torvalds (Linux)
                   </button>
                 </motion.div>
               </div>
 
-              {/* Right Column: Premium Technical Dashboard Mockup */}
+              {/* Right column Floating mockup */}
               <div className="lg:col-span-5 relative mt-8 lg:mt-0">
                 <motion.div
-                  className="rounded-xl border border-border bg-surface overflow-hidden shadow-2xl"
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.6 }}
+                  className="rounded-xl border border-border bg-[#161B22]/40 overflow-hidden shadow-2xl relative"
+                  initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  transition={{ duration: 0.8 }}
                 >
-                  {/* Window Bar */}
-                  <div className="flex items-center justify-between border-b border-border bg-surface-secondary px-4 py-3">
+                  {/* Decorative glass glow overlay */}
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-accent/10 rounded-bl-full blur-xl pointer-events-none" />
+
+                  {/* Windows Bar */}
+                  <div className="flex items-center justify-between border-b border-border bg-[#0D1117]/80 px-4 py-3">
                     <div className="flex items-center gap-1.5">
-                      <div className="h-3 w-3 rounded-full bg-danger/70" />
-                      <div className="h-3 w-3 rounded-full bg-warning/70" />
-                      <div className="h-3 w-3 rounded-full bg-success/70" />
+                      <div className="h-2.5 w-2.5 rounded-full bg-[#FF5F56]" />
+                      <div className="h-2.5 w-2.5 rounded-full bg-[#FFBD2E]" />
+                      <div className="h-2.5 w-2.5 rounded-full bg-[#27C93F]" />
                     </div>
-                    <div className="text-xs text-text-secondary font-mono">devtrack.io/dashboard</div>
-                    <div className="w-12" />
+                    <div className="text-[10px] text-text-secondary font-mono tracking-wider">devtrack.io/dashboard</div>
+                    <div className="w-8" />
                   </div>
 
-                  {/* Window Content */}
-                  <div className="p-5 font-mono text-xs leading-relaxed space-y-4 text-text-secondary">
-                    {/* Mock Header Info */}
-                    <div className="flex items-center justify-between border-b border-border/60 pb-3">
+                  {/* Mock content */}
+                  <div className="p-5 font-mono text-[10px] leading-relaxed space-y-4 text-text-secondary">
+                    <div className="flex items-center justify-between border-b border-border/40 pb-3">
                       <div className="flex items-center gap-2">
-                        <div className="h-8 w-8 rounded-full bg-[#3178c6] flex items-center justify-center text-text-primary text-[10px] font-bold">
-                          TS
+                        <div className="h-8 w-8 rounded-full bg-accent/20 border border-accent/40 flex items-center justify-center text-accent text-xs font-bold font-space-grotesk">
+                          🧬
                         </div>
                         <div>
-                          <div className="font-semibold text-text-primary">alex-developer</div>
-                          <div className="text-[10px]">Active Developer</div>
+                          <div className="font-bold text-text-primary text-xs">alex-developer</div>
+                          <div className="text-[9px] text-[#8B949E]">Morning Coder | Full Stack</div>
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="text-[10px] text-text-secondary">Developer Score</div>
-                        <div className="text-sm font-bold text-success font-space-grotesk">92/100</div>
+                        <span className="text-[8px] text-[#8B949E] uppercase block">Overall Grade</span>
+                        <span className="text-sm font-bold text-[#3FB950] font-space-grotesk">S (92/100)</span>
                       </div>
                     </div>
 
-                    {/* Score Breakdown Row */}
-                    <div className="grid grid-cols-2 gap-2 text-[10px]">
-                      <div className="rounded border border-border/40 bg-background/50 p-2">
-                        <span className="text-text-primary">Consistency:</span> 18/20
+                    <div className="grid grid-cols-2 gap-2 text-[9px]">
+                      <div className="rounded border border-border/40 bg-[#0D1117]/40 p-2 flex justify-between">
+                        <span>Consistency:</span> <strong className="text-text-primary">94%</strong>
                       </div>
-                      <div className="rounded border border-border/40 bg-background/50 p-2">
-                        <span className="text-text-primary">Repo Quality:</span> 19/20
+                      <div className="rounded border border-border/40 bg-[#0D1117]/40 p-2 flex justify-between">
+                        <span>Ecosystem DNA:</span> <strong className="text-text-primary">Polyglot</strong>
                       </div>
-                      <div className="rounded border border-border/40 bg-background/50 p-2">
-                        <span className="text-text-primary">Open Source:</span> 19/20
+                      <div className="rounded border border-border/40 bg-[#0D1117]/40 p-2 flex justify-between">
+                        <span>Commits Streak:</span> <strong className="text-text-primary">45 Days</strong>
                       </div>
-                      <div className="rounded border border-border/40 bg-background/50 p-2">
-                        <span className="text-text-primary">Complexity:</span> 19/20
+                      <div className="rounded border border-border/40 bg-[#0D1117]/40 p-2 flex justify-between">
+                        <span>Quality Score:</span> <strong className="text-[#3FB950]">Excellent</strong>
                       </div>
                     </div>
 
-                    {/* Terminal Activity */}
-                    <div className="bg-[#090D12] rounded p-3 text-[10px] border border-border/60 overflow-hidden relative">
-                      <div className="text-success">$ devtrack-ai-insight generate</div>
-                      <div className="text-text-primary mt-1">Analyzing repository architectures...</div>
-                      <div className="text-text-secondary mt-1">
-                        &gt; Primary language: TypeScript (82%)<br />
-                        &gt; Detected framework: Next.js 15 App Router<br />
-                        &gt; Core strength: High documentation index (100% desc)
+                    {/* Sim Terminal */}
+                    <div className="bg-[#090D12] rounded p-3 border border-border/40 text-[9px] font-mono text-[#8B949E] space-y-1 relative">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-success font-bold">$</span>
+                        <span>{typedCommand}</span>
+                        <span className="w-1.5 h-3 bg-accent animate-pulse" />
                       </div>
-                      <div className="text-accent mt-1">✓ AI Career Recommendation: Fullstack Web Architect</div>
+                      {typedCommand.includes("calculate") && (
+                        <motion.div
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          className="text-text-primary mt-1 border-t border-border/30 pt-1"
+                        >
+                          &gt; Builder Dimension: 94%<br />
+                          &gt; Architect Score: 82%<br />
+                          &gt; Focus Stack: TypeScript (React/Next)
+                        </motion.div>
+                      )}
                     </div>
                   </div>
                 </motion.div>
@@ -226,236 +350,373 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* 2. Core Features Section */}
-        <section id="features" className="py-20 border-t border-border bg-[#0a0e14]">
+        {/* 2. Social Proof */}
+        <section className="py-12 border-t border-b border-border bg-[#0D1117]">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="text-center max-w-2xl mx-auto">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-6 text-center">
+              {[
+                { label: "Developers Analysed", value: 12450, suffix: "+" },
+                { label: "Repositories Indexed", value: 241080, suffix: "" },
+                { label: "Commits Logged", value: 894520, suffix: "+" },
+                { label: "Frameworks Detected", value: 48, suffix: "" },
+                { label: "DNA Profiles Created", value: 9850, suffix: "" }
+              ].map((stat, idx) => (
+                <div key={idx} className="space-y-1.5">
+                  <div className="text-xl md:text-2xl font-bold font-space-grotesk text-accent">
+                    <CounterUp target={stat.value} suffix={stat.suffix} />
+                  </div>
+                  <div className="text-[9px] text-text-secondary uppercase tracking-wider">{stat.label}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* 3. Features Section (Major Upgrade) */}
+        <section id="features" className="py-24 bg-[#0a0e14]">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="text-center max-w-2xl mx-auto space-y-3">
+              <span className="text-[10px] font-bold text-accent uppercase tracking-widest">Platform Core</span>
               <h2 className="text-3xl font-bold font-space-grotesk text-text-primary sm:text-4xl">
-                Analytics Tailored for Engineering Excellence
+                Analytics Reimagined for Engineers
               </h2>
-              <p className="mt-4 text-text-secondary text-sm sm:text-base">
-                We compute raw repository histories, language structures, and pull request data, delivering a transparent diagnostic.
+              <p className="text-text-secondary text-xs leading-relaxed">
+                DevTrack bridges the gap between raw commits and engineering insight. We index repository architectures, and catalog code blueprints.
               </p>
             </div>
 
-            <div className="mt-16 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
-              {/* Feature 1 */}
-              <div className="rounded-xl border border-border bg-surface p-6 flex flex-col">
-                <div className="h-10 w-10 rounded-lg bg-accent/10 text-accent flex items-center justify-center mb-4">
-                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                  </svg>
-                </div>
-                <h3 className="text-base font-bold text-text-primary font-space-grotesk">Coding Consistency</h3>
-                <p className="mt-2 text-xs text-text-secondary leading-relaxed flex-1">
-                  Grade commit regularity and streak habits instead of simple lines of code. Understand coding momentum.
-                </p>
-              </div>
-
-              {/* Feature 2 */}
-              <div className="rounded-xl border border-border bg-surface p-6 flex flex-col">
-                <div className="h-10 w-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center mb-4">
-                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                  </svg>
-                </div>
-                <h3 className="text-base font-bold text-text-primary font-space-grotesk">Repository Quality</h3>
-                <p className="mt-2 text-xs text-text-secondary leading-relaxed flex-1">
-                  Evaluate descriptions, documentation index, star thresholds, and issue resolutions. Reward well-documented projects.
-                </p>
-              </div>
-
-              {/* Feature 3 */}
-              <div className="rounded-xl border border-border bg-surface p-6 flex flex-col">
-                <div className="h-10 w-10 rounded-lg bg-warning/10 text-warning flex items-center justify-center mb-4">
-                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                </div>
-                <h3 className="text-base font-bold text-text-primary font-space-grotesk">Technical Diversity</h3>
-                <p className="mt-2 text-xs text-text-secondary leading-relaxed flex-1">
-                  Grade codebases across technologies, calculating ecosystem depth and specialization indices.
-                </p>
-              </div>
-
-              {/* Feature 4 */}
-              <div className="rounded-xl border border-border bg-surface p-6 flex flex-col">
-                <div className="h-10 w-10 rounded-lg bg-danger/10 text-danger flex items-center justify-center mb-4">
-                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                  </svg>
-                </div>
-                <h3 className="text-base font-bold text-text-primary font-space-grotesk">Open Source Impact</h3>
-                <p className="mt-2 text-xs text-text-secondary leading-relaxed flex-1">
-                  Synthesize external contributions, pull request merges, forks, and issues. Discover developer collaboration.
-                </p>
-              </div>
-            </div>
+            {/* Grid of feature blocks */}
+            <motion.div
+              variants={containerVariants}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, margin: "-100px" }}
+              className="mt-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+            >
+              {[
+                {
+                  title: "Developer DNA",
+                  icon: Sparkles,
+                  color: "text-accent border-accent/20 bg-accent/5",
+                  desc: "Calculate engineering personality styles, dimensions, habits, and career compatibility models from push events.",
+                  why: "Helps developers discover strengths and match roles."
+                },
+                {
+                  title: "Repo Intelligence",
+                  icon: Folder,
+                  color: "text-[#3FB950] border-[#238636]/20 bg-[#238636]/5",
+                  desc: "Audits repository metadata, documentation coverage, dependabot security settings, and checklists.",
+                  why: "Find which directories need cleanup or licenses."
+                },
+                {
+                  title: "AI Insights",
+                  icon: Brain,
+                  color: "text-[#BC8CFF] border-[#BC8CFF]/20 bg-[#BC8CFF]/5",
+                  desc: "Generates natural language summaries outlining strengths, weaknesses, and custom roadmap milestones.",
+                  why: "Translate raw metrics into career growth steps."
+                },
+                {
+                  title: "Time Machine",
+                  icon: Clock,
+                  color: "text-[#D29922] border-[#D29922]/20 bg-[#D29922]/5",
+                  desc: "Interactive commit activity replay showing code velocity milestones, addition sizes, and branch metrics.",
+                  why: "Trace product cycles and release momentum."
+                },
+                {
+                  title: "Ecosystem Languages",
+                  icon: Compass,
+                  color: "text-[#FF7B72] border-[#FF7B72]/20 bg-[#FF7B72]/5",
+                  desc: "Extracts language distribution values, computing balance metrics to map stack polyglot profiles.",
+                  why: "Shows your technical diversity and stack focus."
+                },
+                {
+                  title: "Coding Calendar",
+                  icon: Calendar,
+                  color: "text-[#79C0FF] border-[#79C0FF]/20 bg-[#79C0FF]/5",
+                  desc: "Animated heatmaps mapping daily contributions, streaks, active hours, and holiday schedules.",
+                  why: "Visualize when you write code most consistently."
+                },
+                {
+                  title: "Developer Score",
+                  icon: Award,
+                  color: "text-[#FFC627] border-[#FFC627]/20 bg-[#FFC627]/5",
+                  desc: "Algorithmic score indexing capability across quality, documentation, community, scale, and consistency.",
+                  why: "A comprehensive benchmark of codebase standards."
+                },
+                {
+                  title: "GitHub Wrapped",
+                  icon: Gift,
+                  color: "text-danger border-danger/20 bg-danger/5",
+                  desc: "A shareable cinematic recap of your biggest achievements, milestones, top repository, and code percentile.",
+                  why: "A gorgeous yearly recap card for socials."
+                }
+              ].map((feat, idx) => {
+                const Icon = feat.icon;
+                return (
+                  <motion.div
+                    key={idx}
+                    variants={childVariants}
+                    className="group rounded-xl border border-border bg-[#161B22]/30 p-6 flex flex-col justify-between hover:bg-[#161B22]/60 hover:border-text-secondary/40 transition-all duration-300 relative overflow-hidden"
+                  >
+                    <div className="space-y-4">
+                      <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${feat.color}`}>
+                        <Icon size={18} />
+                      </div>
+                      <div className="space-y-2">
+                        <h3 className="text-sm font-bold text-text-primary font-space-grotesk uppercase tracking-wider">{feat.title}</h3>
+                        <p className="text-[10px] text-text-secondary leading-relaxed font-mono">{feat.desc}</p>
+                      </div>
+                    </div>
+                    <div className="text-[9px] text-[#8B949E] border-t border-border/40 mt-4 pt-2 font-mono italic">
+                      🎯 Why it matters: {feat.why}
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </motion.div>
           </div>
         </section>
 
-        {/* 3. Developer Score Engine Info Section */}
-        <section id="score-engine" className="py-20 bg-background">
+        {/* 4. Live Product Preview (Interactive Mock Dashboard) */}
+        <section className="py-24 border-t border-b border-[#30363D]/50 bg-[#0D1117] relative">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:gap-8 items-center">
-              {/* Left Column */}
-              <div className="lg:col-span-6 flex flex-col justify-center text-left">
-                <span className="text-xs font-semibold uppercase tracking-wider text-accent mb-3">
-                  Score Architecture
-                </span>
-                <h2 className="text-3xl font-bold font-space-grotesk text-text-primary sm:text-4xl">
-                  The Dev-Track Index (0-100)
-                </h2>
-                <p className="mt-4 text-sm text-text-secondary leading-relaxed">
-                  Most platforms count simple stars. We built an algorithmic index mapping developer codebases across five distinct dimensions, evaluating overall capability.
-                </p>
+            <div className="text-center max-w-2xl mx-auto space-y-3 mb-12">
+              <span className="text-[10px] font-bold text-[#3FB950] uppercase tracking-widest">Interactive Preview</span>
+              <h2 className="text-3xl font-bold font-space-grotesk text-text-primary sm:text-4xl">
+                Experience DevTrack in Real-Time
+              </h2>
+              <p className="text-text-secondary text-xs leading-relaxed">
+                Toggle dimensions to simulate dashboard responsive layouts across desktop, tablet, and mobile views.
+              </p>
 
-                <div className="mt-8 space-y-4">
-                  <div className="flex gap-3">
-                    <span className="text-success font-semibold font-mono text-sm">01</span>
-                    <div>
-                      <h4 className="text-sm font-semibold text-text-primary">Logarithmic Stars Grading</h4>
-                      <p className="text-xs text-text-secondary mt-1">Calculates averaged stargazers on logarithmic curves, prevent outlier distortion.</p>
+              {/* View toggle tabs */}
+              <div className="inline-flex items-center gap-1.5 p-1 rounded-xl bg-[#161B22]/60 border border-[#30363D]/60 mt-4">
+                {[
+                  { id: "desktop", label: "Desktop", icon: Laptop },
+                  { id: "tablet", label: "Tablet", icon: Tablet },
+                  { id: "mobile", label: "Mobile", icon: Smartphone }
+                ].map(dev => {
+                  const Icon = dev.icon;
+                  const isActive = previewDevice === dev.id;
+                  return (
+                    <button
+                      key={dev.id}
+                      onClick={() => setPreviewDevice(dev.id as any)}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all uppercase tracking-wider cursor-pointer ${
+                        isActive ? "bg-accent text-white" : "text-text-secondary hover:text-text-primary"
+                      }`}
+                    >
+                      <Icon size={12} />
+                      <span>{dev.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Dashboard Mock Window Container */}
+            <div className="flex justify-center">
+              <motion.div
+                animate={{
+                  width: previewDevice === "desktop" ? "100%" : previewDevice === "tablet" ? "640px" : "320px"
+                }}
+                className="max-w-4xl w-full border border-border bg-[#161B22]/30 rounded-xl shadow-2xl overflow-hidden font-mono text-[10px]"
+              >
+                {/* Header info */}
+                <div className="flex items-center justify-between border-b border-border bg-[#0D1117] px-4 py-3">
+                  <div className="flex items-center gap-1.5">
+                    <span className="h-2 w-2 rounded-full bg-accent animate-pulse" />
+                    <span className="text-[9px] text-[#8B949E] font-semibold">DevTrack Intelligence Workspace</span>
+                  </div>
+                  <span className="text-[9px] text-text-secondary">Demo Mode</span>
+                </div>
+
+                {/* Dashboard layout */}
+                <div className="p-5 space-y-4">
+                  {/* Grid blocks */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* Health Card */}
+                    <div className="rounded-lg border border-border bg-[#0D1117]/60 p-4 space-y-2">
+                      <div className="flex items-center justify-between text-[#8B949E]">
+                        <span>Repository Health</span>
+                        <Activity size={12} className="text-[#3FB950]" />
+                      </div>
+                      <div className="text-lg font-bold text-text-primary font-space-grotesk">S (94/100)</div>
+                      <p className="text-[8px] text-text-secondary leading-relaxed">No critical vulnerabilities or licensing warnings detected.</p>
+                    </div>
+
+                    {/* Commit activity */}
+                    <div className="rounded-lg border border-border bg-[#0D1117]/60 p-4 space-y-2">
+                      <div className="flex items-center justify-between text-[#8B949E]">
+                        <span>Coding Streak</span>
+                        <TrendingUp size={12} className="text-accent" />
+                      </div>
+                      <div className="text-lg font-bold text-text-primary font-space-grotesk">45 Days</div>
+                      <p className="text-[8px] text-text-secondary leading-relaxed">Weekly average: 15.3 commits logged across major branches.</p>
+                    </div>
+
+                    {/* OS Contributions */}
+                    <div className="rounded-lg border border-border bg-[#0D1117]/60 p-4 space-y-2">
+                      <div className="flex items-center justify-between text-[#8B949E]">
+                        <span>Open Source Index</span>
+                        <GitPullRequest size={12} className="text-[#BC8CFF]" />
+                      </div>
+                      <div className="text-lg font-bold text-text-primary font-space-grotesk">84 PRs Merged</div>
+                      <p className="text-[8px] text-text-secondary leading-relaxed">Active collaborator status mapped globally.</p>
                     </div>
                   </div>
-                  <div className="flex gap-3">
-                    <span className="text-success font-semibold font-mono text-sm">02</span>
-                    <div>
-                      <h4 className="text-sm font-semibold text-text-primary">Ecosystem Entropy</h4>
-                      <p className="text-xs text-text-secondary mt-1">Measures language diversity ratios via balance algorithms, distinguishing generalists from specialists.</p>
-                    </div>
-                  </div>
-                  <div className="flex gap-3">
-                    <span className="text-success font-semibold font-mono text-sm">03</span>
-                    <div>
-                      <h4 className="text-sm font-semibold text-text-primary">Complexity Verification</h4>
-                      <p className="text-xs text-text-secondary mt-1">Synthesizes file sizes and build configs to verify source project scope vs simple scripts.</p>
+
+                  {/* Contribution heatmap simulation */}
+                  <div className="rounded-lg border border-border bg-[#0D1117]/60 p-4 space-y-3">
+                    <span className="text-[9px] text-[#8B949E] font-bold block uppercase tracking-wider">Contribution Density Timeline</span>
+                    <div className="flex flex-wrap gap-1">
+                      {[...Array(60)].map((_, idx) => {
+                        const colors = ["bg-[#161b22]", "bg-[#0e4429]", "bg-[#006d32]", "bg-[#26a641]", "bg-[#39d353]"];
+                        // Pick pseudo-random color based on index
+                        const colorIdx = (idx * 7 + 13) % colors.length;
+                        return (
+                          <div key={idx} className={`h-2.5 w-2.5 rounded-sm ${colors[colorIdx]}`} />
+                        );
+                      })}
                     </div>
                   </div>
                 </div>
-              </div>
-
-              {/* Right Column: Mathematical visual table */}
-              <div className="lg:col-span-6">
-                <div className="rounded-xl border border-border bg-surface p-6 font-mono text-xs text-text-secondary">
-                  <div className="flex items-center justify-between border-b border-border/80 pb-3 font-semibold text-text-primary">
-                    <span>DIMENSION</span>
-                    <span>WEIGHT</span>
-                    <span>METRIC DETAILS</span>
-                  </div>
-
-                  <div className="divide-y divide-border/50">
-                    <div className="flex items-center justify-between py-3">
-                      <span className="text-text-primary font-semibold">Consistency</span>
-                      <span>20%</span>
-                      <span>Commit days + consecutive streak</span>
-                    </div>
-                    <div className="flex items-center justify-between py-3">
-                      <span className="text-text-primary font-semibold">Repo Quality</span>
-                      <span>20%</span>
-                      <span>Documentation index + stars</span>
-                    </div>
-                    <div className="flex items-center justify-between py-3">
-                      <span className="text-text-primary font-semibold">Diversity</span>
-                      <span>20%</span>
-                      <span>Unique language count + entropy</span>
-                    </div>
-                    <div className="flex items-center justify-between py-3">
-                      <span className="text-text-primary font-semibold">Open Source</span>
-                      <span>20%</span>
-                      <span>Fork count + public merges</span>
-                    </div>
-                    <div className="flex items-center justify-between py-3">
-                      <span className="text-text-primary font-semibold">Complexity</span>
-                      <span>20%</span>
-                      <span>Code volume + config density</span>
-                    </div>
-                  </div>
-
-                  <div className="mt-4 rounded bg-background/50 p-3 text-[10px] leading-relaxed">
-                    <span className="text-accent font-semibold">Algorithm Note:</span> A score of 70+ indicates professional repository standards. A score of 90+ puts the profile in the top 3% of global developers.
-                  </div>
-                </div>
-              </div>
+              </motion.div>
             </div>
           </div>
         </section>
 
-        {/* 4. GitHub Wrapped & Final CTA */}
-        <section id="wrapped" className="py-20 border-t border-border bg-[#0a0e14] relative">
-          <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 text-center">
-            <span className="text-xs font-semibold uppercase tracking-wider text-accent">
-              Yearly Reports
-            </span>
-            <h2 className="text-3xl sm:text-4xl font-bold font-space-grotesk text-text-primary mt-2">
-              GitHub Wrapped 2026
-            </h2>
-            <p className="mt-4 text-sm text-text-secondary max-w-xl mx-auto leading-relaxed">
-              Unlock a shareable, premium report summarizing your primary language, longest coding streak, major achievements, and contributor percentile.
-            </p>
+        {/* 5. Wrapped Section (Redesigned Cinematic Panel) */}
+        <section id="wrapped" className="py-24 bg-[#0a0e14] relative overflow-hidden">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-accent/5 rounded-full blur-3xl pointer-events-none" />
 
-            {/* Simulated Wrapped Card */}
-            <div className="mt-10 max-w-sm mx-auto rounded-xl border border-border bg-[#121820] p-6 shadow-2xl relative overflow-hidden text-left font-mono">
-              <div className="absolute top-0 right-0 h-24 w-24 bg-accent/10 rounded-bl-full blur-xl pointer-events-none" />
+          <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 text-center space-y-8">
+            <div className="space-y-2">
+              <span className="text-[10px] font-bold text-accent uppercase tracking-widest">Yearly Retrospective</span>
+              <h2 className="text-4xl sm:text-5xl font-extrabold font-space-grotesk text-text-primary tracking-tight leading-[1.1]">
+                Your Entire Year of Coding — <br />
+                <span className="bg-gradient-to-r from-accent to-[#BC8CFF] bg-clip-text text-transparent">Wrapped.</span>
+              </h2>
+              <p className="text-text-secondary text-xs max-w-xl mx-auto leading-relaxed mt-2 font-mono">
+                Unlock a beautiful cinematic story summarizing your repository highlights, longest coding streak, top languages, and collaborator percentile.
+              </p>
+            </div>
+
+            {/* Interactive Preview Wrapped Card */}
+            <div className="max-w-sm mx-auto rounded-xl border border-border bg-[#121820] p-6 shadow-2xl relative overflow-hidden text-left font-mono border-accent/20">
+              <div className="absolute top-0 right-0 h-24 w-24 bg-accent/15 rounded-bl-full blur-xl pointer-events-none" />
               
               <div className="flex items-center justify-between border-b border-border/60 pb-3">
-                <span className="text-xs font-bold text-accent">DEVTRACK WRAPPED</span>
-                <span className="text-xs text-text-secondary">2026</span>
+                <span className="text-[10px] font-bold text-accent tracking-wider uppercase">DEVTRACK WRAPPED</span>
+                <span className="text-[10px] text-text-secondary">2026</span>
               </div>
 
               <div className="mt-5 space-y-4">
                 <div>
-                  <div className="text-[10px] text-text-secondary uppercase">TOP ECOSYSTEM</div>
-                  <div className="text-base font-bold font-space-grotesk text-text-primary">TypeScript</div>
+                  <div className="text-[8px] text-[#8B949E] uppercase tracking-wider">TOP ECOSYSTEM</div>
+                  <div className="text-lg font-bold font-space-grotesk text-text-primary">TypeScript</div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <div className="text-[10px] text-text-secondary uppercase">ACTIVE STREAK</div>
+                    <div className="text-[8px] text-[#8B949E] uppercase tracking-wider">ACTIVE STREAK</div>
                     <div className="text-sm font-bold text-text-primary">45 Days</div>
                   </div>
                   <div>
-                    <div className="text-[10px] text-text-secondary uppercase">COMMITS</div>
+                    <div className="text-[8px] text-[#8B949E] uppercase tracking-wider">COMMITS LOGGED</div>
                     <div className="text-sm font-bold text-text-primary">642 Pushes</div>
                   </div>
                 </div>
 
-                <div className="border-t border-border/40 pt-3">
-                  <div className="text-[10px] text-text-secondary uppercase">BIGGEST ACHIEVEMENT</div>
-                  <div className="text-xs font-bold text-success mt-0.5">Open Source Maverick</div>
-                  <p className="text-[10px] text-text-secondary mt-1">Accumulated 3,000+ stars on original source repositories.</p>
+                <div className="border-t border-border/40 pt-3 space-y-1">
+                  <div className="text-[8px] text-[#8B949E] uppercase tracking-wider">BIGGEST ACHIEVEMENT</div>
+                  <div className="text-xs font-bold text-[#3FB950]">Open Source Maverick</div>
+                  <p className="text-[9px] text-[#8B949E] leading-relaxed">Accumulated 3,000+ stars on original repositories.</p>
                 </div>
               </div>
 
-              <div className="mt-6 pt-3 border-t border-border/40 flex items-center justify-between text-[9px] text-text-secondary">
+              <div className="mt-6 pt-3 border-t border-border/40 flex items-center justify-between text-[8px] text-[#8B949E]">
                 <span>DEVTRACK.IO</span>
-                <span className="text-success font-semibold">TOP 1.8% WORLDWIDE</span>
+                <span className="text-[#3FB950] font-bold bg-[#238636]/10 border border-[#238636]/20 px-1.5 py-0.5 rounded uppercase">TOP 1.8% WORLDWIDE</span>
               </div>
             </div>
 
-            {/* Bottom Form */}
-            <div className="mt-16 max-w-md mx-auto">
-              <h3 className="text-lg font-bold font-space-grotesk text-text-primary">
-                Analyze your footprint instantly
-              </h3>
-              <form onSubmit={handleSearch} className="mt-4 flex flex-col sm:flex-row gap-2">
-                <input
-                  type="text"
-                  placeholder="Enter GitHub Username"
-                  value={searchUsername}
-                  onChange={(e) => setSearchUsername(e.target.value)}
-                  className="flex-1 px-4 py-2.5 rounded-lg border border-border bg-surface text-text-primary placeholder:text-text-secondary/50 text-xs font-semibold focus:border-accent focus:outline-none"
-                  required
-                />
-                <button
-                  type="submit"
-                  disabled={isSearching}
-                  className="px-4 py-2.5 rounded-lg bg-primary hover:bg-success text-white font-semibold text-xs transition-all disabled:opacity-50"
-                >
-                  {isSearching ? "Processing..." : "Generate Analysis"}
-                </button>
-              </form>
+            {/* Preview Wrapped Button */}
+            <div className="pt-4">
+              <button
+                onClick={handleDemoTrigger}
+                className="inline-flex items-center gap-2 rounded-lg bg-accent px-5 py-3 text-xs font-bold text-white hover:bg-accent/90 transition-all shadow-lg shadow-accent/15 cursor-pointer active:scale-95"
+              >
+                <span>Preview Your Wrapped</span>
+                <ChevronRight size={14} />
+              </button>
+            </div>
+          </div>
+        </section>
+
+        {/* 6. Developer Journey Timeline */}
+        <section className="py-24 border-t border-border bg-[#0D1117] relative">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="text-center max-w-2xl mx-auto space-y-3 mb-16">
+              <span className="text-[10px] font-bold text-[#BC8CFF] uppercase tracking-widest">Onboarding Timeline</span>
+              <h2 className="text-3xl font-bold font-space-grotesk text-text-primary sm:text-4xl">
+                The Developer Journey
+              </h2>
+              <p className="text-text-secondary text-xs leading-relaxed">
+                See how DevTrack indexes your profile and extracts insights sequentially.
+              </p>
+            </div>
+
+            {/* Horizontal Timeline */}
+            <div className="grid grid-cols-2 md:grid-cols-7 gap-6 text-center text-xs font-mono relative">
+              {[
+                { step: "1", title: "GitHub Login", desc: "OAuth verification" },
+                { step: "2", title: "Repo Sync", desc: "Metadata indexing" },
+                { step: "3", title: "Analytics", desc: "Streaks calculation" },
+                { step: "4", title: "Developer DNA", desc: "Personality model" },
+                { step: "5", title: "AI Insights", desc: "Automated roadmaps" },
+                { step: "6", title: "Career Match", desc: "Platform index" },
+                { step: "7", title: "Wrapped", desc: "Cinematic summaries" }
+              ].map((item, idx) => (
+                <div key={idx} className="space-y-3 relative group">
+                  <div className="h-8 w-8 rounded-full border border-accent bg-[#0D1117] text-accent text-xs font-bold flex items-center justify-center mx-auto z-10 relative">
+                    {item.step}
+                  </div>
+                  <div>
+                    <div className="font-bold text-text-primary">{item.title}</div>
+                    <p className="text-[9px] text-text-secondary mt-0.5">{item.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* 7. Call To Action (Premium Backdrop Mesh) */}
+        <section className="relative overflow-hidden py-24 bg-gradient-to-r from-[#161B22] to-[#0D1117] border-t border-border">
+          <div className="absolute inset-0 bg-[#000000]/30 pointer-events-none" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[300px] bg-accent/5 rounded-full blur-[100px] pointer-events-none" />
+
+          <div className="relative mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 text-center z-10 space-y-6">
+            <h2 className="text-3xl sm:text-4xl font-extrabold font-space-grotesk text-text-primary tracking-tight leading-[1.2]">
+              Discover the Story Behind Your Code.
+            </h2>
+            <p className="text-text-secondary text-xs max-w-md mx-auto leading-relaxed font-mono">
+              Join thousands of developers grading consistency, scoring repository quality, and reviewing technical growth.
+            </p>
+            <div className="flex flex-wrap items-center justify-center gap-3 pt-4">
+              <button
+                onClick={() => router.push("/dashboard?user=demo")}
+                className="rounded-lg bg-accent px-6 py-3 text-xs font-bold text-white hover:bg-accent/90 transition-all shadow-lg shadow-accent/15 cursor-pointer active:scale-95"
+              >
+                Analyze My GitHub
+              </button>
+              <button
+                onClick={handleDemoTrigger}
+                className="rounded-lg border border-border bg-[#161B22]/60 px-6 py-3 text-xs font-bold text-text-secondary hover:text-text-primary hover:bg-[#161B22] transition-all cursor-pointer active:scale-95"
+              >
+                View Sandbox Demo
+              </button>
             </div>
           </div>
         </section>
