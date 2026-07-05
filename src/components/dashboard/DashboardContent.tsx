@@ -18,6 +18,7 @@ import ProfileComparisonTab from "./ProfileComparisonTab";
 import SettingsTab from "./SettingsTab";
 import WrappedTab from "./WrappedTab";
 import TimeMachineTab from "./TimeMachineTab";
+import DeveloperDnaTab from "./DeveloperDnaTab";
 import DashboardHeader from "./DashboardHeader";
 import QuickActionsFAB from "./QuickActionsFAB";
 import CommandPalette from "./CommandPalette";
@@ -43,12 +44,14 @@ import {
   ChevronLeft,
   ChevronRight,
   Search,
-  History
+  History,
+  Dna
 } from "lucide-react";
 
 type TabId =
   | "overview"
   | "repos"
+  | "dna"
   | "contrib"
   | "calendar"
   | "health"
@@ -192,6 +195,7 @@ export default function DashboardContent() {
 
   const tabsList = [
     { id: "overview", label: "Overview", icon: LayoutGrid },
+    { id: "dna", label: "Developer DNA", icon: Dna },
     { id: "repos", label: "Repositories", icon: Folder },
     { id: "calendar", label: "Coding Calendar", icon: Calendar },
     { id: "health", label: "Repo Health", icon: Activity },
@@ -239,6 +243,8 @@ export default function DashboardContent() {
     switch (activeTab) {
       case "overview":
         return <OverviewTab data={dashboardData} />;
+      case "dna":
+        return <DeveloperDnaTab data={dashboardData} githubToken={githubToken} />;
       case "repos":
         return <RepositoriesTab data={dashboardData} githubToken={githubToken} />;
       case "calendar":
