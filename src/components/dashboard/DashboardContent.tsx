@@ -21,6 +21,7 @@ import TimeMachineTab from "./TimeMachineTab";
 import DeveloperDnaTab from "./DeveloperDnaTab";
 import DashboardHeader from "./DashboardHeader";
 import DeveloperWorkspaceTab from "./DeveloperWorkspaceTab";
+import DeveloperCareerHub from "./DeveloperCareerHub";
 import QuickActionsFAB from "./QuickActionsFAB";
 import CommandPalette from "./CommandPalette";
 import KeyboardShortcutsModal from "./KeyboardShortcutsModal";
@@ -47,7 +48,15 @@ import {
   Search,
   History,
   Dna,
-  Layers
+  Layers,
+  Briefcase,
+  FileText,
+  Globe,
+  TrendingUp,
+  HelpCircle,
+  Compass,
+  GitPullRequest,
+  CheckCircle
 } from "lucide-react";
 
 type TabId =
@@ -65,7 +74,16 @@ type TabId =
   | "ai"
   | "compare"
   | "wrapped"
-  | "settings";
+  | "settings"
+  | "career-overview"
+  | "career-resume"
+  | "career-portfolio"
+  | "career-skills"
+  | "career-interview"
+  | "career-roadmap"
+  | "career-open-source"
+  | "career-certs"
+  | "career-readiness";
 
 export default function DashboardContent() {
   const searchParams = useSearchParams();
@@ -213,7 +231,7 @@ export default function DashboardContent() {
     }
   };
 
-  const tabsList = [
+  const coreTabsList = [
     { id: "overview", label: "Overview", icon: LayoutGrid },
     { id: "workspace", label: "Workspace", icon: Layers },
     { id: "dna", label: "Developer DNA", icon: Dna },
@@ -229,6 +247,20 @@ export default function DashboardContent() {
     { id: "wrapped", label: "Wrapped", icon: Gift },
     { id: "settings", label: "Settings", icon: Settings },
   ] as const;
+
+  const careerTabsList = [
+    { id: "career-overview", label: "Career Overview", icon: Briefcase },
+    { id: "career-resume", label: "Resume Intelligence", icon: FileText },
+    { id: "career-portfolio", label: "Portfolio Review", icon: Globe },
+    { id: "career-skills", label: "Skill Gap Analysis", icon: TrendingUp },
+    { id: "career-interview", label: "Interview Readiness", icon: HelpCircle },
+    { id: "career-roadmap", label: "Learning Roadmap", icon: Compass },
+    { id: "career-open-source", label: "Open Source Journey", icon: GitPullRequest },
+    { id: "career-certs", label: "Certifications", icon: Award },
+    { id: "career-readiness", label: "Job Readiness Score", icon: CheckCircle },
+  ] as const;
+
+  const tabsList = [...coreTabsList, ...careerTabsList];
 
   // Keyboard navigation listener (Arrow keys to switch tabs)
   useEffect(() => {
@@ -300,6 +332,22 @@ export default function DashboardContent() {
         return <WrappedTab data={dashboardData} />;
       case "settings":
         return <SettingsTab data={dashboardData} onTokenUpdate={handleTokenUpdate} />;
+      case "career-overview":
+      case "career-resume":
+      case "career-portfolio":
+      case "career-skills":
+      case "career-interview":
+      case "career-roadmap":
+      case "career-open-source":
+      case "career-certs":
+      case "career-readiness":
+        return (
+          <DeveloperCareerHub
+            data={dashboardData}
+            activeSubTab={activeTab}
+            setActiveSubTab={(t) => setActiveTab(t as TabId)}
+          />
+        );
       default:
         return <OverviewTab data={dashboardData} />;
     }
@@ -370,7 +418,49 @@ export default function DashboardContent() {
           </div>
 
           <nav className="flex flex-col gap-1.5 border-border relative select-none">
-            {tabsList.map(tab => {
+            {coreTabsList.map(tab => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
+
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id as TabId)}
+                  className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all focus:outline-none w-full relative group cursor-pointer ${
+                    isActive
+                      ? "text-text-primary bg-surface-secondary border border-border"
+                      : "border border-transparent text-text-secondary hover:text-text-primary hover:bg-surface/50"
+                  }`}
+                  title={isSidebarCollapsed ? tab.label : undefined}
+                >
+                  <Icon size={16} className={`flex-shrink-0 ${isActive ? "text-accent" : "text-text-secondary group-hover:text-text-primary"}`} />
+                  
+                  {!isSidebarCollapsed && (
+                    <span className="transition-all duration-200">{tab.label}</span>
+                  )}
+
+                  {/* Collapsed Tooltip helper */}
+                  {isSidebarCollapsed && (
+                    <div className="absolute left-full ml-3 px-2.5 py-1.5 bg-[#161B22] border border-border text-[10px] text-text-primary font-bold rounded-lg shadow-xl opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100 transition-all pointer-events-none z-50">
+                      {tab.label}
+                    </div>
+                  )}
+                </button>
+              );
+            })}
+
+            {/* Career Hub Header */}
+            <div className="border-t border-border/40 my-2 pt-2">
+              {!isSidebarCollapsed ? (
+                <span className="px-4 py-1 text-[9px] font-bold text-[#8B949E] uppercase tracking-widest block">
+                  🚀 Career Hub
+                </span>
+              ) : (
+                <div className="h-px bg-border/40 my-1 mx-2" />
+              )}
+            </div>
+
+            {careerTabsList.map(tab => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
 
