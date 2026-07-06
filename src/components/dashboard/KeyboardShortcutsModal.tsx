@@ -16,7 +16,11 @@ export default function KeyboardShortcutsModal({
 
   const shortcutsList = [
     { keys: ["Ctrl", "K"], label: "Global Command Palette" },
+    { keys: ["Ctrl", "Shift", "N"], label: "Create New Note (Workspace)" },
+    { keys: ["Ctrl", "Shift", "R"], label: "Repository Search (Workspace)" },
+    { keys: ["Ctrl", "/"], label: "Open Keyboard Shortcuts Help" },
     { keys: ["G", "O"], label: "Jump to Overview Tab" },
+    { keys: ["G", "D"], label: "Jump to Developer Workspace" },
     { keys: ["G", "R"], label: "Jump to Repositories Tab" },
     { keys: ["G", "C"], label: "Jump to Contributions Tab" },
     { keys: ["G", "L"], label: "Jump to Languages Tab" },

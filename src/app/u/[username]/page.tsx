@@ -330,7 +330,7 @@ export default function PublicProfilePage() {
     return (
       <div className="flex min-h-screen flex-col bg-background select-none">
         <Navbar currentUser={null} onLoginSuccess={() => {}} onLogout={() => {}} onOpenSearch={() => {}} />
-        <div className="flex-grow flex flex-col items-center justify-center text-text-secondary font-mono">
+        <div className="flex-grow flex flex-col items-center justify-center text-text-secondary font-mono pt-24">
           <svg className="animate-spin h-8 w-8 text-accent mb-4" fill="none" viewBox="0 0 24 24">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
@@ -346,7 +346,7 @@ export default function PublicProfilePage() {
     return (
       <div className="flex min-h-screen flex-col bg-background">
         <Navbar currentUser={null} onLoginSuccess={() => {}} onLogout={() => {}} onOpenSearch={() => {}} />
-        <div className="flex-grow flex flex-col items-center justify-center p-8 text-center max-w-md mx-auto font-mono">
+        <div className="flex-grow flex flex-col items-center justify-center p-8 text-center max-w-md mx-auto font-mono pt-24">
           <div className="h-12 w-12 rounded-lg bg-surface border border-border flex items-center justify-center text-text-secondary mb-4">
             <ShieldAlert size={20} />
           </div>
@@ -364,7 +364,7 @@ export default function PublicProfilePage() {
     return (
       <div className="flex min-h-screen flex-col bg-background">
         <Navbar currentUser={null} onLoginSuccess={() => {}} onLogout={() => {}} onOpenSearch={() => {}} />
-        <div className="flex-grow flex flex-col items-center justify-center p-8 text-center max-w-md mx-auto font-mono">
+        <div className="flex-grow flex flex-col items-center justify-center p-8 text-center max-w-md mx-auto font-mono pt-24">
           <div className="h-12 w-12 rounded-lg bg-danger/10 text-danger flex items-center justify-center mb-4">
             <AlertCircle size={20} />
           </div>
@@ -431,7 +431,7 @@ export default function PublicProfilePage() {
       )}
 
       {/* Main Public Profile Page Layout */}
-      <main className="flex-grow mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <main className="flex-grow mx-auto w-full max-w-7xl px-4 pt-24 pb-8 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
         
         {/* Left Column: Personal Card & Recruiter Snapshot (Span 4) */}
         <div className="lg:col-span-4 space-y-6">

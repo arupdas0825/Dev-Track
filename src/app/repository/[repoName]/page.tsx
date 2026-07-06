@@ -389,7 +389,7 @@ export default function RepositoryDetailPage() {
     return (
       <div className="flex min-h-screen flex-col bg-background">
         <Navbar currentUser={currentUser} onLoginSuccess={handleLoginSuccess} onLogout={handleLogout} />
-        <div className="flex-1 flex flex-col items-center justify-center p-8 text-text-secondary">
+        <div className="flex-1 flex flex-col items-center justify-center p-8 text-text-secondary pt-24">
           <Loader2 className="animate-spin h-10 w-10 text-accent mb-4" />
           <span className="text-sm font-semibold tracking-wide font-mono">Running Codebase Security & Health Indexer...</span>
         </div>
@@ -401,7 +401,7 @@ export default function RepositoryDetailPage() {
     return (
       <div className="flex min-h-screen flex-col bg-background">
         <Navbar currentUser={currentUser} onLoginSuccess={handleLoginSuccess} onLogout={handleLogout} />
-        <div className="flex-1 flex flex-col items-center justify-center p-8 text-center max-w-md mx-auto">
+        <div className="flex-1 flex flex-col items-center justify-center p-8 text-center max-w-md mx-auto pt-24">
           <div className="h-12 w-12 rounded-lg bg-danger/10 text-danger flex items-center justify-center mb-4">
             <AlertCircle className="h-6 w-6" />
           </div>
@@ -436,7 +436,7 @@ export default function RepositoryDetailPage() {
     <div className="flex min-h-screen flex-col bg-background selection:bg-accent/30 selection:text-text-primary">
       <Navbar currentUser={currentUser} onLoginSuccess={handleLoginSuccess} onLogout={handleLogout} />
 
-      <main className="flex-1 mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-6">
+      <main className="flex-1 mx-auto w-full max-w-7xl px-4 pt-24 pb-8 sm:px-6 lg:px-8 space-y-6">
         
         {/* Back navigation & Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border/60 pb-6">

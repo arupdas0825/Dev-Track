@@ -20,6 +20,7 @@ import WrappedTab from "./WrappedTab";
 import TimeMachineTab from "./TimeMachineTab";
 import DeveloperDnaTab from "./DeveloperDnaTab";
 import DashboardHeader from "./DashboardHeader";
+import DeveloperWorkspaceTab from "./DeveloperWorkspaceTab";
 import QuickActionsFAB from "./QuickActionsFAB";
 import CommandPalette from "./CommandPalette";
 import KeyboardShortcutsModal from "./KeyboardShortcutsModal";
@@ -45,11 +46,13 @@ import {
   ChevronRight,
   Search,
   History,
-  Dna
+  Dna,
+  Layers
 } from "lucide-react";
 
 type TabId =
   | "overview"
+  | "workspace"
   | "repos"
   | "dna"
   | "contrib"
@@ -78,6 +81,8 @@ export default function DashboardContent() {
 
   // Sidebar customizations
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isFocusMode, setIsFocusMode] = useState(false);
+  const [newNoteTrigger, setNewNoteTrigger] = useState<(() => void) | null>(null);
 
   const usernameParam = searchParams.get("user") || "";
 
@@ -158,13 +163,28 @@ export default function DashboardContent() {
   // Keyboard Shortcuts Hook
   useKeyboardShortcuts({
     onOpenCommandPalette: () => setIsCommandPaletteOpen(true),
-    onSelectTab: (tabId) => setActiveTab(tabId as TabId),
+    onSelectTab: (tabId) => {
+      setActiveTab(tabId as TabId);
+      if (tabId !== "workspace") setIsFocusMode(false);
+    },
     onOpenShortcutsHelp: () => setIsShortcutsModalOpen(true),
     onCloseDialogs: () => {
       setIsCommandPaletteOpen(false);
       setIsShortcutsModalOpen(false);
       setIsExportModalOpen(false);
+      setIsFocusMode(false);
     },
+    onNewNote: () => {
+      setActiveTab("workspace");
+      setIsFocusMode(false);
+      setTimeout(() => {
+        if (newNoteTrigger) newNoteTrigger();
+      }, 50);
+    },
+    onRepoSearch: () => {
+      setActiveTab("workspace");
+      setIsCommandPaletteOpen(true);
+    }
   });
 
   const isLoading = !dashboardData && (profileLoading || reposLoading || analyticsLoading);
@@ -195,6 +215,7 @@ export default function DashboardContent() {
 
   const tabsList = [
     { id: "overview", label: "Overview", icon: LayoutGrid },
+    { id: "workspace", label: "Workspace", icon: Layers },
     { id: "dna", label: "Developer DNA", icon: Dna },
     { id: "repos", label: "Repositories", icon: Folder },
     { id: "calendar", label: "Coding Calendar", icon: Calendar },
@@ -243,6 +264,16 @@ export default function DashboardContent() {
     switch (activeTab) {
       case "overview":
         return <OverviewTab data={dashboardData} />;
+      case "workspace":
+        return (
+          <DeveloperWorkspaceTab
+            data={dashboardData}
+            githubToken={githubToken}
+            isFocusMode={isFocusMode}
+            setIsFocusMode={setIsFocusMode}
+            registerNewNoteCallback={(cb) => setNewNoteTrigger(() => cb)}
+          />
+        );
       case "dna":
         return <DeveloperDnaTab data={dashboardData} githubToken={githubToken} />;
       case "repos":
@@ -278,7 +309,7 @@ export default function DashboardContent() {
     return (
       <div className="flex min-h-screen flex-col bg-background">
         <Navbar currentUser={currentUser} onLoginSuccess={handleLoginSuccess} onLogout={handleLogout} onOpenSearch={() => setIsCommandPaletteOpen(true)} />
-        <div className="flex-1 flex flex-col items-center justify-center p-8 text-text-secondary">
+        <div className="flex-1 flex flex-col items-center justify-center p-8 text-text-secondary pt-24">
           <svg className="animate-spin h-10 w-10 text-accent mb-4" fill="none" viewBox="0 0 24 24">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
@@ -293,7 +324,7 @@ export default function DashboardContent() {
     return (
       <div className="flex min-h-screen flex-col bg-background">
         <Navbar currentUser={currentUser} onLoginSuccess={handleLoginSuccess} onLogout={handleLogout} onOpenSearch={() => setIsCommandPaletteOpen(true)} />
-        <div className="flex-1 flex flex-col items-center justify-center p-8 text-center max-w-md mx-auto">
+        <div className="flex-1 flex flex-col items-center justify-center p-8 text-center max-w-md mx-auto pt-24">
           <div className="h-12 w-12 rounded-lg bg-danger/10 text-danger flex items-center justify-center mb-4">
             <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -316,10 +347,13 @@ export default function DashboardContent() {
     <div className="flex min-h-screen flex-col bg-background relative selection:bg-accent/30">
       <Navbar currentUser={currentUser} onLoginSuccess={handleLoginSuccess} onLogout={handleLogout} onOpenSearch={() => setIsCommandPaletteOpen(true)} />
 
-      <div className="flex-1 mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8 flex flex-col md:flex-row gap-8">
+      <div className={`flex-1 mx-auto w-full px-4 pt-24 pb-8 sm:px-6 lg:px-8 flex flex-col md:flex-row gap-8 transition-all duration-300 ${
+        isFocusMode ? "max-w-4xl" : "max-w-7xl"
+      }`}>
         
         {/* Collapsible Sidebar Nav */}
-        <aside className={`flex-shrink-0 transition-all duration-300 md:block hidden ${isSidebarCollapsed ? "w-16" : "w-64"}`}>
+        {!isFocusMode && (
+          <aside className={`flex-shrink-0 transition-all duration-300 md:block hidden ${isSidebarCollapsed ? "w-16" : "w-64"}`}>
           <div className="mb-4">
             <button
               onClick={() => setIsCommandPaletteOpen(true)}
@@ -381,9 +415,11 @@ export default function DashboardContent() {
             </button>
           </nav>
         </aside>
+        )}
 
         {/* Mobile Horizontal scrollbar nav */}
-        <aside className="md:hidden flex-shrink-0 border-b border-border pb-3">
+        {!isFocusMode && (
+          <aside className="md:hidden flex-shrink-0 border-b border-border pb-3">
           <nav className="flex flex-row overflow-x-auto gap-1.5 scrollbar-none pb-1">
             {tabsList.map(tab => {
               const Icon = tab.icon;
@@ -405,11 +441,12 @@ export default function DashboardContent() {
             })}
           </nav>
         </aside>
+        )}
 
         {/* Tab Content window */}
         <div className="flex-1 min-w-0">
-          {dashboardData && <DashboardHeader data={dashboardData} />}
-          <div className="border border-border bg-surface/20 rounded-xl p-6 transition-all duration-300">
+          {dashboardData && !isFocusMode && <DashboardHeader data={dashboardData} />}
+          <div className={isFocusMode ? "transition-all duration-300" : "border border-border bg-surface/20 rounded-xl p-6 transition-all duration-300"}>
             <AnimatePresence mode="wait">
               <motion.div
                 key={activeTab}

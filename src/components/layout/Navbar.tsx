@@ -41,13 +41,13 @@ export default function Navbar({ currentUser, onLoginSuccess, onLogout, onDemoTr
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 font-mono ${
+      className={`fixed top-0 left-0 right-0 z-50 h-16 flex items-center transition-all duration-300 font-mono ${
         scrolled
-          ? "bg-[#0D1117]/70 backdrop-blur-xl border-b border-[#30363D]/60 py-2.5 shadow-2xl shadow-black/30"
-          : "bg-transparent border-b border-transparent py-5"
+          ? "bg-[#0D1117]/75 backdrop-blur-xl border-b border-[#30363D]/80 shadow-2xl shadow-black/40"
+          : "bg-transparent border-b border-transparent"
       }`}
     >
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Brand Logo & Links */}
         <div className="flex items-center gap-8">
           <Link href="/" className="flex items-center group transition-transform duration-300 active:scale-95">

@@ -7,6 +7,8 @@ export interface KeyboardShortcutsOptions {
   onSelectTab: (tabId: string) => void;
   onOpenShortcutsHelp: () => void;
   onCloseDialogs: () => void;
+  onNewNote?: () => void;
+  onRepoSearch?: () => void;
 }
 
 export function useKeyboardShortcuts({
@@ -14,6 +16,8 @@ export function useKeyboardShortcuts({
   onSelectTab,
   onOpenShortcutsHelp,
   onCloseDialogs,
+  onNewNote,
+  onRepoSearch,
 }: KeyboardShortcutsOptions) {
   const [pendingGKey, setPendingGKey] = useState(false);
 
@@ -22,12 +26,14 @@ export function useKeyboardShortcuts({
 
     const handleKeyDown = (e: KeyboardEvent) => {
       // Ignore key events inside input, textarea, or contentEditable elements
+      // UNLESS the user is pressing Escape (to close dialogs)
       const target = e.target as HTMLElement;
-      if (
+      const isInput = 
         target.tagName === "INPUT" ||
         target.tagName === "TEXTAREA" ||
-        target.isContentEditable
-      ) {
+        target.isContentEditable;
+
+      if (isInput) {
         if (e.key === "Escape") {
           onCloseDialogs();
         }
@@ -49,21 +55,43 @@ export function useKeyboardShortcuts({
         return;
       }
 
-      // 3. ? (Shift + /) -> Keyboard Shortcuts Help
-      if (e.key === "?" && !e.ctrlKey && !e.metaKey) {
+      // 3. Ctrl+Shift+N -> New Note in Workspace
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === "n") {
+        e.preventDefault();
+        if (onNewNote) onNewNote();
+        setPendingGKey(false);
+        return;
+      }
+
+      // 4. Ctrl+Shift+R -> Repository Search in Workspace/Palette
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === "r") {
+        e.preventDefault();
+        if (onRepoSearch) onRepoSearch();
+        setPendingGKey(false);
+        return;
+      }
+
+      // 5. Ctrl+/ or ? -> Keyboard Shortcuts Help
+      if (
+        (e.key === "?" && !e.ctrlKey && !e.metaKey) || 
+        ((e.ctrlKey || e.metaKey) && e.key === "/")
+      ) {
         e.preventDefault();
         onOpenShortcutsHelp();
         setPendingGKey(false);
         return;
       }
 
-      // 4. Two-key chord navigation (G then O/R/C/L/A/W/S)
+      // 6. Two-key chord navigation (G then O/D/R/C/L/A/W/S/P/H/T)
       if (pendingGKey) {
         const key = e.key.toLowerCase();
         setPendingGKey(false);
         if (key === "o") {
           e.preventDefault();
           onSelectTab("overview");
+        } else if (key === "d") {
+          e.preventDefault();
+          onSelectTab("workspace");
         } else if (key === "r") {
           e.preventDefault();
           onSelectTab("repos");
@@ -111,7 +139,7 @@ export function useKeyboardShortcuts({
       window.removeEventListener("keydown", handleKeyDown);
       clearTimeout(timeoutId);
     };
-  }, [pendingGKey, onOpenCommandPalette, onSelectTab, onOpenShortcutsHelp, onCloseDialogs]);
+  }, [pendingGKey, onOpenCommandPalette, onSelectTab, onOpenShortcutsHelp, onCloseDialogs, onNewNote, onRepoSearch]);
 
   return { pendingGKey };
 }
