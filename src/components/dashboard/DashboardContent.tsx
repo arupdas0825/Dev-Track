@@ -23,6 +23,8 @@ import DashboardHeader from "./DashboardHeader";
 import DeveloperWorkspaceTab from "./DeveloperWorkspaceTab";
 import DeveloperCareerHub from "./DeveloperCareerHub";
 import DeveloperChallengesHub from "./DeveloperChallengesHub";
+import DeveloperCommunityHub from "./DeveloperCommunityHub";
+
 import TeamWorkspaceTab from "./TeamWorkspaceTab";
 import AiCodeReviewTab from "./AiCodeReviewTab";
 import LiveActivityTab from "./LiveActivityTab";
@@ -138,7 +140,21 @@ type TabId =
   | "challenges-leaderboards"
   | "challenges-missions"
   | "challenges-rewards"
-  | "challenges-history";
+
+  | "challenges-history"
+  | "community-feed"
+  | "community-developers"
+  | "community-discussions"
+  | "community-showcase"
+  | "community-opensource"
+  | "community-events"
+  | "community-studygroups"
+  | "community-clubs"
+  | "community-jobs"
+  | "community-notifications"
+  | "community-messaging"
+  | "community-search";
+
 
 
 export default function DashboardContent() {
@@ -457,7 +473,23 @@ export default function DashboardContent() {
     { id: "challenges-history", label: "Challenge History", icon: History },
   ] as const;
 
-  const tabsList = [...coreTabsList, ...careerTabsList, ...teamTabsList, ...aiReviewTabsList, ...liveActivityTabsList, ...challengesTabsList];
+  const communityTabsList = [
+    { id: "community-feed", label: "Community Feed", icon: LayoutGrid },
+    { id: "community-developers", label: "Developers Directory", icon: Users },
+    { id: "community-discussions", label: "Forums", icon: MessageSquare },
+    { id: "community-showcase", label: "Showcase", icon: Award },
+    { id: "community-opensource", label: "Open Source Hub", icon: Folder },
+    { id: "community-events", label: "Events", icon: Calendar },
+    { id: "community-studygroups", label: "Study Groups", icon: Compass },
+    { id: "community-clubs", label: "Clubs", icon: Globe },
+    { id: "community-jobs", label: "Job Board", icon: Briefcase },
+    { id: "community-notifications", label: "Inbox Notifications", icon: Bell },
+    { id: "community-messaging", label: "Direct Messages", icon: MessageSquare },
+    { id: "community-search", label: "Universal Search", icon: Search }
+  ] as const;
+
+  const tabsList = [...coreTabsList, ...careerTabsList, ...teamTabsList, ...aiReviewTabsList, ...liveActivityTabsList, ...challengesTabsList, ...communityTabsList];
+
 
 
   const sidebarSections = [
@@ -521,7 +553,26 @@ export default function DashboardContent() {
       ]
     },
     {
+      id: "community",
+      label: "👥 Community",
+      icon: Users,
+      items: [
+        { id: "community-feed", label: "Feed" },
+        { id: "community-developers", label: "Developers" },
+        { id: "community-discussions", label: "Discussions" },
+        { id: "community-showcase", label: "Showcase" },
+        { id: "community-opensource", label: "Open Source" },
+        { id: "community-events", label: "Events" },
+        { id: "community-studygroups", label: "Study Groups" },
+        { id: "community-clubs", label: "Clubs" },
+        { id: "community-jobs", label: "Jobs" },
+        { id: "community-notifications", label: "Notifications" },
+        { id: "community-messaging", label: "Messaging" }
+      ]
+    },
+    {
       id: "ai-review",
+
 
       label: "AI Review",
       icon: Sparkles,
@@ -774,6 +825,27 @@ export default function DashboardContent() {
             githubToken={githubToken}
           />
         );
+      case "community-feed":
+      case "community-developers":
+      case "community-discussions":
+      case "community-showcase":
+      case "community-opensource":
+      case "community-events":
+      case "community-studygroups":
+      case "community-clubs":
+      case "community-jobs":
+      case "community-notifications":
+      case "community-messaging":
+      case "community-search":
+        return (
+          <DeveloperCommunityHub
+            data={dashboardData}
+            activeSubTab={activeTab}
+            setActiveSubTab={(t) => setActiveTab(t as TabId)}
+            githubToken={githubToken}
+          />
+        );
+
 
       default:
         return <OverviewTab data={dashboardData} />;

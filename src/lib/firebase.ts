@@ -27,8 +27,9 @@ const isFirebaseEnabled =
 
 let app: FirebaseApp | undefined;
 let auth: Auth | undefined;
-let db: Firestore | undefined;
+export let db: Firestore | undefined;
 let analytics: Analytics | undefined;
+
 
 if (isFirebaseEnabled) {
   try {
