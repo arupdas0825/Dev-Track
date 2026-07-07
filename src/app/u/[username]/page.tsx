@@ -60,6 +60,8 @@ import Navbar from "@/components/layout/Navbar";
 import { useGithubProfile } from "@/hooks/useGithubProfile";
 import { useRepositories } from "@/hooks/useRepositories";
 import { useAnalytics } from "@/hooks/useAnalytics";
+import { getLevelRankTitle } from "@/services/challengesEngine";
+
 
 export default function PublicProfilePage() {
   const params = useParams();
@@ -70,6 +72,20 @@ export default function PublicProfilePage() {
   const [isPrivate, setIsPrivate] = useState(false);
   const [isUnclaimed, setIsUnclaimed] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
+  const [gamificationState, setGamificationState] = useState<any>(null);
+
+  useEffect(() => {
+    if (!username) return;
+    if (typeof window !== "undefined") {
+      const cached = localStorage.getItem(`devtrack_gamification_${username}`);
+      if (cached) {
+        try {
+          setGamificationState(JSON.parse(cached));
+        } catch (e) {}
+      }
+    }
+  }, [username]);
+
 
   // For unclaimed profiles direct fetch fallback
   const storedToken = typeof window !== "undefined" ? localStorage.getItem("devtrack_github_token") || "" : "";
@@ -307,6 +323,44 @@ export default function PublicProfilePage() {
       }
     ];
   }, [activeData]);
+
+  const profileLevelInfo = useMemo(() => {
+    if (gamificationState) {
+      return {
+        level: gamificationState.level,
+        rankTitle: gamificationState.rankTitle,
+        xp: gamificationState.totalXp,
+        streak: gamificationState.streak
+      };
+    }
+    // Fallback estimation
+    const commits = activeData?.contributions.totalCommits || 0;
+    const estimatedXp = commits * 10;
+    let level = 1;
+    while (estimatedXp >= level * 200) {
+      level++;
+    }
+    return {
+      level,
+      rankTitle: getLevelRankTitle(level),
+      xp: estimatedXp,
+      streak: activeData?.contributions.currentStreak || 0
+    };
+  }, [gamificationState, activeData]);
+
+  const achievementsList = useMemo(() => {
+    if (gamificationState?.achievements) {
+      return gamificationState.achievements.map((ach: any) => ({
+        id: ach.id,
+        title: ach.title,
+        desc: ach.description,
+        unlocked: !!ach.unlockedAt,
+        rarity: ach.xpReward >= 500 ? "Epic" : ach.xpReward >= 250 ? "Rare" : "Common"
+      }));
+    }
+    return achievements;
+  }, [gamificationState, achievements]);
+
 
   // Timeline Milestones
   const milestones = useMemo(() => {
@@ -765,8 +819,9 @@ export default function PublicProfilePage() {
                 Unlocked Badges
               </h4>
               <div className="grid grid-cols-2 gap-3">
-                {achievements.map((achievement, idx) => (
+                {achievementsList.map((achievement: any, idx: number) => (
                   <div
+
                     key={idx}
                     className={`p-3 rounded-lg border flex flex-col justify-between items-center text-center space-y-2 ${
                       achievement.unlocked
@@ -794,8 +849,9 @@ export default function PublicProfilePage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1 text-xs">
               <div className="p-3 bg-background/50 rounded-lg border border-border space-y-1">
                 <span className="text-[10px] text-text-secondary uppercase block">Developer Level</span>
-                <span className="font-bold text-text-primary block truncate">L3 - Senior Associate</span>
+                <span className="font-bold text-text-primary block truncate">Level {profileLevelInfo.level} — {profileLevelInfo.rankTitle}</span>
               </div>
+
               <div className="p-3 bg-background/50 rounded-lg border border-border space-y-1">
                 <span className="text-[10px] text-text-secondary uppercase block">Suggested Technology</span>
                 <span className="font-bold text-[#58A6FF] block truncate">{aiInsights?.suggestedTechnologies?.[0] || "GraphQL"}</span>

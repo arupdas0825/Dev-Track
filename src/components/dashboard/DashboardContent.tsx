@@ -22,6 +22,7 @@ import DeveloperDnaTab from "./DeveloperDnaTab";
 import DashboardHeader from "./DashboardHeader";
 import DeveloperWorkspaceTab from "./DeveloperWorkspaceTab";
 import DeveloperCareerHub from "./DeveloperCareerHub";
+import DeveloperChallengesHub from "./DeveloperChallengesHub";
 import TeamWorkspaceTab from "./TeamWorkspaceTab";
 import AiCodeReviewTab from "./AiCodeReviewTab";
 import LiveActivityTab from "./LiveActivityTab";
@@ -127,7 +128,18 @@ type TabId =
   | "live-releases"
   | "live-social"
   | "live-timeline"
-  | "live-sync";
+  | "live-sync"
+  | "challenges-dashboard"
+  | "challenges-daily"
+  | "challenges-weekly"
+  | "challenges-monthly"
+  | "challenges-achievements"
+  | "challenges-xp"
+  | "challenges-leaderboards"
+  | "challenges-missions"
+  | "challenges-rewards"
+  | "challenges-history";
+
 
 export default function DashboardContent() {
   const searchParams = useSearchParams();
@@ -432,7 +444,21 @@ export default function DashboardContent() {
     { id: "live-sync", label: "Sync History", icon: RefreshCw },
   ] as const;
 
-  const tabsList = [...coreTabsList, ...careerTabsList, ...teamTabsList, ...aiReviewTabsList, ...liveActivityTabsList];
+  const challengesTabsList = [
+    { id: "challenges-dashboard", label: "Challenges Dashboard", icon: Award },
+    { id: "challenges-daily", label: "Daily Challenges", icon: Clock },
+    { id: "challenges-weekly", label: "Weekly Challenges", icon: Calendar },
+    { id: "challenges-monthly", label: "Monthly Challenges", icon: Calendar },
+    { id: "challenges-achievements", label: "Achievements", icon: Award },
+    { id: "challenges-xp", label: "XP & Levels", icon: TrendingUp },
+    { id: "challenges-leaderboards", label: "Leaderboards", icon: Users },
+    { id: "challenges-missions", label: "Missions", icon: Compass },
+    { id: "challenges-rewards", label: "Rewards", icon: Gift },
+    { id: "challenges-history", label: "Challenge History", icon: History },
+  ] as const;
+
+  const tabsList = [...coreTabsList, ...careerTabsList, ...teamTabsList, ...aiReviewTabsList, ...liveActivityTabsList, ...challengesTabsList];
+
 
   const sidebarSections = [
     {
@@ -478,7 +504,25 @@ export default function DashboardContent() {
       ]
     },
     {
+      id: "challenges",
+      label: "🏆 Developer Challenges",
+      icon: Award,
+      items: [
+        { id: "challenges-dashboard", label: "Dashboard" },
+        { id: "challenges-daily", label: "Daily Challenges" },
+        { id: "challenges-weekly", label: "Weekly Challenges" },
+        { id: "challenges-monthly", label: "Monthly Challenges" },
+        { id: "challenges-achievements", label: "Achievements" },
+        { id: "challenges-xp", label: "XP & Levels" },
+        { id: "challenges-leaderboards", label: "Leaderboards" },
+        { id: "challenges-missions", label: "Missions" },
+        { id: "challenges-rewards", label: "Rewards" },
+        { id: "challenges-history", label: "Challenge History" },
+      ]
+    },
+    {
       id: "ai-review",
+
       label: "AI Review",
       icon: Sparkles,
       items: [
@@ -712,6 +756,25 @@ export default function DashboardContent() {
             githubToken={githubToken}
           />
         );
+      case "challenges-dashboard":
+      case "challenges-daily":
+      case "challenges-weekly":
+      case "challenges-monthly":
+      case "challenges-achievements":
+      case "challenges-xp":
+      case "challenges-leaderboards":
+      case "challenges-missions":
+      case "challenges-rewards":
+      case "challenges-history":
+        return (
+          <DeveloperChallengesHub
+            data={dashboardData}
+            activeSubTab={activeTab}
+            setActiveSubTab={(t) => setActiveTab(t as TabId)}
+            githubToken={githubToken}
+          />
+        );
+
       default:
         return <OverviewTab data={dashboardData} />;
     }
