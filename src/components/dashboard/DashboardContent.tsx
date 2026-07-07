@@ -24,6 +24,7 @@ import DeveloperWorkspaceTab from "./DeveloperWorkspaceTab";
 import DeveloperCareerHub from "./DeveloperCareerHub";
 import TeamWorkspaceTab from "./TeamWorkspaceTab";
 import AiCodeReviewTab from "./AiCodeReviewTab";
+import LiveActivityTab from "./LiveActivityTab";
 import QuickActionsFAB from "./QuickActionsFAB";
 import CommandPalette from "./CommandPalette";
 import KeyboardShortcutsModal from "./KeyboardShortcutsModal";
@@ -61,7 +62,11 @@ import {
   CheckCircle,
   Shield,
   ChevronDown,
-  Plus
+  Plus,
+  Bell,
+  Clock,
+  Tag,
+  RefreshCw
 } from "lucide-react";
 
 type TabId =
@@ -107,7 +112,16 @@ type TabId =
   | "ai-performance"
   | "ai-practices"
   | "ai-suggestions"
-  | "ai-reports";
+  | "ai-reports"
+  | "live-feed"
+  | "live-notifications"
+  | "live-repos"
+  | "live-prs"
+  | "live-issues"
+  | "live-releases"
+  | "live-social"
+  | "live-timeline"
+  | "live-sync";
 
 export default function DashboardContent() {
   const searchParams = useSearchParams();
@@ -396,7 +410,19 @@ export default function DashboardContent() {
     { id: "ai-reports", label: "Reports", icon: FileText },
   ] as const;
 
-    const tabsList = [...coreTabsList, ...careerTabsList, ...teamTabsList, ...aiReviewTabsList];
+  const liveActivityTabsList = [
+    { id: "live-feed", label: "Activity Feed", icon: Activity },
+    { id: "live-notifications", label: "Notifications", icon: Bell },
+    { id: "live-repos", label: "Repository Events", icon: Folder },
+    { id: "live-prs", label: "Pull Requests", icon: GitPullRequest },
+    { id: "live-issues", label: "Issues", icon: HelpCircle },
+    { id: "live-releases", label: "Releases", icon: Tag },
+    { id: "live-social", label: "Stars & Followers", icon: Users },
+    { id: "live-timeline", label: "Live Timeline", icon: Clock },
+    { id: "live-sync", label: "Sync History", icon: RefreshCw },
+  ] as const;
+
+  const tabsList = [...coreTabsList, ...careerTabsList, ...teamTabsList, ...aiReviewTabsList, ...liveActivityTabsList];
 
   const sidebarSections = [
     {
@@ -452,6 +478,22 @@ export default function DashboardContent() {
         { id: "ai-practices", label: "Best Practices" },
         { id: "ai-suggestions", label: "AI Suggestions" },
         { id: "ai-reports", label: "Reports" },
+      ]
+    },
+    {
+      id: "live-activity",
+      label: "Live Activity",
+      icon: Activity,
+      items: [
+        { id: "live-feed", label: "Activity Feed" },
+        { id: "live-notifications", label: "Notifications" },
+        { id: "live-repos", label: "Repository Events" },
+        { id: "live-prs", label: "Pull Requests" },
+        { id: "live-issues", label: "Issues" },
+        { id: "live-releases", label: "Releases" },
+        { id: "live-social", label: "Stars & Followers" },
+        { id: "live-timeline", label: "Live Timeline" },
+        { id: "live-sync", label: "Sync History" },
       ]
     },
     {
@@ -628,6 +670,23 @@ export default function DashboardContent() {
       case "ai-reports":
         return (
           <AiCodeReviewTab
+            activeSubTab={activeTab}
+            setActiveSubTab={(t) => setActiveTab(t as TabId)}
+            dashboardData={dashboardData}
+            githubToken={githubToken}
+          />
+        );
+      case "live-feed":
+      case "live-notifications":
+      case "live-repos":
+      case "live-prs":
+      case "live-issues":
+      case "live-releases":
+      case "live-social":
+      case "live-timeline":
+      case "live-sync":
+        return (
+          <LiveActivityTab
             activeSubTab={activeTab}
             setActiveSubTab={(t) => setActiveTab(t as TabId)}
             dashboardData={dashboardData}

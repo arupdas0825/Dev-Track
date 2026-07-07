@@ -76,6 +76,15 @@ export default function CommandPalette({
     { id: "ai-practices", label: "AI Code Review: Best Practices", icon: "✅", action: () => onSelectTab("ai-practices") },
     { id: "ai-suggestions", label: "AI Code Review: Suggestions Plan", icon: "💡", action: () => onSelectTab("ai-suggestions") },
     { id: "ai-reports", label: "AI Code Review: Download Reports", icon: "📥", action: () => onSelectTab("ai-reports") },
+    { id: "live-feed", label: "Live Activity: Activity Feed", icon: "⚡", action: () => onSelectTab("live-feed") },
+    { id: "live-notifications", label: "Live Activity: GitHub Notifications", icon: "🔔", action: () => onSelectTab("live-notifications") },
+    { id: "live-repos", label: "Live Activity: Repository Events", icon: "📂", action: () => onSelectTab("live-repos") },
+    { id: "live-prs", label: "Live Activity: Pull Requests", icon: "🔌", action: () => onSelectTab("live-prs") },
+    { id: "live-issues", label: "Live Activity: Issue Tracker", icon: "🐞", action: () => onSelectTab("live-issues") },
+    { id: "live-releases", label: "Live Activity: Releases", icon: "🏷️", action: () => onSelectTab("live-releases") },
+    { id: "live-social", label: "Live Activity: Stars & Followers", icon: "👥", action: () => onSelectTab("live-social") },
+    { id: "live-timeline", label: "Live Activity: Custom Timeline", icon: "📅", action: () => onSelectTab("live-timeline") },
+    { id: "live-sync", label: "Live Activity: Sync History Logs", icon: "🔄", action: () => onSelectTab("live-sync") },
   ];
 
   const quickActions = [
