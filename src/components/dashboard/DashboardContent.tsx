@@ -66,7 +66,9 @@ import {
   Bell,
   Clock,
   Tag,
-  RefreshCw
+  RefreshCw,
+  MessageSquare,
+  ClipboardList
 } from "lucide-react";
 
 type TabId =
@@ -85,15 +87,19 @@ type TabId =
   | "compare"
   | "wrapped"
   | "settings"
-  | "career-overview"
-  | "career-resume"
-  | "career-portfolio"
-  | "career-skills"
-  | "career-interview"
+  | "career-dashboard"
+  | "career-resume-builder"
+  | "career-ats-analyzer"
+  | "career-portfolio-analyzer"
+  | "career-job-match"
+  | "career-cover-letter"
+  | "career-linkedin"
+  | "career-skill-gap"
+  | "career-interview-prep"
   | "career-roadmap"
-  | "career-open-source"
-  | "career-certs"
-  | "career-readiness"
+  | "career-versions"
+  | "career-tracker"
+  | "career-assistant"
   | "team-overview"
   | "team-members"
   | "team-analytics"
@@ -374,15 +380,19 @@ export default function DashboardContent() {
   ] as const;
 
   const careerTabsList = [
-    { id: "career-overview", label: "Career Overview", icon: Briefcase },
-    { id: "career-resume", label: "Resume Intelligence", icon: FileText },
-    { id: "career-portfolio", label: "Portfolio Review", icon: Globe },
-    { id: "career-skills", label: "Skill Gap Analysis", icon: TrendingUp },
-    { id: "career-interview", label: "Interview Readiness", icon: HelpCircle },
-    { id: "career-roadmap", label: "Learning Roadmap", icon: Compass },
-    { id: "career-open-source", label: "Open Source Journey", icon: GitPullRequest },
-    { id: "career-certs", label: "Certifications", icon: Award },
-    { id: "career-readiness", label: "Job Readiness Score", icon: CheckCircle },
+    { id: "career-dashboard", label: "Career Dashboard", icon: Briefcase },
+    { id: "career-resume-builder", label: "Resume Builder", icon: FileText },
+    { id: "career-ats-analyzer", label: "ATS Resume Analyzer", icon: CheckCircle },
+    { id: "career-portfolio-analyzer", label: "Portfolio Analyzer", icon: Globe },
+    { id: "career-job-match", label: "Job Match", icon: Star },
+    { id: "career-cover-letter", label: "Cover Letter Generator", icon: FileText },
+    { id: "career-linkedin", label: "LinkedIn Optimizer", icon: Award },
+    { id: "career-skill-gap", label: "Skill Gap Analysis", icon: TrendingUp },
+    { id: "career-interview-prep", label: "Interview Preparation", icon: HelpCircle },
+    { id: "career-roadmap", label: "Career Roadmap", icon: Compass },
+    { id: "career-versions", label: "Resume Versions", icon: History },
+    { id: "career-tracker", label: "Application Tracker", icon: ClipboardList },
+    { id: "career-assistant", label: "AI Career Assistant", icon: MessageSquare },
   ] as const;
 
   const teamTabsList = [
@@ -449,18 +459,22 @@ export default function DashboardContent() {
     },
     {
       id: "career",
-      label: "Career Hub",
+      label: "AI Career Suite",
       icon: Briefcase,
       items: [
-        { id: "career-overview", label: "Career Overview" },
-        { id: "career-resume", label: "Resume Intelligence" },
-        { id: "career-portfolio", label: "Portfolio Review" },
-        { id: "career-skills", label: "Skill Gap Analysis" },
-        { id: "career-interview", label: "Interview Readiness" },
-        { id: "career-roadmap", label: "Learning Roadmap" },
-        { id: "career-open-source", label: "Open Source Journey" },
-        { id: "career-certs", label: "Certifications" },
-        { id: "career-readiness", label: "Job Readiness Score" },
+        { id: "career-dashboard", label: "Career Dashboard" },
+        { id: "career-resume-builder", label: "Resume Builder" },
+        { id: "career-ats-analyzer", label: "ATS Resume Analyzer" },
+        { id: "career-portfolio-analyzer", label: "Portfolio Analyzer" },
+        { id: "career-job-match", label: "Job Match" },
+        { id: "career-cover-letter", label: "Cover Letter Generator" },
+        { id: "career-linkedin", label: "LinkedIn Optimizer" },
+        { id: "career-skill-gap", label: "Skill Gap Analysis" },
+        { id: "career-interview-prep", label: "Interview Preparation" },
+        { id: "career-roadmap", label: "Career Roadmap" },
+        { id: "career-versions", label: "Resume Versions" },
+        { id: "career-tracker", label: "Application Tracker" },
+        { id: "career-assistant", label: "AI Career Assistant" },
       ]
     },
     {
@@ -626,20 +640,25 @@ export default function DashboardContent() {
         return <WrappedTab data={dashboardData} />;
       case "settings":
         return <SettingsTab data={dashboardData} onTokenUpdate={handleTokenUpdate} />;
-      case "career-overview":
-      case "career-resume":
-      case "career-portfolio":
-      case "career-skills":
-      case "career-interview":
+      case "career-dashboard":
+      case "career-resume-builder":
+      case "career-ats-analyzer":
+      case "career-portfolio-analyzer":
+      case "career-job-match":
+      case "career-cover-letter":
+      case "career-linkedin":
+      case "career-skill-gap":
+      case "career-interview-prep":
       case "career-roadmap":
-      case "career-open-source":
-      case "career-certs":
-      case "career-readiness":
+      case "career-versions":
+      case "career-tracker":
+      case "career-assistant":
         return (
           <DeveloperCareerHub
             data={dashboardData}
             activeSubTab={activeTab}
             setActiveSubTab={(t) => setActiveTab(t as TabId)}
+            githubToken={githubToken}
           />
         );
       case "team-overview":
