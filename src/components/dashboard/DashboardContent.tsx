@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { DevTrackUser, subscribeToAuthChanges, logOutUser, syncUserAndReposInFirestore } from "@/lib/firebase";
 import { UserDashboardData } from "@/types";
@@ -59,7 +59,9 @@ import {
   Compass,
   GitPullRequest,
   CheckCircle,
-  Shield
+  Shield,
+  ChevronDown,
+  Plus
 } from "lucide-react";
 
 type TabId =
@@ -124,6 +126,15 @@ export default function DashboardContent() {
   const [isFocusMode, setIsFocusMode] = useState(false);
   const [newNoteTrigger, setNewNoteTrigger] = useState<(() => void) | null>(null);
 
+  // Premium sidebar redesign states
+  const [sidebarWidth, setSidebarWidth] = useState<number>(240);
+  const [isResizing, setIsResizing] = useState<boolean>(false);
+  const [activeSection, setActiveSection] = useState<string>("dashboard");
+  const [pinnedTabs, setPinnedTabs] = useState<string[]>([]);
+  const [recentTabs, setRecentTabs] = useState<string[]>(["overview"]);
+  const [activeWorkspace, setActiveWorkspace] = useState<string>("Personal Workspace");
+  const [isWorkspaceMenuOpen, setIsWorkspaceMenuOpen] = useState<boolean>(false);
+
   const usernameParam = searchParams.get("user") || "";
 
   // Subscribe to Auth changes
@@ -144,8 +155,86 @@ export default function DashboardContent() {
       if (sidebarPref) {
         setIsSidebarCollapsed(sidebarPref === "true");
       }
+
+      const storedWidth = localStorage.getItem("devtrack_sidebar_width");
+      if (storedWidth) {
+        setSidebarWidth(Number(storedWidth));
+      }
+      
+      const storedPinned = localStorage.getItem("devtrack_pinned_tabs");
+      if (storedPinned) {
+        try {
+          setPinnedTabs(JSON.parse(storedPinned));
+        } catch (e) {}
+      }
+
+      const storedRecent = localStorage.getItem("devtrack_recent_tabs");
+      if (storedRecent) {
+        try {
+          setRecentTabs(JSON.parse(storedRecent));
+        } catch (e) {}
+      }
     }
   }, []);
+
+  // Update recent pages list
+  useEffect(() => {
+    if (activeTab) {
+      setRecentTabs(prev => {
+        const filtered = prev.filter(t => t !== activeTab);
+        const updated = [activeTab, ...filtered].slice(0, 5);
+        if (typeof window !== "undefined") {
+          localStorage.setItem("devtrack_recent_tabs", JSON.stringify(updated));
+        }
+        return updated;
+      });
+    }
+  }, [activeTab]);
+
+  // Sidebar drag resizer logic
+  const startResizing = (mouseDownEvent: React.MouseEvent) => {
+    mouseDownEvent.preventDefault();
+    setIsResizing(true);
+  };
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isResizing) return;
+      const newWidth = e.clientX - 16;
+      if (newWidth >= 160 && newWidth <= 340) {
+        setSidebarWidth(newWidth);
+        if (typeof window !== "undefined") {
+          localStorage.setItem("devtrack_sidebar_width", String(newWidth));
+        }
+      }
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+    };
+
+    if (isResizing) {
+      document.addEventListener("mousemove", handleMouseMove);
+      document.addEventListener("mouseup", handleMouseUp);
+    }
+
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [isResizing]);
+
+  // Pin / Unpin tab toggle
+  const togglePinTab = (tabId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setPinnedTabs(prev => {
+      const updated = prev.includes(tabId) ? prev.filter(t => t !== tabId) : [...prev, tabId];
+      if (typeof window !== "undefined") {
+        localStorage.setItem("devtrack_pinned_tabs", JSON.stringify(updated));
+      }
+      return updated;
+    });
+  };
 
   // Determine target username
   let targetUser = usernameParam.trim();
@@ -307,7 +396,123 @@ export default function DashboardContent() {
     { id: "ai-reports", label: "Reports", icon: FileText },
   ] as const;
 
-  const tabsList = [...coreTabsList, ...careerTabsList, ...teamTabsList, ...aiReviewTabsList];
+    const tabsList = [...coreTabsList, ...careerTabsList, ...teamTabsList, ...aiReviewTabsList];
+
+  const sidebarSections = [
+    {
+      id: "dashboard",
+      label: "Dashboard",
+      icon: LayoutGrid,
+      items: [
+        { id: "overview", label: "Overview" },
+      ]
+    },
+    {
+      id: "developer",
+      label: "Developer",
+      icon: Dna,
+      items: [
+        { id: "workspace", label: "Workspace" },
+        { id: "dna", label: "Developer DNA" },
+        { id: "repos", label: "Repository Explorer" },
+        { id: "calendar", label: "Coding Calendar" },
+        { id: "health", label: "Repo Health" },
+        { id: "growth", label: "Growth Timeline" },
+        { id: "time-machine", label: "Time Machine" },
+      ]
+    },
+    {
+      id: "career",
+      label: "Career Hub",
+      icon: Briefcase,
+      items: [
+        { id: "career-overview", label: "Career Overview" },
+        { id: "career-resume", label: "Resume Intelligence" },
+        { id: "career-portfolio", label: "Portfolio Review" },
+        { id: "career-skills", label: "Skill Gap Analysis" },
+        { id: "career-interview", label: "Interview Readiness" },
+        { id: "career-roadmap", label: "Learning Roadmap" },
+        { id: "career-open-source", label: "Open Source Journey" },
+        { id: "career-certs", label: "Certifications" },
+        { id: "career-readiness", label: "Job Readiness Score" },
+      ]
+    },
+    {
+      id: "ai-review",
+      label: "AI Review",
+      icon: Sparkles,
+      items: [
+        { id: "ai-scanner", label: "Repository Scanner" },
+        { id: "ai-code-review", label: "Code Review" },
+        { id: "ai-security", label: "Security Audit" },
+        { id: "ai-docs", label: "Documentation" },
+        { id: "ai-dependencies", label: "Dependencies" },
+        { id: "ai-architecture", label: "Architecture" },
+        { id: "ai-performance", label: "Performance" },
+        { id: "ai-practices", label: "Best Practices" },
+        { id: "ai-suggestions", label: "AI Suggestions" },
+        { id: "ai-reports", label: "Reports" },
+      ]
+    },
+    {
+      id: "team",
+      label: "Team Workspace",
+      icon: Users,
+      items: [
+        { id: "team-overview", label: "Overview" },
+        { id: "team-members", label: "Members" },
+        { id: "team-repos", label: "Repositories" },
+        { id: "team-sprint", label: "Sprint Dashboard" },
+        { id: "team-leaderboard", label: "Leaderboard" },
+        { id: "team-activity", label: "Activity Feed" },
+        { id: "team-reports", label: "Reports" },
+        { id: "team-settings", label: "Settings" },
+      ]
+    },
+    {
+      id: "analytics",
+      label: "Analytics",
+      icon: TrendingUp,
+      items: [
+        { id: "lang", label: "Languages" },
+        { id: "score", label: "Developer Score" },
+        { id: "ai", label: "AI Insights" },
+        { id: "compare", label: "Compare Profile" },
+        { id: "wrapped", label: "Wrapped" },
+      ]
+    },
+    {
+      id: "settings-section",
+      label: "Settings",
+      icon: Settings,
+      items: [
+        { id: "settings", label: "Settings" }
+      ]
+    }
+  ];
+
+  const pinnedItemsData = useMemo(() => {
+    const allItems = sidebarSections.flatMap(sec => sec.items);
+    return pinnedTabs.map(pinnedId => {
+      return allItems.find(item => item.id === pinnedId);
+    }).filter(Boolean) as { id: string; label: string }[];
+  }, [pinnedTabs, sidebarSections]);
+
+  const toggleSection = (sectionId: string) => {
+    if (activeSection === sectionId) {
+      setActiveSection("");
+    } else {
+      setActiveSection(sectionId);
+    }
+  };
+
+  // Expand parent section automatically when activeTab changes
+  useEffect(() => {
+    const parentSection = sidebarSections.find(sec => sec.items.some(item => item.id === activeTab));
+    if (parentSection) {
+      setActiveSection(parentSection.id);
+    }
+  }, [activeTab]);
 
   // Keyboard navigation listener (Arrow keys to switch tabs)
   useEffect(() => {
@@ -480,196 +685,215 @@ export default function DashboardContent() {
         isFocusMode ? "max-w-4xl" : "max-w-7xl"
       }`}>
         
-        {/* Collapsible Sidebar Nav */}
+        {/* Collapsible/Resizable Sidebar Nav */}
         {!isFocusMode && (
-          <aside className={`flex-shrink-0 transition-all duration-300 md:block hidden ${isSidebarCollapsed ? "w-16" : "w-64"}`}>
-          <div className="mb-4">
-            <button
-              onClick={() => setIsCommandPaletteOpen(true)}
-              className="w-full flex items-center justify-between px-3 py-2 rounded-lg border border-border bg-[#161B22]/50 hover:bg-[#161B22] text-xs text-text-secondary cursor-pointer transition-all"
-            >
-              <div className="flex items-center gap-2">
-                <Search size={14} className="text-text-secondary flex-shrink-0" />
-                {!isSidebarCollapsed && <span>Search dashboard...</span>}
-              </div>
+          <aside
+            style={{ width: isSidebarCollapsed ? 72 : sidebarWidth }}
+            className="flex-shrink-0 md:flex hidden flex-col border-r border-[#30363D] bg-[#161B22]/30 select-none relative group transition-all duration-150 h-[calc(100vh-120px)] rounded-xl"
+          >
+            {/* Top Workspace Switcher */}
+            <div className="p-3 border-b border-[#30363D]/60 flex items-center justify-between gap-2 relative">
+              <button
+                onClick={() => setIsWorkspaceMenuOpen(!isWorkspaceMenuOpen)}
+                className="flex items-center justify-between w-full p-1.5 rounded-lg border border-[#30363D] bg-[#0D1117] hover:bg-[#161B22] text-xs text-[#F0F6FC] font-semibold cursor-pointer transition-colors"
+              >
+                <div className="flex items-center gap-2 truncate">
+                  <div className="w-5 h-5 rounded bg-[#2F81F7] text-white flex items-center justify-center font-bold text-[10px]">
+                    {activeWorkspace.charAt(0)}
+                  </div>
+                  {!isSidebarCollapsed && <span className="truncate">{activeWorkspace}</span>}
+                </div>
+                {!isSidebarCollapsed && <ChevronDown size={14} className="text-[#8B949E]" />}
+              </button>
+
+              {/* Switcher Dropdown */}
+              {isWorkspaceMenuOpen && !isSidebarCollapsed && (
+                <div className="absolute top-full left-3 right-3 mt-1.5 bg-[#161B22] border border-[#30363D] rounded-lg shadow-xl p-1 z-50 animate-fadeIn text-xs">
+                  <button
+                    onClick={() => {
+                      setActiveWorkspace("Personal Workspace");
+                      setIsWorkspaceMenuOpen(false);
+                    }}
+                    className="w-full flex items-center gap-2 p-2 hover:bg-[#21262D] rounded text-left text-[#F0F6FC] cursor-pointer"
+                  >
+                    <div className="w-4 h-4 rounded bg-[#2F81F7] text-white flex items-center justify-center text-[8px] font-bold">P</div>
+                    Personal Workspace
+                  </button>
+                  <button
+                    onClick={() => {
+                      setActiveWorkspace("Vercel Team");
+                      setIsWorkspaceMenuOpen(false);
+                    }}
+                    className="w-full flex items-center gap-2 p-2 hover:bg-[#21262D] rounded text-left text-[#F0F6FC] cursor-pointer"
+                  >
+                    <div className="w-4 h-4 rounded bg-[#3FB950] text-white flex items-center justify-center text-[8px] font-bold">V</div>
+                    Vercel Team
+                  </button>
+                  <div className="border-t border-[#30363D] my-1" />
+                  <button
+                    onClick={() => {
+                      alert("Connect Organization workspace");
+                      setIsWorkspaceMenuOpen(false);
+                    }}
+                    className="w-full flex items-center gap-2 p-2 hover:bg-[#21262D] rounded text-left text-[#8B949E] hover:text-[#F0F6FC] cursor-pointer"
+                  >
+                    <Plus size={12} />
+                    Connect Organization
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Pinned & Scrollable Sections */}
+            <div className="flex-1 overflow-y-auto p-3 space-y-4 scrollbar-thin">
+              {/* Search Shortcut */}
               {!isSidebarCollapsed && (
-                <span className="font-mono text-[9px] border border-border px-1.5 py-0.5 rounded bg-surface">Ctrl K</span>
-              )}
-            </button>
-          </div>
-
-          <nav className="flex flex-col gap-1.5 border-border relative select-none">
-            {coreTabsList.map(tab => {
-              const Icon = tab.icon;
-              const isActive = activeTab === tab.id;
-
-              return (
                 <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id as TabId)}
-                  className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all focus:outline-none w-full relative group cursor-pointer ${
-                    isActive
-                      ? "text-text-primary bg-surface-secondary border border-border"
-                      : "border border-transparent text-text-secondary hover:text-text-primary hover:bg-surface/50"
-                  }`}
-                  title={isSidebarCollapsed ? tab.label : undefined}
+                  onClick={() => setIsCommandPaletteOpen(true)}
+                  className="w-full flex items-center justify-between px-3 py-1.5 rounded-lg border border-[#30363D] bg-[#0D1117] hover:bg-[#161B22] text-[11px] text-[#8B949E] cursor-pointer transition-all mb-2"
                 >
-                  <Icon size={16} className={`flex-shrink-0 ${isActive ? "text-accent" : "text-text-secondary group-hover:text-text-primary"}`} />
-                  
-                  {!isSidebarCollapsed && (
-                    <span className="transition-all duration-200">{tab.label}</span>
-                  )}
-
-                  {/* Collapsed Tooltip helper */}
-                  {isSidebarCollapsed && (
-                    <div className="absolute left-full ml-3 px-2.5 py-1.5 bg-[#161B22] border border-border text-[10px] text-text-primary font-bold rounded-lg shadow-xl opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100 transition-all pointer-events-none z-50">
-                      {tab.label}
-                    </div>
-                  )}
+                  <div className="flex items-center gap-2">
+                    <Search size={12} />
+                    <span>Search commands...</span>
+                  </div>
+                  <kbd className="text-[9px] border border-[#30363D] px-1.5 py-0.5 rounded bg-surface">Ctrl K</kbd>
                 </button>
-              );
-            })}
-
-            {/* Career Hub Header */}
-            <div className="border-t border-border/40 my-2 pt-2">
-              {!isSidebarCollapsed ? (
-                <span className="px-4 py-1 text-[9px] font-bold text-[#8B949E] uppercase tracking-widest block">
-                  🚀 Career Hub
-                </span>
-              ) : (
-                <div className="h-px bg-border/40 my-1 mx-2" />
               )}
+
+              {/* Pinned Items */}
+              {pinnedItemsData.length > 0 && (
+                <div className="space-y-1">
+                  {!isSidebarCollapsed && (
+                    <span className="text-[9px] font-bold text-[#8B949E] uppercase tracking-wider block px-2 mb-1.5">
+                      ⭐ Pinned
+                    </span>
+                  )}
+                  {pinnedItemsData.map(item => (
+                    <button
+                      key={item.id}
+                      onClick={() => setActiveTab(item.id as TabId)}
+                      className={`flex items-center justify-between w-full px-3 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                        activeTab === item.id
+                          ? "text-[#F0F6FC] bg-[#21262D] border border-[#30363D]"
+                          : "text-[#8B949E] hover:text-[#F0F6FC] hover:bg-[#161B22]/40"
+                      }`}
+                      title={isSidebarCollapsed ? item.label : undefined}
+                    >
+                      <div className="flex items-center gap-2 truncate">
+                        <Star size={12} className="text-yellow-500 fill-yellow-500 flex-shrink-0" />
+                        {!isSidebarCollapsed && <span className="truncate">{item.label}</span>}
+                      </div>
+                      {!isSidebarCollapsed && (
+                        <button
+                          onClick={(e) => togglePinTab(item.id, e)}
+                          className="opacity-0 hover:text-[#F85149] transition-opacity p-0.5 text-xs font-bold"
+                        >
+                          ×
+                        </button>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Accordion Sections */}
+              <div className="space-y-1.5">
+                {sidebarSections.map(sec => {
+                  const SecIcon = sec.icon;
+                  const isExpanded = activeSection === sec.id;
+                  const hasActiveChild = sec.items.some(item => item.id === activeTab);
+
+                  return (
+                    <div key={sec.id} className="space-y-1 animate-fadeIn">
+                      {/* Section Title */}
+                      <button
+                        onClick={() => toggleSection(sec.id)}
+                        className={`flex items-center justify-between w-full px-3 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                          hasActiveChild && !isExpanded
+                            ? "text-[#2F81F7]"
+                            : "text-[#8B949E] hover:text-[#F0F6FC] hover:bg-[#161B22]/40"
+                        }`}
+                        title={isSidebarCollapsed ? sec.label : undefined}
+                      >
+                        <div className="flex items-center gap-2 truncate">
+                          <SecIcon size={14} className="flex-shrink-0" />
+                          {!isSidebarCollapsed && <span className="truncate">{sec.label}</span>}
+                        </div>
+                        {!isSidebarCollapsed && (
+                          <ChevronDown
+                            size={12}
+                            className={`transform transition-transform duration-200 ${
+                              isExpanded ? "" : "-rotate-90"
+                            }`}
+                          />
+                        )}
+                      </button>
+
+                      {/* Expandable sub-items */}
+                      {isExpanded && !isSidebarCollapsed && (
+                        <div className="pl-4 border-l border-[#30363D] ml-4.5 space-y-1 py-1">
+                          {sec.items.map(item => {
+                            const isPinned = pinnedTabs.includes(item.id);
+                            return (
+                              <div
+                                key={item.id}
+                                className="group/item flex items-center justify-between w-full"
+                              >
+                                <button
+                                  onClick={() => setActiveTab(item.id as TabId)}
+                                  className={`flex-1 text-left px-2.5 py-1.5 rounded-md text-[11px] font-semibold transition-all truncate cursor-pointer ${
+                                    activeTab === item.id
+                                      ? "text-[#F0F6FC] bg-[#21262D]/60 font-bold"
+                                      : "text-[#8B949E] hover:text-[#F0F6FC]"
+                                  }`}
+                                >
+                                  {item.label}
+                                </button>
+                                <button
+                                  onClick={(e) => togglePinTab(item.id, e)}
+                                  className={`p-1 opacity-0 group-hover/item:opacity-100 transition-opacity cursor-pointer ${
+                                    isPinned ? "opacity-100 text-yellow-500" : "text-[#484F58] hover:text-yellow-500"
+                                  }`}
+                                >
+                                  <Star size={10} className={isPinned ? "fill-yellow-500 text-yellow-500" : ""} />
+                                </button>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
 
-            {careerTabsList.map(tab => {
-              const Icon = tab.icon;
-              const isActive = activeTab === tab.id;
-
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id as TabId)}
-                  className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all focus:outline-none w-full relative group cursor-pointer ${
-                    isActive
-                      ? "text-text-primary bg-surface-secondary border border-border"
-                      : "border border-transparent text-text-secondary hover:text-text-primary hover:bg-surface/50"
-                  }`}
-                  title={isSidebarCollapsed ? tab.label : undefined}
-                >
-                  <Icon size={16} className={`flex-shrink-0 ${isActive ? "text-accent" : "text-text-secondary group-hover:text-text-primary"}`} />
-                  
-                  {!isSidebarCollapsed && (
-                    <span className="transition-all duration-200">{tab.label}</span>
-                  )}
-
-                  {/* Collapsed Tooltip helper */}
-                  {isSidebarCollapsed && (
-                    <div className="absolute left-full ml-3 px-2.5 py-1.5 bg-[#161B22] border border-border text-[10px] text-text-primary font-bold rounded-lg shadow-xl opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100 transition-all pointer-events-none z-50">
-                      {tab.label}
-                    </div>
-                  )}
-                </button>
-              );
-            })}
-
-            {/* Team Workspace Header */}
-            <div className="border-t border-[#30363D]/40 my-2 pt-2">
-              {!isSidebarCollapsed ? (
-                <span className="px-4 py-1 text-[9px] font-bold text-[#8B949E] uppercase tracking-widest block">
-                  👥 Team Workspace
-                </span>
-              ) : (
-                <div className="h-px bg-border/40 my-1 mx-2" />
-              )}
+            {/* Sticky Bottom Area */}
+            <div className="p-3 border-t border-[#30363D]/60 space-y-2">
+              <div className="flex items-center justify-between text-[10px] text-[#8B949E] px-1.5">
+                {!isSidebarCollapsed && (
+                  <>
+                    <span>v0.1.0</span>
+                    <span>Storage: 62%</span>
+                  </>
+                )}
+              </div>
+              <button
+                onClick={toggleSidebar}
+                className="w-full flex items-center justify-center p-2 rounded-lg border border-[#30363D] bg-[#0D1117] hover:bg-[#161B22] text-[#8B949E] hover:text-[#F0F6FC] cursor-pointer transition-colors text-xs font-bold"
+              >
+                {isSidebarCollapsed ? <ChevronRight size={14} /> : "Collapse Sidebar"}
+              </button>
             </div>
 
-            {teamTabsList.map(tab => {
-              const Icon = tab.icon;
-              const isActive = activeTab === tab.id;
-
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id as TabId)}
-                  className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all focus:outline-none w-full relative group cursor-pointer ${
-                    isActive
-                      ? "text-[#F0F6FC] bg-[#21262D] border border-[#30363D]"
-                      : "border border-transparent text-[#8B949E] hover:text-[#F0F6FC] hover:bg-[#161B22]/50"
-                  }`}
-                  title={isSidebarCollapsed ? tab.label : undefined}
-                >
-                  <Icon size={16} className={`flex-shrink-0 ${isActive ? "text-[#2F81F7]" : "text-[#8B949E] group-hover:text-[#F0F6FC]"}`} />
-                  
-                  {!isSidebarCollapsed && (
-                    <span className="transition-all duration-200">{tab.label}</span>
-                  )}
-
-                  {/* Collapsed Tooltip helper */}
-                  {isSidebarCollapsed && (
-                    <div className="absolute left-full ml-3 px-2.5 py-1.5 bg-[#161B22] border border-border text-[10px] text-text-primary font-bold rounded-lg shadow-xl opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100 transition-all pointer-events-none z-50">
-                      {tab.label}
-                    </div>
-                  )}
-                </button>
-              );
-            })}
-
-            {/* AI Code Review Section */}
-            <div className="border-t border-[#30363D]/40 my-2 pt-2">
-              {!isSidebarCollapsed ? (
-                <span className="px-4 py-1 text-[9px] font-bold text-[#8B949E] uppercase tracking-widest block">
-                  🤖 AI Code Review
-                </span>
-              ) : (
-                <div className="h-px bg-border/40 my-1 mx-2" />
-              )}
-            </div>
-
-            {aiReviewTabsList.map(tab => {
-              const Icon = tab.icon;
-              const isActive = activeTab === tab.id;
-
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id as TabId)}
-                  className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all focus:outline-none w-full relative group cursor-pointer ${
-                    isActive
-                      ? "text-[#F0F6FC] bg-[#21262D] border border-[#30363D]"
-                      : "border border-transparent text-[#8B949E] hover:text-[#F0F6FC] hover:bg-[#161B22]/50"
-                  }`}
-                  title={isSidebarCollapsed ? tab.label : undefined}
-                >
-                  <Icon size={16} className={`flex-shrink-0 ${isActive ? "text-[#2F81F7]" : "text-[#8B949E] group-hover:text-[#F0F6FC]"}`} />
-                  
-                  {!isSidebarCollapsed && (
-                    <span className="transition-all duration-200">{tab.label}</span>
-                  )}
-
-                  {/* Collapsed Tooltip helper */}
-                  {isSidebarCollapsed && (
-                    <div className="absolute left-full ml-3 px-2.5 py-1.5 bg-[#161B22] border border-border text-[10px] text-text-primary font-bold rounded-lg shadow-xl opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100 transition-all pointer-events-none z-50">
-                      {tab.label}
-                    </div>
-                  )}
-                </button>
-              );
-            })}
-
-            {/* Collapse toggle button */}
-            <button
-              onClick={toggleSidebar}
-              className="mt-4 flex items-center justify-center gap-3 px-4 py-2.5 rounded-lg text-xs font-bold border border-border bg-[#161B22]/30 text-text-secondary hover:text-text-primary hover:bg-surface/50 transition-all focus:outline-none w-full cursor-pointer"
-            >
-              {isSidebarCollapsed ? <ChevronRight size={14} /> : (
-                <>
-                  <ChevronLeft size={14} />
-                  <span>Collapse Navigation</span>
-                </>
-              )}
-            </button>
-          </nav>
-        </aside>
+            {/* Drag Handle */}
+            {!isSidebarCollapsed && (
+              <div
+                onMouseDown={startResizing}
+                className="absolute top-0 right-0 w-1.5 h-full cursor-col-resize hover:bg-[#2F81F7]/40 active:bg-[#2F81F7] transition-all z-50"
+              />
+            )}
+          </aside>
         )}
 
         {/* Mobile Horizontal scrollbar nav */}
