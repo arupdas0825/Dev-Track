@@ -29,8 +29,9 @@
   --color-warning: var(--warning);
   --color-danger: var(--danger);
 
-  --font-space-grotesk: var(--font-space-grotesk);
   --font-inter: var(--font-inter);
+  --font-geist: var(--font-geist);
+  --font-mono: var(--font-mono);
 }
 
 body {
@@ -39,6 +40,92 @@ body {
   font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
   margin: 0;
   padding: 0;
+}
+
+/* Premium Typography utilities */
+.font-geist {
+  font-family: var(--font-geist), system-ui, sans-serif;
+}
+
+.font-inter {
+  font-family: var(--font-inter), system-ui, sans-serif;
+}
+
+.font-mono {
+  font-family: var(--font-mono), monospace;
+}
+
+.text-display-hero {
+  font-size: 60px;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  font-weight: 800;
+}
+
+.text-hero {
+  font-size: 48px;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  font-weight: 700;
+}
+
+.text-dashboard-heading {
+  font-size: 36px;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  font-weight: 700;
+}
+
+.text-section-heading {
+  font-size: 28px;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  font-weight: 600;
+}
+
+.text-card-heading {
+  font-size: 22px;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  font-weight: 600;
+}
+
+.text-sub-heading {
+  font-size: 18px;
+  line-height: 1.4;
+  font-weight: 500;
+}
+
+.text-body-large {
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.text-body {
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.text-small-text {
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.text-caption {
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.text-label {
+  font-size: 11px;
+  line-height: 1.4;
+  letter-spacing: 0.02em;
+}
+
+/* Tabular figures for stats alignment */
+.text-tabular {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
 }
 
 /* Custom styles for charts or overlays */
