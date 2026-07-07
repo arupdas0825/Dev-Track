@@ -57,6 +57,15 @@ export default function CommandPalette({
     { id: "compare", label: "Developer Comparison Tool", icon: "👥", action: () => onSelectTab("compare") },
     { id: "wrapped", label: "GitHub Wrapped", icon: "🎁", action: () => onSelectTab("wrapped") },
     { id: "settings", label: "Settings", icon: "⚙️", action: () => onSelectTab("settings") },
+    { id: "team-overview", label: "Team Workspace: Overview", icon: "👥", action: () => onSelectTab("team-overview") },
+    { id: "team-members", label: "Team Workspace: Members Directory", icon: "👤", action: () => onSelectTab("team-members") },
+    { id: "team-analytics", label: "Team Workspace: Organization Analytics", icon: "📈", action: () => onSelectTab("team-analytics") },
+    { id: "team-repos", label: "Team Workspace: Repositories", icon: "📂", action: () => onSelectTab("team-repos") },
+    { id: "team-leaderboard", label: "Team Workspace: Leaderboard", icon: "🏆", action: () => onSelectTab("team-leaderboard") },
+    { id: "team-sprint", label: "Team Workspace: Sprint Dashboard", icon: "🏃‍♂️", action: () => onSelectTab("team-sprint") },
+    { id: "team-activity", label: "Team Workspace: Live Activity Feed", icon: "⚡", action: () => onSelectTab("team-activity") },
+    { id: "team-reports", label: "Team Workspace: Reports", icon: "📄", action: () => onSelectTab("team-reports") },
+    { id: "team-settings", label: "Team Workspace: Settings", icon: "⚙️", action: () => onSelectTab("team-settings") },
   ];
 
   const quickActions = [

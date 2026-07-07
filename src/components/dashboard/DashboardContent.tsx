@@ -22,6 +22,7 @@ import DeveloperDnaTab from "./DeveloperDnaTab";
 import DashboardHeader from "./DashboardHeader";
 import DeveloperWorkspaceTab from "./DeveloperWorkspaceTab";
 import DeveloperCareerHub from "./DeveloperCareerHub";
+import TeamWorkspaceTab from "./TeamWorkspaceTab";
 import QuickActionsFAB from "./QuickActionsFAB";
 import CommandPalette from "./CommandPalette";
 import KeyboardShortcutsModal from "./KeyboardShortcutsModal";
@@ -83,7 +84,16 @@ type TabId =
   | "career-roadmap"
   | "career-open-source"
   | "career-certs"
-  | "career-readiness";
+  | "career-readiness"
+  | "team-overview"
+  | "team-members"
+  | "team-analytics"
+  | "team-repos"
+  | "team-leaderboard"
+  | "team-sprint"
+  | "team-activity"
+  | "team-reports"
+  | "team-settings";
 
 export default function DashboardContent() {
   const searchParams = useSearchParams();
@@ -260,7 +270,19 @@ export default function DashboardContent() {
     { id: "career-readiness", label: "Job Readiness Score", icon: CheckCircle },
   ] as const;
 
-  const tabsList = [...coreTabsList, ...careerTabsList];
+  const teamTabsList = [
+    { id: "team-overview", label: "Team Overview", icon: LayoutGrid },
+    { id: "team-members", label: "Members", icon: Users },
+    { id: "team-analytics", label: "Organization Analytics", icon: TrendingUp },
+    { id: "team-repos", label: "Repositories", icon: Folder },
+    { id: "team-leaderboard", label: "Team Leaderboard", icon: Award },
+    { id: "team-sprint", label: "Sprint Dashboard", icon: CheckCircle },
+    { id: "team-activity", label: "Activity Feed", icon: History },
+    { id: "team-reports", label: "Reports", icon: FileText },
+    { id: "team-settings", label: "Settings", icon: Settings },
+  ] as const;
+
+  const tabsList = [...coreTabsList, ...careerTabsList, ...teamTabsList];
 
   // Keyboard navigation listener (Arrow keys to switch tabs)
   useEffect(() => {
@@ -346,6 +368,22 @@ export default function DashboardContent() {
             data={dashboardData}
             activeSubTab={activeTab}
             setActiveSubTab={(t) => setActiveTab(t as TabId)}
+          />
+        );
+      case "team-overview":
+      case "team-members":
+      case "team-analytics":
+      case "team-repos":
+      case "team-leaderboard":
+      case "team-sprint":
+      case "team-activity":
+      case "team-reports":
+      case "team-settings":
+        return (
+          <TeamWorkspaceTab
+            activeSubTab={activeTab}
+            setActiveSubTab={(t) => setActiveTab(t as TabId)}
+            githubToken={githubToken}
           />
         );
       default:
@@ -476,6 +514,48 @@ export default function DashboardContent() {
                   title={isSidebarCollapsed ? tab.label : undefined}
                 >
                   <Icon size={16} className={`flex-shrink-0 ${isActive ? "text-accent" : "text-text-secondary group-hover:text-text-primary"}`} />
+                  
+                  {!isSidebarCollapsed && (
+                    <span className="transition-all duration-200">{tab.label}</span>
+                  )}
+
+                  {/* Collapsed Tooltip helper */}
+                  {isSidebarCollapsed && (
+                    <div className="absolute left-full ml-3 px-2.5 py-1.5 bg-[#161B22] border border-border text-[10px] text-text-primary font-bold rounded-lg shadow-xl opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100 transition-all pointer-events-none z-50">
+                      {tab.label}
+                    </div>
+                  )}
+                </button>
+              );
+            })}
+
+            {/* Team Workspace Header */}
+            <div className="border-t border-[#30363D]/40 my-2 pt-2">
+              {!isSidebarCollapsed ? (
+                <span className="px-4 py-1 text-[9px] font-bold text-[#8B949E] uppercase tracking-widest block">
+                  👥 Team Workspace
+                </span>
+              ) : (
+                <div className="h-px bg-border/40 my-1 mx-2" />
+              )}
+            </div>
+
+            {teamTabsList.map(tab => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
+
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id as TabId)}
+                  className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all focus:outline-none w-full relative group cursor-pointer ${
+                    isActive
+                      ? "text-[#F0F6FC] bg-[#21262D] border border-[#30363D]"
+                      : "border border-transparent text-[#8B949E] hover:text-[#F0F6FC] hover:bg-[#161B22]/50"
+                  }`}
+                  title={isSidebarCollapsed ? tab.label : undefined}
+                >
+                  <Icon size={16} className={`flex-shrink-0 ${isActive ? "text-[#2F81F7]" : "text-[#8B949E] group-hover:text-[#F0F6FC]"}`} />
                   
                   {!isSidebarCollapsed && (
                     <span className="transition-all duration-200">{tab.label}</span>
