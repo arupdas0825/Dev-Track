@@ -23,6 +23,7 @@ import DashboardHeader from "./DashboardHeader";
 import DeveloperWorkspaceTab from "./DeveloperWorkspaceTab";
 import DeveloperCareerHub from "./DeveloperCareerHub";
 import TeamWorkspaceTab from "./TeamWorkspaceTab";
+import AiCodeReviewTab from "./AiCodeReviewTab";
 import QuickActionsFAB from "./QuickActionsFAB";
 import CommandPalette from "./CommandPalette";
 import KeyboardShortcutsModal from "./KeyboardShortcutsModal";
@@ -57,7 +58,8 @@ import {
   HelpCircle,
   Compass,
   GitPullRequest,
-  CheckCircle
+  CheckCircle,
+  Shield
 } from "lucide-react";
 
 type TabId =
@@ -93,7 +95,17 @@ type TabId =
   | "team-sprint"
   | "team-activity"
   | "team-reports"
-  | "team-settings";
+  | "team-settings"
+  | "ai-scanner"
+  | "ai-code-review"
+  | "ai-security"
+  | "ai-docs"
+  | "ai-dependencies"
+  | "ai-architecture"
+  | "ai-performance"
+  | "ai-practices"
+  | "ai-suggestions"
+  | "ai-reports";
 
 export default function DashboardContent() {
   const searchParams = useSearchParams();
@@ -282,7 +294,20 @@ export default function DashboardContent() {
     { id: "team-settings", label: "Settings", icon: Settings },
   ] as const;
 
-  const tabsList = [...coreTabsList, ...careerTabsList, ...teamTabsList];
+  const aiReviewTabsList = [
+    { id: "ai-scanner", label: "Repository Scanner", icon: Activity },
+    { id: "ai-code-review", label: "Code Review", icon: Code },
+    { id: "ai-security", label: "Security", icon: Shield },
+    { id: "ai-docs", label: "Documentation", icon: FileText },
+    { id: "ai-dependencies", label: "Dependencies", icon: Layers },
+    { id: "ai-architecture", label: "Architecture", icon: Compass },
+    { id: "ai-performance", label: "Performance", icon: TrendingUp },
+    { id: "ai-practices", label: "Best Practices", icon: CheckCircle },
+    { id: "ai-suggestions", label: "AI Suggestions", icon: Sparkles },
+    { id: "ai-reports", label: "Reports", icon: FileText },
+  ] as const;
+
+  const tabsList = [...coreTabsList, ...careerTabsList, ...teamTabsList, ...aiReviewTabsList];
 
   // Keyboard navigation listener (Arrow keys to switch tabs)
   useEffect(() => {
@@ -383,6 +408,24 @@ export default function DashboardContent() {
           <TeamWorkspaceTab
             activeSubTab={activeTab}
             setActiveSubTab={(t) => setActiveTab(t as TabId)}
+            githubToken={githubToken}
+          />
+        );
+      case "ai-scanner":
+      case "ai-code-review":
+      case "ai-security":
+      case "ai-docs":
+      case "ai-dependencies":
+      case "ai-architecture":
+      case "ai-performance":
+      case "ai-practices":
+      case "ai-suggestions":
+      case "ai-reports":
+        return (
+          <AiCodeReviewTab
+            activeSubTab={activeTab}
+            setActiveSubTab={(t) => setActiveTab(t as TabId)}
+            dashboardData={dashboardData}
             githubToken={githubToken}
           />
         );
@@ -541,6 +584,48 @@ export default function DashboardContent() {
             </div>
 
             {teamTabsList.map(tab => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
+
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id as TabId)}
+                  className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all focus:outline-none w-full relative group cursor-pointer ${
+                    isActive
+                      ? "text-[#F0F6FC] bg-[#21262D] border border-[#30363D]"
+                      : "border border-transparent text-[#8B949E] hover:text-[#F0F6FC] hover:bg-[#161B22]/50"
+                  }`}
+                  title={isSidebarCollapsed ? tab.label : undefined}
+                >
+                  <Icon size={16} className={`flex-shrink-0 ${isActive ? "text-[#2F81F7]" : "text-[#8B949E] group-hover:text-[#F0F6FC]"}`} />
+                  
+                  {!isSidebarCollapsed && (
+                    <span className="transition-all duration-200">{tab.label}</span>
+                  )}
+
+                  {/* Collapsed Tooltip helper */}
+                  {isSidebarCollapsed && (
+                    <div className="absolute left-full ml-3 px-2.5 py-1.5 bg-[#161B22] border border-border text-[10px] text-text-primary font-bold rounded-lg shadow-xl opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100 transition-all pointer-events-none z-50">
+                      {tab.label}
+                    </div>
+                  )}
+                </button>
+              );
+            })}
+
+            {/* AI Code Review Section */}
+            <div className="border-t border-[#30363D]/40 my-2 pt-2">
+              {!isSidebarCollapsed ? (
+                <span className="px-4 py-1 text-[9px] font-bold text-[#8B949E] uppercase tracking-widest block">
+                  🤖 AI Code Review
+                </span>
+              ) : (
+                <div className="h-px bg-border/40 my-1 mx-2" />
+              )}
+            </div>
+
+            {aiReviewTabsList.map(tab => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
 

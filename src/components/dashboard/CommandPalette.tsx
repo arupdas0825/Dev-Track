@@ -66,6 +66,16 @@ export default function CommandPalette({
     { id: "team-activity", label: "Team Workspace: Live Activity Feed", icon: "⚡", action: () => onSelectTab("team-activity") },
     { id: "team-reports", label: "Team Workspace: Reports", icon: "📄", action: () => onSelectTab("team-reports") },
     { id: "team-settings", label: "Team Workspace: Settings", icon: "⚙️", action: () => onSelectTab("team-settings") },
+    { id: "ai-scanner", label: "AI Code Review: Repository Scanner", icon: "🤖", action: () => onSelectTab("ai-scanner") },
+    { id: "ai-code-review", label: "AI Code Review: Code Quality", icon: "💻", action: () => onSelectTab("ai-code-review") },
+    { id: "ai-security", label: "AI Code Review: Security Audit", icon: "🛡️", action: () => onSelectTab("ai-security") },
+    { id: "ai-docs", label: "AI Code Review: Documentation Review", icon: "📖", action: () => onSelectTab("ai-docs") },
+    { id: "ai-dependencies", label: "AI Code Review: Dependencies Audit", icon: "📦", action: () => onSelectTab("ai-dependencies") },
+    { id: "ai-architecture", label: "AI Code Review: Architecture Style", icon: "🏛️", action: () => onSelectTab("ai-architecture") },
+    { id: "ai-performance", label: "AI Code Review: Performance Analysis", icon: "⚡", action: () => onSelectTab("ai-performance") },
+    { id: "ai-practices", label: "AI Code Review: Best Practices", icon: "✅", action: () => onSelectTab("ai-practices") },
+    { id: "ai-suggestions", label: "AI Code Review: Suggestions Plan", icon: "💡", action: () => onSelectTab("ai-suggestions") },
+    { id: "ai-reports", label: "AI Code Review: Download Reports", icon: "📥", action: () => onSelectTab("ai-reports") },
   ];
 
   const quickActions = [
