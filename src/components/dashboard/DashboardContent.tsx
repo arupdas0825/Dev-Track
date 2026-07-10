@@ -32,6 +32,7 @@ import AiCodeReviewTab from "./AiCodeReviewTab";
 import LiveActivityTab from "./LiveActivityTab";
 import QuickActionsFAB from "./QuickActionsFAB";
 import HiringDashboard from "./HiringDashboard";
+import EnterpriseHub from "./EnterpriseHub";
 import Logo from "../ui/Logo";
 import CommandPalette from "./CommandPalette";
 import KeyboardShortcutsModal from "./KeyboardShortcutsModal";
@@ -82,7 +83,8 @@ import {
   ArrowUp,
   X,
   Send,
-  AlertCircle
+  AlertCircle,
+  Building2
 } from "lucide-react";
 
 type TabId =
@@ -174,7 +176,18 @@ type TabId =
   | "community-jobs"
   | "community-notifications"
   | "community-messaging"
-  | "community-search";
+  | "community-search"
+  | "enterprise-dashboard"
+  | "enterprise-organizations"
+  | "enterprise-members"
+  | "enterprise-teams"
+  | "enterprise-admin"
+  | "enterprise-api-keys"
+  | "enterprise-usage"
+  | "enterprise-billing"
+  | "enterprise-audit"
+  | "enterprise-security"
+  | "enterprise-integrations";
 
 
 
@@ -566,7 +579,21 @@ export default function DashboardContent() {
     { id: "community-search", label: "Universal Search", icon: Search }
   ] as const;
 
-  const tabsList = [...coreTabsList, ...hiringTabsList, ...careerTabsList, ...teamTabsList, ...aiReviewTabsList, ...liveActivityTabsList, ...challengesTabsList, ...communityTabsList];
+  const enterpriseTabsList = [
+    { id: "enterprise-dashboard", label: "Enterprise Dashboard", icon: Building2 },
+    { id: "enterprise-organizations", label: "Organizations", icon: Building2 },
+    { id: "enterprise-members", label: "Members", icon: Users },
+    { id: "enterprise-teams", label: "Teams", icon: Users },
+    { id: "enterprise-admin", label: "Admin Panel", icon: Shield },
+    { id: "enterprise-api-keys", label: "API Keys", icon: Shield },
+    { id: "enterprise-usage", label: "Usage Analytics", icon: TrendingUp },
+    { id: "enterprise-billing", label: "Billing", icon: TrendingUp },
+    { id: "enterprise-audit", label: "Audit Logs", icon: FileText },
+    { id: "enterprise-security", label: "Security", icon: Shield },
+    { id: "enterprise-integrations", label: "Integrations", icon: Globe },
+  ] as const;
+
+  const tabsList = [...coreTabsList, ...hiringTabsList, ...careerTabsList, ...teamTabsList, ...aiReviewTabsList, ...liveActivityTabsList, ...challengesTabsList, ...communityTabsList, ...enterpriseTabsList];
 
 
 
@@ -733,6 +760,24 @@ export default function DashboardContent() {
       icon: Settings,
       items: [
         { id: "settings", label: "Settings" }
+      ]
+    },
+    {
+      id: "enterprise",
+      label: "🏢 Enterprise",
+      icon: Building2,
+      items: [
+        { id: "enterprise-dashboard", label: "Enterprise Dashboard" },
+        { id: "enterprise-organizations", label: "Organizations" },
+        { id: "enterprise-members", label: "Members" },
+        { id: "enterprise-teams", label: "Teams" },
+        { id: "enterprise-admin", label: "Admin Panel" },
+        { id: "enterprise-api-keys", label: "API Keys" },
+        { id: "enterprise-usage", label: "Usage Analytics" },
+        { id: "enterprise-billing", label: "Billing" },
+        { id: "enterprise-audit", label: "Audit Logs" },
+        { id: "enterprise-security", label: "Security" },
+        { id: "enterprise-integrations", label: "Integrations" },
       ]
     }
   ];
@@ -960,6 +1005,23 @@ export default function DashboardContent() {
         );
 
 
+      case "enterprise-dashboard":
+      case "enterprise-organizations":
+      case "enterprise-members":
+      case "enterprise-teams":
+      case "enterprise-admin":
+      case "enterprise-api-keys":
+      case "enterprise-usage":
+      case "enterprise-billing":
+      case "enterprise-audit":
+      case "enterprise-security":
+      case "enterprise-integrations":
+        return (
+          <EnterpriseHub
+            activeSubTab={activeTab}
+            setActiveSubTab={(t) => setActiveTab(t as TabId)}
+          />
+        );
       default:
         return <OverviewTab data={dashboardData} />;
     }
