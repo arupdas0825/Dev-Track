@@ -19,49 +19,14 @@ export default function Logo({
 }: LogoProps) {
   return (
     <div className={cn("flex items-center gap-3", className)}>
-      <svg
-        viewBox="0 0 130 120"
+      <img
+        src="/devtrack-logo.png"
+        alt="DevTrack Logo"
         width={size}
-        height={size * (120 / 130)}
-        className="flex-shrink-0"
-      >
-        <defs>
-          <linearGradient id="logo-grad-component" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#2F81F7" />
-            <stop offset="100%" stopColor="#8957e5" />
-          </linearGradient>
-          <linearGradient id="bar-grad-component" x1="0%" y1="100%" x2="0%" y2="0%">
-            <stop offset="0%" stopColor="#2F81F7" stopOpacity="0.6" />
-            <stop offset="100%" stopColor="#2F81F7" stopOpacity="1" />
-          </linearGradient>
-          <linearGradient id="line-grad-component" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#a371f7" />
-            <stop offset="100%" stopColor="#8957e5" />
-          </linearGradient>
-        </defs>
-
-        {/* Left Brackets */}
-        <path d="M 20 48 L 12 58 L 20 68" fill="none" stroke="#2F81F7" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M 25 44 L 19 72" fill="none" stroke="#8B949E" strokeWidth="2.5" strokeLinecap="round" />
-        <path d="M 26 48 L 34 58 L 26 68" fill="none" stroke="#2F81F7" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-
-        {/* C-loop D-Shape */}
-        <path
-          d="M 44 34 H 74 A 24 24 0 0 1 98 58 A 24 24 0 0 1 74 82 H 44 A 5 5 0 0 1 44 72 H 74 A 14 14 0 0 0 88 58 A 14 14 0 0 0 74 44 H 44 A 5 5 0 0 1 44 34 Z"
-          fill="url(#logo-grad-component)"
-        />
-
-        {/* Inner Bars */}
-        <rect x="52" y="64" width="4.5" height="8" rx="1.5" fill="url(#bar-grad-component)" />
-        <rect x="61" y="56" width="4.5" height="16" rx="1.5" fill="url(#bar-grad-component)" />
-        <rect x="70" y="48" width="4.5" height="24" rx="1.5" fill="url(#bar-grad-component)" />
-
-        {/* Right Line Chart */}
-        <path d="M 100 70 L 110 58 L 122 46" fill="none" stroke="url(#line-grad-component)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-        <circle cx="100" cy="70" r="3.5" fill="#0D1117" stroke="#a371f7" strokeWidth="2" />
-        <circle cx="110" cy="58" r="3.5" fill="#0D1117" stroke="#a371f7" strokeWidth="2" />
-        <circle cx="122" cy="46" r="3.5" fill="#8957e5" stroke="#F0F6FC" strokeWidth="1.5" />
-      </svg>
+        height={size}
+        className="flex-shrink-0 object-contain transition-all duration-300 hover:scale-[1.03] hover:drop-shadow-[0_0_12px_rgba(88,166,255,0.6)] antialiased"
+        style={{ width: size, height: size }}
+      />
 
       {showText && (
         <div className="flex flex-col text-left select-none">

@@ -29,6 +29,8 @@ import TeamWorkspaceTab from "./TeamWorkspaceTab";
 import AiCodeReviewTab from "./AiCodeReviewTab";
 import LiveActivityTab from "./LiveActivityTab";
 import QuickActionsFAB from "./QuickActionsFAB";
+import HiringDashboard from "./HiringDashboard";
+import Logo from "../ui/Logo";
 import CommandPalette from "./CommandPalette";
 import KeyboardShortcutsModal from "./KeyboardShortcutsModal";
 import ExportCenterModal from "./ExportCenterModal";
@@ -76,6 +78,16 @@ import {
 
 type TabId =
   | "overview"
+  | "hiring-overview"
+  | "hiring-ats"
+  | "hiring-resume-analyzer"
+  | "hiring-resume-match"
+  | "hiring-job-match"
+  | "hiring-skills-gap"
+  | "hiring-recruiter"
+  | "hiring-interview"
+  | "hiring-roadmap"
+  | "hiring-applications"
   | "workspace"
   | "repos"
   | "dna"
@@ -407,6 +419,19 @@ export default function DashboardContent() {
     { id: "settings", label: "Settings", icon: Settings },
   ] as const;
 
+  const hiringTabsList = [
+    { id: "hiring-overview", label: "Overview", icon: LayoutGrid },
+    { id: "hiring-ats", label: "ATS Score", icon: CheckCircle },
+    { id: "hiring-resume-analyzer", label: "Resume Analyzer", icon: FileText },
+    { id: "hiring-resume-match", label: "Resume Match", icon: Layers },
+    { id: "hiring-job-match", label: "Job Match", icon: Star },
+    { id: "hiring-skills-gap", label: "Skills Gap", icon: TrendingUp },
+    { id: "hiring-recruiter", label: "Recruiter View", icon: Users },
+    { id: "hiring-interview", label: "Interview Readiness", icon: HelpCircle },
+    { id: "hiring-roadmap", label: "Career Roadmap", icon: Compass },
+    { id: "hiring-applications", label: "Applications", icon: ClipboardList },
+  ] as const;
+
   const careerTabsList = [
     { id: "career-dashboard", label: "Career Dashboard", icon: Briefcase },
     { id: "career-resume-builder", label: "Resume Builder", icon: FileText },
@@ -488,7 +513,7 @@ export default function DashboardContent() {
     { id: "community-search", label: "Universal Search", icon: Search }
   ] as const;
 
-  const tabsList = [...coreTabsList, ...careerTabsList, ...teamTabsList, ...aiReviewTabsList, ...liveActivityTabsList, ...challengesTabsList, ...communityTabsList];
+  const tabsList = [...coreTabsList, ...hiringTabsList, ...careerTabsList, ...teamTabsList, ...aiReviewTabsList, ...liveActivityTabsList, ...challengesTabsList, ...communityTabsList];
 
 
 
@@ -499,6 +524,23 @@ export default function DashboardContent() {
       icon: LayoutGrid,
       items: [
         { id: "overview", label: "Overview" },
+      ]
+    },
+    {
+      id: "hiring",
+      label: "💼 Hiring Dashboard",
+      icon: Briefcase,
+      items: [
+        { id: "hiring-overview", label: "Overview" },
+        { id: "hiring-ats", label: "ATS Score" },
+        { id: "hiring-resume-analyzer", label: "Resume Analyzer" },
+        { id: "hiring-resume-match", label: "Resume Match" },
+        { id: "hiring-job-match", label: "Job Match" },
+        { id: "hiring-skills-gap", label: "Skills Gap" },
+        { id: "hiring-recruiter", label: "Recruiter View" },
+        { id: "hiring-interview", label: "Interview Readiness" },
+        { id: "hiring-roadmap", label: "Career Roadmap" },
+        { id: "hiring-applications", label: "Applications" },
       ]
     },
     {
@@ -699,6 +741,24 @@ export default function DashboardContent() {
     switch (activeTab) {
       case "overview":
         return <OverviewTab data={dashboardData} />;
+      case "hiring-overview":
+      case "hiring-ats":
+      case "hiring-resume-analyzer":
+      case "hiring-resume-match":
+      case "hiring-job-match":
+      case "hiring-skills-gap":
+      case "hiring-recruiter":
+      case "hiring-interview":
+      case "hiring-roadmap":
+      case "hiring-applications":
+        return (
+          <HiringDashboard
+            data={dashboardData}
+            activeSubTab={activeTab}
+            setActiveSubTab={(t) => setActiveTab(t as TabId)}
+            githubToken={githubToken}
+          />
+        );
       case "workspace":
         return (
           <DeveloperWorkspaceTab
@@ -857,10 +917,10 @@ export default function DashboardContent() {
       <div className="flex min-h-screen flex-col bg-background">
         <Navbar currentUser={currentUser} onLoginSuccess={handleLoginSuccess} onLogout={handleLogout} onOpenSearch={() => setIsCommandPaletteOpen(true)} />
         <div className="flex-1 flex flex-col items-center justify-center p-8 text-text-secondary pt-24">
-          <svg className="animate-spin h-10 w-10 text-accent mb-4" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-          </svg>
+          <div className="relative mb-6">
+            <div className="absolute inset-0 rounded-full bg-accent/25 blur-xl animate-pulse" />
+            <Logo size={64} showText={false} className="relative z-10 animate-bounce" />
+          </div>
           <span className="text-sm font-semibold tracking-wide font-mono">Running Codebase Indexer...</span>
         </div>
       </div>
