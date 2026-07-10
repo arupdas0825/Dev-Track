@@ -37,18 +37,18 @@
 body {
   background-color: var(--background);
   color: var(--foreground);
-  font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
+  font-family: 'Object Sans', var(--font-inter), system-ui, -apple-system, sans-serif;
   margin: 0;
   padding: 0;
 }
 
 /* Premium Typography utilities */
 .font-geist {
-  font-family: var(--font-geist), system-ui, sans-serif;
+  font-family: 'Object Sans', var(--font-geist), system-ui, sans-serif;
 }
 
 .font-inter {
-  font-family: var(--font-inter), system-ui, sans-serif;
+  font-family: 'Object Sans', var(--font-inter), system-ui, sans-serif;
 }
 
 .font-mono {

@@ -24,6 +24,8 @@ import DeveloperWorkspaceTab from "./DeveloperWorkspaceTab";
 import DeveloperCareerHub from "./DeveloperCareerHub";
 import DeveloperChallengesHub from "./DeveloperChallengesHub";
 import DeveloperCommunityHub from "./DeveloperCommunityHub";
+import ContributionHeatmap from "./ContributionHeatmap";
+import DeveloperMilestones from "./DeveloperMilestones";
 
 import TeamWorkspaceTab from "./TeamWorkspaceTab";
 import AiCodeReviewTab from "./AiCodeReviewTab";
@@ -73,7 +75,14 @@ import {
   Tag,
   RefreshCw,
   MessageSquare,
-  ClipboardList
+  ClipboardList,
+  Heart,
+  Share2,
+  LogOut,
+  ArrowUp,
+  X,
+  Send,
+  AlertCircle
 } from "lucide-react";
 
 type TabId =
@@ -194,6 +203,50 @@ export default function DashboardContent() {
   const [recentTabs, setRecentTabs] = useState<string[]>(["overview"]);
   const [activeWorkspace, setActiveWorkspace] = useState<string>("Personal Workspace");
   const [isWorkspaceMenuOpen, setIsWorkspaceMenuOpen] = useState<boolean>(false);
+
+  // Dedicated Mobile Experience States
+  const [activeMobileTab, setActiveMobileTab] = useState<"dashboard" | "repos" | "insights" | "community" | "profile">("dashboard");
+  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState<boolean>(false);
+  const [isAiAssistantOpen, setIsAiAssistantOpen] = useState<boolean>(false);
+  const [isProfileInfoExpanded, setIsProfileInfoExpanded] = useState<boolean>(false);
+  const [mobileSearchQuery, setMobileSearchQuery] = useState<string>("");
+  const [isOnline, setIsOnline] = useState<boolean>(true);
+  const [pullToRefreshStatus, setPullToRefreshStatus] = useState<"idle" | "pulling" | "refreshing">("idle");
+  const [touchStartClientY, setTouchStartClientY] = useState<number>(0);
+  const [isBackToTopVisible, setIsBackToTopVisible] = useState<boolean>(false);
+  const [mobileNotificationsCount, setMobileNotificationsCount] = useState<number>(3);
+  
+  // Mobile mock states
+  const [mobileRecentSearches, setMobileRecentSearches] = useState<string[]>(["nextjs", "react-motion", "recharts"]);
+  const [likedPosts, setLikedPosts] = useState<Record<string, boolean>>({});
+  const [aiAssistantMessages, setAiAssistantMessages] = useState<{sender: "user" | "assistant", text: string}[]>([
+    { sender: "assistant", text: "Hello! I am your AI Career Assistant. How can I help you improve your repository quality, prep for interviews, or analyze your ATS score today?" }
+  ]);
+  const [aiAssistantInput, setAiAssistantInput] = useState<string>("");
+  const [expandedMobileRepoId, setExpandedMobileRepoId] = useState<string | null>(null);
+  const [targetMobileRole, setTargetMobileRole] = useState<string>("Frontend");
+
+  // Track network and scroll status
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setIsOnline(navigator.onLine);
+      const handleOnline = () => setIsOnline(true);
+      const handleOffline = () => setIsOnline(false);
+      window.addEventListener("online", handleOnline);
+      window.addEventListener("offline", handleOffline);
+      
+      const handleScroll = () => {
+        setIsBackToTopVisible(window.scrollY > 400);
+      };
+      window.addEventListener("scroll", handleScroll);
+
+      return () => {
+        window.removeEventListener("online", handleOnline);
+        window.removeEventListener("offline", handleOffline);
+        window.removeEventListener("scroll", handleScroll);
+      };
+    }
+  }, []);
 
   const usernameParam = searchParams.get("user") || "";
 
@@ -950,306 +1003,1076 @@ export default function DashboardContent() {
     );
   }
 
-  return (
-    <div className="flex min-h-screen flex-col bg-background relative selection:bg-accent/30">
-      <Navbar currentUser={currentUser} onLoginSuccess={handleLoginSuccess} onLogout={handleLogout} onOpenSearch={() => setIsCommandPaletteOpen(true)} />
+  // Dedicated Mobile View Content Renderer
+  const renderMobileActiveTabContent = () => {
+    if (!dashboardData) return null;
+    const { profile, contributions, score, languages, repositories } = dashboardData;
 
-      <div className={`flex-1 mx-auto w-full px-4 pt-24 pb-8 sm:px-6 lg:px-8 flex flex-col md:flex-row gap-8 transition-all duration-300 ${
-        isFocusMode ? "max-w-4xl" : "max-w-7xl"
-      }`}>
-        
-        {/* Collapsible/Resizable Sidebar Nav */}
-        {!isFocusMode && (
-          <aside
-            style={{ width: isSidebarCollapsed ? 72 : sidebarWidth }}
-            className="flex-shrink-0 md:flex hidden flex-col border-r border-[#30363D] bg-[#161B22]/30 select-none relative group transition-all duration-150 h-[calc(100vh-120px)] rounded-xl"
-          >
-            {/* Top Workspace Switcher */}
-            <div className="p-3 border-b border-[#30363D]/60 flex items-center justify-between gap-2 relative">
-              <button
-                onClick={() => setIsWorkspaceMenuOpen(!isWorkspaceMenuOpen)}
-                className="flex items-center justify-between w-full p-1.5 rounded-lg border border-[#30363D] bg-[#0D1117] hover:bg-[#161B22] text-xs text-[#F0F6FC] font-semibold cursor-pointer transition-colors"
-              >
-                <div className="flex items-center gap-2 truncate">
-                  <div className="w-5 h-5 rounded bg-[#2F81F7] text-white flex items-center justify-center font-bold text-[10px]">
-                    {activeWorkspace.charAt(0)}
+    switch (activeMobileTab) {
+      case "dashboard":
+        const totalStars = repositories.reduce((acc, curr) => acc + (curr.stargazers_count || 0), 0);
+        return (
+          <div className="space-y-6">
+            {/* Pull-To-Refresh Visual Indicator */}
+            {pullToRefreshStatus !== "idle" && (
+              <div className="flex justify-center items-center py-2 text-[10px] font-mono text-text-secondary animate-pulse bg-surface/30 border border-border/40 rounded-xl">
+                {pullToRefreshStatus === "pulling" ? "↓ Pull more to refresh..." : "🔄 Refreshing telemetry..."}
+              </div>
+            )}
+
+            {/* Offline Network indicator */}
+            {!isOnline && (
+              <div className="bg-danger/10 border border-danger/25 text-danger rounded-xl p-3 flex items-center gap-2 text-xs font-semibold animate-pulse">
+                <Shield size={14} />
+                <span>Offline mode: loading telemetry from local cache</span>
+              </div>
+            )}
+
+            {/* Welcome Card */}
+            <div className="bg-surface/60 border border-border rounded-2xl p-4 space-y-3 shadow-lg shadow-black/10">
+              <div className="flex justify-between items-start">
+                <div>
+                  <span className="text-[10px] font-mono text-text-secondary uppercase tracking-wider">Telemetry Active</span>
+                  <h3 className="text-lg font-black font-space-grotesk text-text-primary mt-0.5">
+                    Hey, {profile.name || profile.login} 👋
+                  </h3>
+                </div>
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-success/20 bg-success/10 text-success text-[10px] font-mono">
+                  <span className="w-1.5 h-1.5 rounded-full bg-success animate-ping" />
+                  <span>Synced</span>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4 border-t border-border/40 pt-3 text-xs font-mono">
+                <div>
+                  <span className="text-text-secondary block text-[9px]">ACTIVE STREAK</span>
+                  <span className="text-text-primary font-bold text-sm">{contributions.currentStreak || 0} Days</span>
+                </div>
+                <div>
+                  <span className="text-text-secondary block text-[9px]">DEV GRADE</span>
+                  <span className="text-accent font-bold text-sm">{score.grade || "A"}</span>
+                </div>
+              </div>
+              {/* Progress bar */}
+              <div className="space-y-1">
+                <div className="flex justify-between text-[10px] text-text-secondary font-mono">
+                  <span>Score Engine Progress</span>
+                  <span>{score.overall}/100</span>
+                </div>
+                <div className="h-1.5 bg-border rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-accent to-[#8957e5] rounded-full transition-all duration-500"
+                    style={{ width: `${score.overall}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Profile Section */}
+            <div className="bg-surface/60 border border-border rounded-2xl p-4 shadow-lg shadow-black/10">
+              <div className="flex items-center gap-3.5">
+                <div className="relative w-14 h-14 flex-shrink-0">
+                  {/* Grade ring outline */}
+                  <svg className="absolute inset-0 w-full h-full transform -rotate-90">
+                    <circle cx="28" cy="28" r="25" fill="none" stroke="#30363D" strokeWidth="2.5" />
+                    <circle
+                      cx="28"
+                      cy="28"
+                      r="25"
+                      fill="none"
+                      stroke="#2F81F7"
+                      strokeWidth="2.5"
+                      strokeDasharray={2 * Math.PI * 25}
+                      strokeDashoffset={2 * Math.PI * 25 - ((score.overall / 100) * 2 * Math.PI * 25)}
+                    />
+                  </svg>
+                  <img
+                    src={profile.avatar_url}
+                    alt={profile.login}
+                    className="w-11 h-11 rounded-full absolute top-1.5 left-1.5 object-cover"
+                  />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h4 className="text-sm font-bold text-text-primary truncate">{profile.name || profile.login}</h4>
+                  <span className="text-xs text-text-secondary font-mono truncate block">@{profile.login}</span>
+                </div>
+                <button
+                  onClick={() => setIsProfileInfoExpanded(!isProfileInfoExpanded)}
+                  className="px-3 py-1.5 rounded-lg border border-border bg-[#0D1117] hover:bg-[#161B22] text-[10px] font-mono text-text-secondary hover:text-text-primary"
+                >
+                  {isProfileInfoExpanded ? "Hide Details" : "Expand Bio"}
+                </button>
+              </div>
+
+              {/* Expandable details */}
+              <AnimatePresence>
+                {isProfileInfoExpanded && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    className="overflow-hidden border-t border-border/40 mt-3 pt-3 text-xs text-text-secondary space-y-2 font-mono"
+                  >
+                    {profile.bio && <p className="leading-relaxed bg-[#0D1117] p-2.5 rounded-xl border border-border/40 text-[10px] text-text-secondary">{profile.bio}</p>}
+                    <div className="grid grid-cols-2 gap-2 text-[10px]">
+                      <div>📍 {profile.location || "Earth"}</div>
+                      <div>🏢 {profile.company || "Independent"}</div>
+                      <div>👥 {profile.followers} Followers</div>
+                      <div>📦 {repositories.length} Repositories</div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* Statistics Section (2 cards per row) */}
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                { label: "Repositories", val: repositories.length, detail: "Active projects" },
+                { label: "Contributions", val: contributions.totalCommits + contributions.totalPRs, detail: "Total pushes" },
+                { label: "Stars Received", val: totalStars, detail: "Community stars" },
+                { label: "Followers", val: profile.followers, detail: "Network size" },
+                { label: "Streak Count", val: contributions.longestStreak, detail: "Max consistency" },
+                { label: "Telemetry Score", val: `${score.overall}/100`, detail: "Overall index" }
+              ].map((stat, i) => (
+                <div key={i} className="bg-[#161B22]/40 border border-border rounded-xl p-3 flex flex-col justify-between h-24">
+                  <span className="text-[9px] font-bold text-text-secondary uppercase tracking-wider">{stat.label}</span>
+                  <span className="text-xl font-black font-space-grotesk text-text-primary text-tabular">{stat.val}</span>
+                  <span className="text-[9px] text-text-secondary font-mono">{stat.detail}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Heatmap Section */}
+            <div className="bg-surface/60 border border-border rounded-2xl p-4 shadow-lg shadow-black/10 space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-[10px] font-bold text-text-secondary uppercase tracking-wider">Consistency Mapping</span>
+                <span className="text-[9px] font-mono text-accent">Horizontal Swipe</span>
+              </div>
+              <div className="overflow-x-auto scrollbar-none py-1 border border-border/40 rounded-xl bg-[#0D1117]/80">
+                <div className="min-w-[650px] p-2 flex justify-center text-xs">
+                  <ContributionHeatmap
+                    dailyContributions={contributions.dailyContributions || {}}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Swipeable / Progress-based Language stack */}
+            <div className="bg-surface/60 border border-border rounded-2xl p-4 shadow-lg shadow-black/10 space-y-3">
+              <span className="text-[10px] font-bold text-text-secondary uppercase tracking-wider block">Technology Distribution</span>
+              <div className="space-y-3.5 pt-1.5">
+                {languages.slice(0, 5).map((lang, idx) => (
+                  <div key={idx} className="space-y-1.5">
+                    <div className="flex justify-between items-center text-xs">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full" style={{ backgroundColor: lang.color || "#888" }} />
+                        <span className="font-bold text-text-primary">{lang.name}</span>
+                      </div>
+                      <span className="font-mono text-text-secondary text-[11px]">{lang.percentage}%</span>
+                    </div>
+                    <div className="h-1 bg-border rounded-full overflow-hidden">
+                      <div
+                        className="h-full rounded-full"
+                        style={{
+                          backgroundColor: lang.color || "#888",
+                          width: `${lang.percentage}%`
+                        }}
+                      />
+                    </div>
                   </div>
-                  {!isSidebarCollapsed && <span className="truncate">{activeWorkspace}</span>}
-                </div>
-                {!isSidebarCollapsed && <ChevronDown size={14} className="text-[#8B949E]" />}
-              </button>
+                ))}
+              </div>
+            </div>
 
-              {/* Switcher Dropdown */}
-              {isWorkspaceMenuOpen && !isSidebarCollapsed && (
-                <div className="absolute top-full left-3 right-3 mt-1.5 bg-[#161B22] border border-[#30363D] rounded-lg shadow-xl p-1 z-50 animate-fadeIn text-xs">
-                  <button
-                    onClick={() => {
-                      setActiveWorkspace("Personal Workspace");
-                      setIsWorkspaceMenuOpen(false);
-                    }}
-                    className="w-full flex items-center gap-2 p-2 hover:bg-[#21262D] rounded text-left text-[#F0F6FC] cursor-pointer"
-                  >
-                    <div className="w-4 h-4 rounded bg-[#2F81F7] text-white flex items-center justify-center text-[8px] font-bold">P</div>
-                    Personal Workspace
-                  </button>
-                  <button
-                    onClick={() => {
-                      setActiveWorkspace("Vercel Team");
-                      setIsWorkspaceMenuOpen(false);
-                    }}
-                    className="w-full flex items-center gap-2 p-2 hover:bg-[#21262D] rounded text-left text-[#F0F6FC] cursor-pointer"
-                  >
-                    <div className="w-4 h-4 rounded bg-[#3FB950] text-white flex items-center justify-center text-[8px] font-bold">V</div>
-                    Vercel Team
-                  </button>
-                  <div className="border-t border-[#30363D] my-1" />
-                  <button
-                    onClick={() => {
-                      alert("Connect Organization workspace");
-                      setIsWorkspaceMenuOpen(false);
-                    }}
-                    className="w-full flex items-center gap-2 p-2 hover:bg-[#21262D] rounded text-left text-[#8B949E] hover:text-[#F0F6FC] cursor-pointer"
-                  >
-                    <Plus size={12} />
-                    Connect Organization
-                  </button>
-                </div>
+            {/* Expandable Milestones / Activity */}
+            <div className="bg-surface/60 border border-border rounded-2xl p-4 shadow-lg shadow-black/10 space-y-3">
+              <span className="text-[10px] font-bold text-text-secondary uppercase tracking-wider block">DevTrack Milestones</span>
+              <DeveloperMilestones data={dashboardData} />
+            </div>
+          </div>
+        );
+
+      case "repos":
+        const filteredRepos = repositories.filter(repo =>
+          repo.name.toLowerCase().includes(mobileSearchQuery.toLowerCase()) ||
+          (repo.language && repo.language.toLowerCase().includes(mobileSearchQuery.toLowerCase()))
+        );
+
+        return (
+          <div className="space-y-4">
+            {/* Search Bar Input */}
+            <div className="relative">
+              <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-secondary" />
+              <input
+                type="text"
+                placeholder="Search repositories..."
+                value={mobileSearchQuery}
+                onChange={(e) => setMobileSearchQuery(e.target.value)}
+                className="w-full bg-[#161B22]/50 border border-border rounded-xl py-2 pl-9 pr-4 text-xs text-text-primary focus:outline-none focus:border-accent"
+              />
+              {mobileSearchQuery && (
+                <button
+                  onClick={() => setMobileSearchQuery("")}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-text-secondary text-xs"
+                >
+                  Clear
+                </button>
               )}
             </div>
 
-            {/* Pinned & Scrollable Sections */}
-            <div className="flex-1 overflow-y-auto p-3 space-y-4 scrollbar-thin">
-              {/* Search Shortcut */}
-              {!isSidebarCollapsed && (
-                <button
-                  onClick={() => setIsCommandPaletteOpen(true)}
-                  className="w-full flex items-center justify-between px-3 py-1.5 rounded-lg border border-[#30363D] bg-[#0D1117] hover:bg-[#161B22] text-[11px] text-[#8B949E] cursor-pointer transition-all mb-2"
-                >
-                  <div className="flex items-center gap-2">
-                    <Search size={12} />
-                    <span>Search commands...</span>
-                  </div>
-                  <kbd className="text-[9px] border border-[#30363D] px-1.5 py-0.5 rounded bg-surface">Ctrl K</kbd>
-                </button>
-              )}
-
-              {/* Pinned Items */}
-              {pinnedItemsData.length > 0 && (
-                <div className="space-y-1">
-                  {!isSidebarCollapsed && (
-                    <span className="text-[9px] font-bold text-[#8B949E] uppercase tracking-wider block px-2 mb-1.5">
-                      ⭐ Pinned
-                    </span>
-                  )}
-                  {pinnedItemsData.map(item => (
-                    <button
-                      key={item.id}
-                      onClick={() => setActiveTab(item.id as TabId)}
-                      className={`flex items-center justify-between w-full px-3 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                        activeTab === item.id
-                          ? "text-[#F0F6FC] bg-[#21262D] border border-[#30363D]"
-                          : "text-[#8B949E] hover:text-[#F0F6FC] hover:bg-[#161B22]/40"
-                      }`}
-                      title={isSidebarCollapsed ? item.label : undefined}
+            {/* Repos list */}
+            <div className="space-y-3">
+              {filteredRepos.length > 0 ? (
+                filteredRepos.map(repo => {
+                  const isExpanded = expandedMobileRepoId === repo.name;
+                  return (
+                    <div
+                      key={repo.name}
+                      onClick={() => setExpandedMobileRepoId(isExpanded ? null : repo.name)}
+                      className="bg-surface/50 border border-border rounded-2xl p-4 shadow-md transition-all active:bg-[#161B22] flex flex-col justify-between cursor-pointer"
                     >
-                      <div className="flex items-center gap-2 truncate">
-                        <Star size={12} className="text-yellow-500 fill-yellow-500 flex-shrink-0" />
-                        {!isSidebarCollapsed && <span className="truncate">{item.label}</span>}
+                      <div className="flex justify-between items-start">
+                        <div className="flex items-center gap-2">
+                          <Folder size={14} className="text-accent flex-shrink-0" />
+                          <h4 className="text-xs font-bold text-text-primary truncate max-w-[180px]">{repo.name}</h4>
+                        </div>
+                        {/* Health Index Badge */}
+                        <div className={`px-2 py-0.5 rounded text-[9px] font-bold font-mono ${
+                          (repo.open_issues_count || 0) > 5 ? "bg-danger/10 text-danger" : "bg-success/10 text-success"
+                        }`}>
+                          Health: {Math.max(40, 100 - (repo.open_issues_count || 0) * 8)}%
+                        </div>
                       </div>
-                      {!isSidebarCollapsed && (
-                        <button
-                          onClick={(e) => togglePinTab(item.id, e)}
-                          className="opacity-0 hover:text-[#F85149] transition-opacity p-0.5 text-xs font-bold"
-                        >
-                          ×
-                        </button>
+
+                      {repo.description && (
+                        <p className="text-[10px] text-text-secondary mt-1.5 line-clamp-2 leading-relaxed">
+                          {repo.description}
+                        </p>
                       )}
+
+                      <div className="flex items-center justify-between border-t border-border/40 mt-3 pt-2 text-[10px] font-mono text-text-secondary">
+                        <div className="flex items-center gap-3">
+                          {repo.language && (
+                            <span className="flex items-center gap-1">
+                              <span className="w-1.5 h-1.5 rounded-full bg-[#f1e05a]" />
+                              {repo.language}
+                            </span>
+                          )}
+                          <span className="flex items-center gap-0.5">⭐ {repo.stargazers_count}</span>
+                          <span className="flex items-center gap-0.5">🍴 {repo.forks_count}</span>
+                        </div>
+                        <span className="text-[9px] text-accent">Details</span>
+                      </div>
+
+                      {/* Expandable details panel */}
+                      <AnimatePresence>
+                        {isExpanded && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            className="overflow-hidden border-t border-border/40 mt-2.5 pt-2.5 space-y-2 text-[10px] text-text-secondary font-mono"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <div className="grid grid-cols-2 gap-2 text-[9.5px]">
+                              <div>Default Branch: <span className="text-text-primary">{repo.default_branch || "main"}</span></div>
+                              <div>Watchers: <span className="text-text-primary">{repo.watchers_count || 0}</span></div>
+                              <div>Open Issues: <span className="text-text-primary">{repo.open_issues_count || 0}</span></div>
+                              <div>Size: <span className="text-text-primary">{Math.round(repo.size / 1024)} MB</span></div>
+                            </div>
+                            <div className="flex gap-2 pt-1">
+                              <a
+                                href={repo.html_url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="flex-1 py-1.5 bg-[#21262D] border border-[#30363D] hover:bg-[#30363D] rounded-lg text-center text-text-primary font-bold"
+                              >
+                                View GitHub
+                              </a>
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="text-center py-8 text-text-secondary font-mono text-xs">No repositories match search</div>
+              )}
+            </div>
+          </div>
+        );
+
+      case "insights":
+        return (
+          <div className="space-y-6">
+            {/* Overall developer rating */}
+            <div className="bg-surface/60 border border-border rounded-2xl p-4 flex items-center justify-between shadow-lg shadow-black/10">
+              <div className="space-y-1">
+                <span className="text-[10px] font-bold text-text-secondary uppercase tracking-wider block">Developer Grade</span>
+                <span className="text-2xl font-black font-space-grotesk text-accent block">{score.grade || "A"}</span>
+                <span className="text-[9px] text-text-secondary font-mono leading-none">Telemetry compiled successfully</span>
+              </div>
+              <div className="w-16 h-16 rounded-full bg-accent/10 border border-accent/20 flex items-center justify-center">
+                <span className="text-lg font-black font-space-grotesk text-accent">{score.overall}</span>
+              </div>
+            </div>
+
+            {/* Technical radar score progress bars */}
+            <div className="bg-surface/60 border border-border rounded-2xl p-4 shadow-lg shadow-black/10 space-y-4">
+              <span className="text-[10px] font-bold text-text-secondary uppercase tracking-wider block">Telemetry Category Scoring</span>
+              <div className="space-y-3.5">
+                {[
+                  { name: "Repository Quality", score: score.categories?.repoQuality?.score || 16, max: 20 },
+                  { name: "Coding Consistency", score: score.categories?.consistency?.score || 15, max: 20 },
+                  { name: "Documentation Integrity", score: score.categories?.documentation?.score || 8, max: 10 },
+                  { name: "Open Source Engagement", score: score.categories?.openSource?.score || 11, max: 15 },
+                  { name: "Community Impact", score: score.categories?.communityImpact?.score || 12, max: 15 }
+                ].map((item, idx) => (
+                  <div key={idx} className="space-y-1.5 text-xs">
+                    <div className="flex justify-between font-mono text-text-secondary text-[10px]">
+                      <span>{item.name}</span>
+                      <span className="text-text-primary font-semibold">{item.score}/{item.max}</span>
+                    </div>
+                    <div className="h-1 bg-border rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-accent rounded-full"
+                        style={{ width: `${(item.score / item.max) * 100}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* AI Strengths & recommendations list */}
+            <div className="space-y-3">
+              <span className="text-[10px] font-bold text-text-secondary uppercase tracking-wider block">AI Diagnostics</span>
+              {/* Strengths card */}
+              <div className="bg-surface/50 border border-border rounded-2xl p-4 shadow-md space-y-2">
+                <div className="flex items-center gap-2">
+                  <CheckCircle size={14} className="text-success" />
+                  <h4 className="text-xs font-bold text-text-primary font-space-grotesk">Verified Strengths</h4>
+                </div>
+                <ul className="space-y-1.5 text-[10px] font-mono text-text-secondary leading-relaxed list-disc list-inside">
+                  {dashboardData.aiInsights.strengths.slice(0, 3).map((s, idx) => (
+                    <li key={idx}>{s}</li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Weaknesses card */}
+              <div className="bg-surface/50 border border-border rounded-2xl p-4 shadow-md space-y-2">
+                <div className="flex items-center gap-2">
+                  <AlertCircle size={14} className="text-warning" />
+                  <h4 className="text-xs font-bold text-text-primary font-space-grotesk">Improvement Focus</h4>
+                </div>
+                <ul className="space-y-1.5 text-[10px] font-mono text-text-secondary leading-relaxed list-disc list-inside">
+                  {dashboardData.aiInsights.weaknesses.slice(0, 3).map((w, idx) => (
+                    <li key={idx}>{w}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        );
+
+      case "community":
+        const posts = [
+          { id: "1", author: "arupdas0825", avatar: profile.avatar_url, time: "2h ago", content: "Just indexed my main codebase on DevTrack. Scored a consistent A grade and verified my system design skills. Ready to connect with hiring recruiters!", likes: 14, replies: 3 },
+          { id: "2", author: "linus_t", avatar: "/vercel.svg", time: "5h ago", content: "Building a new compiler engine in Rust. Committing daily on GitHub. Consistency heatmap is glowing green! 🦀🖥️ #rust #compiler", likes: 112, replies: 28 },
+          { id: "3", author: "taylor_ot", avatar: "/next.svg", time: "1d ago", content: "Excited to preview DevTrack Upgrade 13. The new AI Career intelligence platform dashboard looks absolutely next-gen. Great job team!", likes: 54, replies: 8 }
+        ];
+
+        return (
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <span className="text-[10px] font-bold text-text-secondary uppercase tracking-wider">Community Showcase Feed</span>
+              <button
+                onClick={() => alert("Make a post")}
+                className="px-3 py-1 bg-accent rounded-lg text-[10px] font-mono text-white font-bold"
+              >
+                + New Post
+              </button>
+            </div>
+
+            <div className="space-y-3.5">
+              {posts.map(post => {
+                const isLiked = likedPosts[post.id];
+                return (
+                  <div key={post.id} className="bg-surface/50 border border-border rounded-2xl p-4 shadow-md space-y-3">
+                    <div className="flex items-center gap-2.5">
+                      <img src={post.avatar} alt={post.author} className="w-7 h-7 rounded-full border border-border object-cover" />
+                      <div className="flex-1 min-w-0">
+                        <span className="text-xs font-bold text-text-primary truncate block">{post.author}</span>
+                        <span className="text-[9px] text-text-secondary font-mono leading-none block">{post.time}</span>
+                      </div>
+                    </div>
+                    <p className="text-xs text-text-secondary leading-relaxed font-sans">{post.content}</p>
+
+                    {/* Post action footer */}
+                    <div className="flex items-center gap-6 border-t border-border/40 pt-2 text-[10px] font-mono text-text-secondary">
+                      <button
+                        onClick={() => setLikedPosts({ ...likedPosts, [post.id]: !isLiked })}
+                        className={`flex items-center gap-1 hover:text-danger transition-colors cursor-pointer ${
+                          isLiked ? "text-danger" : ""
+                        }`}
+                      >
+                        <Heart size={12} className={isLiked ? "fill-danger text-danger" : ""} />
+                        <span>{post.likes + (isLiked ? 1 : 0)}</span>
+                      </button>
+                      <button className="flex items-center gap-1 hover:text-text-primary transition-colors">
+                        <MessageSquare size={12} />
+                        <span>{post.replies}</span>
+                      </button>
+                      <button className="flex items-center gap-1 hover:text-text-primary transition-colors">
+                        <Share2 size={12} />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+
+      case "profile":
+        return (
+          <div className="space-y-6">
+            {/* Account Card */}
+            <div className="bg-surface/60 border border-border rounded-2xl p-4 flex items-center gap-4 shadow-lg shadow-black/10">
+              <img src={profile.avatar_url} alt={profile.login} className="w-12 h-12 rounded-full border border-border object-cover" />
+              <div>
+                <h4 className="text-xs font-bold text-text-primary">{profile.name || profile.login}</h4>
+                <span className="text-[10px] text-text-secondary font-mono leading-none">GitHub Account Linked</span>
+              </div>
+            </div>
+
+            {/* Grouped settings menu lists */}
+            <div className="space-y-4">
+              {/* Preferences list */}
+              <div className="bg-[#161B22]/40 border border-border rounded-2xl overflow-hidden shadow-md">
+                <span className="text-[9px] font-bold text-text-secondary uppercase tracking-wider block px-4 pt-3.5 pb-1">Preferences</span>
+                <div className="divide-y divide-border/60">
+                  <div className="px-4 py-3 flex justify-between items-center text-xs">
+                    <span className="text-text-primary font-semibold">Install PWA Web App</span>
+                    <button
+                      onClick={() => alert("Install PWA to Home Screen initiated.")}
+                      className="px-2.5 py-1 bg-[#21262D] hover:bg-[#30363D] border border-border rounded text-[10px] font-mono text-accent font-bold"
+                    >
+                      Install
+                    </button>
+                  </div>
+                  <div className="px-4 py-3 flex justify-between items-center text-xs">
+                    <span className="text-text-primary font-semibold">Active Workspace</span>
+                    <span className="font-mono text-text-secondary text-[10px]">{activeWorkspace}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Developer Profile Info Group */}
+              <div className="bg-[#161B22]/40 border border-border rounded-2xl overflow-hidden shadow-md">
+                <span className="text-[9px] font-bold text-text-secondary uppercase tracking-wider block px-4 pt-3.5 pb-1">System Health</span>
+                <div className="divide-y divide-border/60">
+                  <div className="px-4 py-3 flex justify-between items-center text-xs">
+                    <span className="text-text-primary font-semibold">Network Connection</span>
+                    <span className={`font-mono text-[10px] px-2 py-0.5 rounded ${isOnline ? "bg-success/15 text-success" : "bg-danger/15 text-danger"}`}>
+                      {isOnline ? "Online" : "Offline"}
+                    </span>
+                  </div>
+                  <div className="px-4 py-3 flex justify-between items-center text-xs">
+                    <span className="text-text-primary font-semibold">Telemetry Version</span>
+                    <span className="font-mono text-text-secondary text-[10px]">v0.1.0</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Logout button */}
+              <button
+                onClick={handleLogout}
+                className="w-full py-3 bg-danger/10 hover:bg-danger/15 border border-danger/25 text-danger rounded-xl text-xs font-bold font-space-grotesk flex items-center justify-center gap-2 cursor-pointer transition-colors"
+              >
+                <LogOut size={14} />
+                <span>Disconnect GitHub Profile</span>
+              </button>
+            </div>
+          </div>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  const mobileNavTabs = [
+    { id: "dashboard", label: "Dashboard", icon: LayoutGrid },
+    { id: "repos", label: "Repositories", icon: Folder },
+    { id: "insights", label: "Insights", icon: TrendingUp },
+    { id: "community", label: "Community", icon: Users },
+    { id: "profile", label: "Profile", icon: Settings }
+  ] as const;
+
+  if (error && !dashboardData) {
+    return (
+      <div className="flex min-h-screen flex-col bg-background">
+        <Navbar currentUser={currentUser} onLoginSuccess={handleLoginSuccess} onLogout={handleLogout} onOpenSearch={() => setIsCommandPaletteOpen(true)} />
+        <div className="flex-1 flex flex-col items-center justify-center p-8 text-center max-w-md mx-auto pt-24">
+          <div className="h-12 w-12 rounded-lg bg-danger/10 text-danger flex items-center justify-center mb-4">
+            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <h3 className="text-base font-bold font-space-grotesk text-text-primary">Analysis Failed</h3>
+          <p className="text-xs text-text-secondary mt-2 leading-relaxed">{error}</p>
+          <button
+            onClick={() => router.push("/")}
+            className="mt-6 rounded-lg bg-accent px-4 py-2 text-xs font-bold text-white hover:bg-accent/90 transition-colors"
+          >
+            Return to Search
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      {/* DESKTOP LAYOUT SHELL (md and larger) */}
+      <div className="hidden md:flex min-h-screen flex-col bg-background relative selection:bg-accent/30 w-full">
+        <Navbar currentUser={currentUser} onLoginSuccess={handleLoginSuccess} onLogout={handleLogout} onOpenSearch={() => setIsCommandPaletteOpen(true)} />
+
+        <div className={`flex-1 mx-auto w-full px-4 pt-24 pb-8 sm:px-6 lg:px-8 flex flex-col md:flex-row gap-8 transition-all duration-300 ${
+          isFocusMode ? "max-w-4xl" : "max-w-7xl"
+        }`}>
+          
+          {/* Collapsible/Resizable Sidebar Nav */}
+          {!isFocusMode && (
+            <aside
+              style={{ width: isSidebarCollapsed ? 72 : sidebarWidth }}
+              className="flex-shrink-0 md:flex hidden flex-col border-r border-[#30363D] bg-[#161B22]/30 select-none relative group transition-all duration-150 h-[calc(100vh-120px)] rounded-xl"
+            >
+              {/* Top Workspace Switcher */}
+              <div className="p-3 border-b border-[#30363D]/60 flex items-center justify-between gap-2 relative">
+                <button
+                  onClick={() => setIsWorkspaceMenuOpen(!isWorkspaceMenuOpen)}
+                  className="flex items-center justify-between w-full p-1.5 rounded-lg border border-[#30363D] bg-[#0D1117] hover:bg-[#161B22] text-xs text-[#F0F6FC] font-semibold cursor-pointer transition-colors"
+                >
+                  <div className="flex items-center gap-2 truncate">
+                    <div className="w-5 h-5 rounded bg-[#2F81F7] text-white flex items-center justify-center font-bold text-[10px]">
+                      {activeWorkspace.charAt(0)}
+                    </div>
+                    {!isSidebarCollapsed && <span className="truncate">{activeWorkspace}</span>}
+                  </div>
+                  {!isSidebarCollapsed && <ChevronDown size={14} className="text-[#8B949E]" />}
+                </button>
+
+                {/* Switcher Dropdown */}
+                {isWorkspaceMenuOpen && !isSidebarCollapsed && (
+                  <div className="absolute top-full left-3 right-3 mt-1.5 bg-[#161B22] border border-[#30363D] rounded-lg shadow-xl p-1 z-50 animate-fadeIn text-xs">
+                    <button
+                      onClick={() => {
+                        setActiveWorkspace("Personal Workspace");
+                        setIsWorkspaceMenuOpen(false);
+                      }}
+                      className="w-full flex items-center gap-2 p-2 hover:bg-[#21262D] rounded text-left text-[#F0F6FC] cursor-pointer"
+                    >
+                      <div className="w-4 h-4 rounded bg-[#2F81F7] text-white flex items-center justify-center text-[8px] font-bold">P</div>
+                      Personal Workspace
+                    </button>
+                    <button
+                      onClick={() => {
+                        setActiveWorkspace("Vercel Team");
+                        setIsWorkspaceMenuOpen(false);
+                      }}
+                      className="w-full flex items-center gap-2 p-2 hover:bg-[#21262D] rounded text-left text-[#F0F6FC] cursor-pointer"
+                    >
+                      <div className="w-4 h-4 rounded bg-[#3FB950] text-white flex items-center justify-center text-[8px] font-bold">V</div>
+                      Vercel Team
+                    </button>
+                    <div className="border-t border-[#30363D] my-1" />
+                    <button
+                      onClick={() => {
+                        alert("Connect Organization workspace");
+                        setIsWorkspaceMenuOpen(false);
+                      }}
+                      className="w-full flex items-center gap-2 p-2 hover:bg-[#21262D] rounded text-left text-[#8B949E] hover:text-[#F0F6FC] cursor-pointer"
+                    >
+                      <Plus size={12} />
+                      Connect Organization
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Pinned & Scrollable Sections */}
+              <div className="flex-1 overflow-y-auto p-3 space-y-4 scrollbar-thin">
+                {/* Search Shortcut */}
+                {!isSidebarCollapsed && (
+                  <button
+                    onClick={() => setIsCommandPaletteOpen(true)}
+                    className="w-full flex items-center justify-between px-3 py-1.5 rounded-lg border border-[#30363D] bg-[#0D1117] hover:bg-[#161B22] text-[11px] text-[#8B949E] cursor-pointer transition-all mb-2"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Search size={12} />
+                      <span>Search commands...</span>
+                    </div>
+                    <kbd className="text-[9px] border border-[#30363D] px-1.5 py-0.5 rounded bg-surface">Ctrl K</kbd>
+                  </button>
+                )}
+
+                {/* Pinned Items */}
+                {pinnedItemsData.length > 0 && (
+                  <div className="space-y-1">
+                    {!isSidebarCollapsed && (
+                      <span className="text-[9px] font-bold text-[#8B949E] uppercase tracking-wider block px-2 mb-1.5">
+                        ⭐ Pinned
+                      </span>
+                    )}
+                    {pinnedItemsData.map(item => (
+                      <button
+                        key={item.id}
+                        onClick={() => setActiveTab(item.id as TabId)}
+                        className={`flex items-center justify-between w-full px-3 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                          activeTab === item.id
+                            ? "text-[#F0F6FC] bg-[#21262D] border border-[#30363D]"
+                            : "text-[#8B949E] hover:text-[#F0F6FC] hover:bg-[#161B22]/40"
+                        }`}
+                        title={isSidebarCollapsed ? item.label : undefined}
+                      >
+                        <div className="flex items-center gap-2 truncate">
+                          <Star size={12} className="text-yellow-500 fill-yellow-500 flex-shrink-0" />
+                          {!isSidebarCollapsed && <span className="truncate">{item.label}</span>}
+                        </div>
+                        {!isSidebarCollapsed && (
+                          <button
+                            onClick={(e) => togglePinTab(item.id, e)}
+                            className="opacity-0 hover:text-[#F85149] transition-opacity p-0.5 text-xs font-bold"
+                          >
+                            ×
+                          </button>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {/* Accordion Sections */}
+                <div className="space-y-1.5">
+                  {sidebarSections.map(sec => {
+                    const SecIcon = sec.icon;
+                    const isExpanded = activeSection === sec.id;
+                    const hasActiveChild = sec.items.some(item => item.id === activeTab);
+
+                    return (
+                      <div key={sec.id} className="space-y-1 animate-fadeIn">
+                        {/* Section Title */}
+                        <button
+                          onClick={() => toggleSection(sec.id)}
+                          className={`flex items-center justify-between w-full px-3 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                            hasActiveChild && !isExpanded
+                              ? "text-[#2F81F7]"
+                              : "text-[#8B949E] hover:text-[#F0F6FC] hover:bg-[#161B22]/40"
+                          }`}
+                          title={isSidebarCollapsed ? sec.label : undefined}
+                        >
+                          <div className="flex items-center gap-2 truncate">
+                            <SecIcon size={14} className="flex-shrink-0" />
+                            {!isSidebarCollapsed && <span className="truncate">{sec.label}</span>}
+                          </div>
+                          {!isSidebarCollapsed && (
+                            <ChevronDown
+                              size={12}
+                              className={`transform transition-transform duration-200 ${
+                                isExpanded ? "" : "-rotate-90"
+                              }`}
+                            />
+                          )}
+                        </button>
+
+                        {/* Expandable sub-items */}
+                        {isExpanded && !isSidebarCollapsed && (
+                          <div className="pl-4 border-l border-[#30363D] ml-4.5 space-y-1 py-1">
+                            {sec.items.map(item => {
+                              const isPinned = pinnedTabs.includes(item.id);
+                              return (
+                                <div
+                                  key={item.id}
+                                  className="group/item flex items-center justify-between w-full"
+                                >
+                                  <button
+                                    onClick={() => setActiveTab(item.id as TabId)}
+                                    className={`flex-1 text-left px-2.5 py-1.5 rounded-md text-[11px] font-semibold transition-all truncate cursor-pointer ${
+                                      activeTab === item.id
+                                        ? "text-[#F0F6FC] bg-[#21262D]/60 font-bold"
+                                        : "text-[#8B949E] hover:text-[#F0F6FC]"
+                                    }`}
+                                  >
+                                    {item.label}
+                                  </button>
+                                  <button
+                                    onClick={(e) => togglePinTab(item.id, e)}
+                                    className={`p-1 opacity-0 group-hover/item:opacity-100 transition-opacity cursor-pointer ${
+                                      isPinned ? "opacity-100 text-yellow-500" : "text-[#484F58] hover:text-yellow-500"
+                                    }`}
+                                  >
+                                    <Star size={10} className={isPinned ? "fill-yellow-500 text-yellow-500" : ""} />
+                                  </button>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Sticky Bottom Area */}
+              <div className="p-3 border-t border-[#30363D]/60 space-y-2">
+                <div className="flex items-center justify-between text-[10px] text-[#8B949E] px-1.5">
+                  {!isSidebarCollapsed && (
+                    <>
+                      <span>v0.1.0</span>
+                      <span>Storage: 62%</span>
+                    </>
+                  )}
+                </div>
+                <button
+                  onClick={toggleSidebar}
+                  className="w-full flex items-center justify-center p-2 rounded-lg border border-[#30363D] bg-[#0D1117] hover:bg-[#161B22] text-[#8B949E] hover:text-[#F0F6FC] cursor-pointer transition-colors text-xs font-bold"
+                >
+                  {isSidebarCollapsed ? <ChevronRight size={14} /> : "Collapse Sidebar"}
+                </button>
+              </div>
+
+              {/* Drag Handle */}
+              {!isSidebarCollapsed && (
+                <div
+                  onMouseDown={startResizing}
+                  className="absolute top-0 right-0 w-1.5 h-full cursor-col-resize hover:bg-[#2F81F7]/40 active:bg-[#2F81F7] transition-all z-50"
+                />
+              )}
+            </aside>
+          )}
+
+          {/* Mobile Horizontal scrollbar nav */}
+          {!isFocusMode && (
+            <aside className="md:hidden flex-shrink-0 border-b border-border pb-3">
+              <nav className="flex flex-row overflow-x-auto gap-1.5 scrollbar-none pb-1">
+                {tabsList.map(tab => {
+                  const Icon = tab.icon;
+                  const isActive = activeTab === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id as TabId)}
+                      className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-bold whitespace-nowrap transition-all focus:outline-none ${
+                        isActive
+                          ? "bg-surface-secondary border border-border text-text-primary"
+                          : "border border-transparent text-text-secondary hover:text-text-primary hover:bg-surface/50"
+                      }`}
+                    >
+                      <Icon size={14} className={isActive ? "text-accent" : "text-text-secondary"} />
+                      <span>{tab.label}</span>
+                    </button>
+                  );
+                })}
+              </nav>
+            </aside>
+          )}
+
+          {/* Tab Content window */}
+          <div className="flex-1 min-w-0">
+            {dashboardData && !isFocusMode && <DashboardHeader data={dashboardData} />}
+            <div className={isFocusMode ? "transition-all duration-300" : "border border-border bg-surface/20 rounded-xl p-6 transition-all duration-300"}>
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activeTab}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  {renderActiveTabContent()}
+                </motion.div>
+              </AnimatePresence>
+            </div>
+          </div>
+        </div>
+
+        {/* Floating Quick Actions FAB */}
+        {dashboardData && (
+          <QuickActionsFAB
+            githubUsername={dashboardData.profile.login}
+            onSelectTab={(t) => setActiveTab(t as TabId)}
+            onRefreshData={() => setSyncedData(null)}
+            onOpenExportModal={() => setIsExportModalOpen(true)}
+            onOpenShortcutsModal={() => setIsShortcutsModalOpen(true)}
+          />
+        )}
+
+        {/* Global Command Palette */}
+        <CommandPalette
+          isOpen={isCommandPaletteOpen}
+          onClose={() => setIsCommandPaletteOpen(false)}
+          repositories={dashboardData?.repositories || []}
+          onSelectTab={(t) => setActiveTab(t as TabId)}
+          onSelectRepo={(name) => {
+            const owner = dashboardData?.profile.login || "demo";
+            router.push(`/repository/${name}?owner=${owner}`);
+          }}
+          onRefreshData={() => setSyncedData(null)}
+        />
+
+        {/* Keyboard Shortcuts Modal */}
+        <KeyboardShortcutsModal
+          isOpen={isShortcutsModalOpen}
+          onClose={() => setIsShortcutsModalOpen(false)}
+        />
+
+        {/* Export Center Modal */}
+        <ExportCenterModal
+          isOpen={isExportModalOpen}
+          onClose={() => setIsExportModalOpen(false)}
+          data={dashboardData}
+        />
+      </div>
+
+      {/* DEDICATED MOBILE LAYOUT SHELL (screens smaller than md) */}
+      <div
+        className="flex md:hidden flex-col w-full pb-24 relative select-none bg-background min-h-screen font-inter"
+        onTouchStart={(e) => {
+          if (window.scrollY === 0) {
+            setTouchStartClientY(e.touches[0].clientY);
+            setPullToRefreshStatus("idle");
+          }
+        }}
+        onTouchMove={(e) => {
+          if (window.scrollY === 0 && touchStartClientY > 0) {
+            const diff = e.touches[0].clientY - touchStartClientY;
+            if (diff > 50 && diff < 150) {
+              setPullToRefreshStatus("pulling");
+            }
+          }
+        }}
+        onTouchEnd={() => {
+          if (pullToRefreshStatus === "pulling") {
+            setPullToRefreshStatus("refreshing");
+            setTimeout(() => {
+              setPullToRefreshStatus("idle");
+              setTouchStartClientY(0);
+              alert("GitHub Telemetry refreshed successfully!");
+            }, 1200);
+          } else {
+            setTouchStartClientY(0);
+          }
+        }}
+      >
+        {/* Sticky Mobile Header */}
+        <header className="sticky top-0 z-40 bg-[#0D1117]/85 backdrop-blur-md border-b border-border/50 py-3 px-4 flex items-center justify-between">
+          <Logo size={24} showText={true} />
+          <div className="flex items-center gap-3.5">
+            {/* Notification Badge Bell */}
+            <button
+              onClick={() => alert("Notification center: 3 active repository issues require attention.")}
+              className="relative text-text-secondary hover:text-text-primary p-1 cursor-pointer"
+            >
+              <Bell size={18} />
+              {mobileNotificationsCount > 0 && (
+                <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-danger border border-[#0D1117] rounded-full" />
+              )}
+            </button>
+
+            {/* Profile Avatar / Settings Switch */}
+            {dashboardData && (
+              <button
+                onClick={() => {
+                  setActiveMobileTab("profile");
+                }}
+                className="w-7 h-7 rounded-full border border-border overflow-hidden cursor-pointer"
+              >
+                <img
+                  src={dashboardData.profile.avatar_url || "/avatar.png"}
+                  alt={dashboardData.profile.login}
+                  className="w-full h-full object-cover"
+                />
+              </button>
+            )}
+          </div>
+        </header>
+
+        {/* Mobile Main Content Area */}
+        <main className="px-4 py-5 flex-1 min-w-0">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeMobileTab}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+            >
+              {renderMobileActiveTabContent()}
+            </motion.div>
+          </AnimatePresence>
+        </main>
+
+        {/* Mobile Bottom Navigation Bar */}
+        <nav className="fixed bottom-0 left-0 right-0 z-40 bg-[#161B22]/90 backdrop-blur-md border-t border-[#30363D] px-4 py-2 flex items-center justify-around pb-safe">
+          {mobileNavTabs.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeMobileTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveMobileTab(tab.id)}
+                className={`flex flex-col items-center gap-0.5 text-[9px] font-bold focus:outline-none cursor-pointer transition-colors ${
+                  isActive ? "text-accent" : "text-text-secondary"
+                }`}
+              >
+                <Icon size={18} className={isActive ? "text-accent scale-105 transition-transform" : "text-text-secondary"} />
+                <span>{tab.label}</span>
+              </button>
+            );
+          })}
+        </nav>
+
+        {/* Floating Center Action Button for AI Assistant */}
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40">
+          <button
+            onClick={() => setIsAiAssistantOpen(true)}
+            className="w-13 h-13 rounded-full bg-gradient-to-r from-accent to-[#8957e5] text-white flex items-center justify-center shadow-lg shadow-accent/40 border border-white/20 hover:scale-105 active:scale-95 transition-all animate-bounce cursor-pointer"
+            style={{ animationDuration: '3s' }}
+          >
+            <Sparkles size={20} className="fill-current animate-pulse" />
+          </button>
+        </div>
+
+        {/* Custom Native-Feeling Bottom Sheet */}
+        <AnimatePresence>
+          {isAiAssistantOpen && (
+            <div className="fixed inset-0 z-50 bg-black/75 flex items-end">
+              {/* Dismiss backdrop */}
+              <div className="absolute inset-0 -z-10" onClick={() => setIsAiAssistantOpen(false)} />
+              <motion.div
+                initial={{ y: "100%" }}
+                animate={{ y: 0 }}
+                exit={{ y: "100%" }}
+                transition={{ type: "spring", damping: 24, stiffness: 200 }}
+                className="bg-[#161B22] border-t border-[#30363D] rounded-t-2xl w-full max-h-[82vh] flex flex-col p-4 font-inter"
+              >
+                {/* Sheet Handle Indicator */}
+                <div className="w-10 h-1 bg-[#30363D] rounded-full mx-auto mb-3 cursor-pointer" onClick={() => setIsAiAssistantOpen(false)} />
+
+                {/* Sheet Header */}
+                <div className="flex justify-between items-center border-b border-[#30363D]/60 pb-3.5 mb-3.5">
+                  <div className="flex items-center gap-2">
+                    <Sparkles size={16} className="text-accent fill-accent" />
+                    <span className="text-xs font-bold text-[#F0F6FC] uppercase tracking-wider">AI Career Intelligence</span>
+                  </div>
+                  <button
+                    onClick={() => setIsAiAssistantOpen(false)}
+                    className="w-6 h-6 rounded-full bg-[#21262D] hover:bg-[#30363D] flex items-center justify-center text-text-secondary hover:text-text-primary text-sm font-bold transition-all cursor-pointer"
+                  >
+                    ×
+                  </button>
+                </div>
+
+                {/* Chat Messages */}
+                <div className="flex-1 overflow-y-auto space-y-3.5 p-1 max-h-[300px] scrollbar-thin">
+                  {aiAssistantMessages.map((msg, i) => (
+                    <div key={i} className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"}`}>
+                      <div className={`max-w-[85%] rounded-2xl p-3 text-[11px] leading-relaxed ${
+                        msg.sender === "user"
+                          ? "bg-accent text-white rounded-tr-none"
+                          : "bg-[#21262D] text-text-secondary rounded-tl-none font-mono"
+                      }`}>
+                        {msg.text}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Suggestion Chips */}
+                <div className="flex gap-2 overflow-x-auto scrollbar-none py-2.5 border-t border-border/40 mt-3">
+                  {[
+                    "Calculate ATS match score",
+                    "Analyze my skills gaps",
+                    "Generate interview questions",
+                    "Optimise resume sentence"
+                  ].map((chip) => (
+                    <button
+                      key={chip}
+                      onClick={() => {
+                        const userMsg = chip;
+                        const assistantResponse = chip.includes("ATS")
+                          ? "ATS Compatibility scan reports: 84% compatibility score. Excellent layout formatting. Missing keywords: Docker, CI/CD pipelines."
+                          : chip.includes("gaps")
+                          ? "Skills Gap Telemetry: Missing backend skills like Redis, Docker. Suggested coursework: 'Advanced Docker & Kubernetes' on Coursera."
+                          : chip.includes("interview")
+                          ? "Interview DSA Question: Given a binary tree, return its level order traversal. Checkbox checklists loaded under Interview Readiness section."
+                          : "Resume Optimizer: 'Responsible for codebase updates' -> 'Architected and automated robust CI/CD code deployments, reducing latency by 24%'.";
+                        
+                        setAiAssistantMessages(prev => [
+                          ...prev,
+                          { sender: "user", text: userMsg },
+                          { sender: "assistant", text: assistantResponse }
+                        ]);
+                      }}
+                      className="flex-shrink-0 px-3 py-1.5 rounded-full border border-border bg-[#0D1117] hover:bg-[#161B22] text-[10px] text-text-secondary font-mono whitespace-nowrap active:scale-95 transition-all cursor-pointer"
+                    >
+                      {chip}
                     </button>
                   ))}
                 </div>
-              )}
 
-              {/* Accordion Sections */}
-              <div className="space-y-1.5">
-                {sidebarSections.map(sec => {
-                  const SecIcon = sec.icon;
-                  const isExpanded = activeSection === sec.id;
-                  const hasActiveChild = sec.items.some(item => item.id === activeTab);
-
-                  return (
-                    <div key={sec.id} className="space-y-1 animate-fadeIn">
-                      {/* Section Title */}
-                      <button
-                        onClick={() => toggleSection(sec.id)}
-                        className={`flex items-center justify-between w-full px-3 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                          hasActiveChild && !isExpanded
-                            ? "text-[#2F81F7]"
-                            : "text-[#8B949E] hover:text-[#F0F6FC] hover:bg-[#161B22]/40"
-                        }`}
-                        title={isSidebarCollapsed ? sec.label : undefined}
-                      >
-                        <div className="flex items-center gap-2 truncate">
-                          <SecIcon size={14} className="flex-shrink-0" />
-                          {!isSidebarCollapsed && <span className="truncate">{sec.label}</span>}
-                        </div>
-                        {!isSidebarCollapsed && (
-                          <ChevronDown
-                            size={12}
-                            className={`transform transition-transform duration-200 ${
-                              isExpanded ? "" : "-rotate-90"
-                            }`}
-                          />
-                        )}
-                      </button>
-
-                      {/* Expandable sub-items */}
-                      {isExpanded && !isSidebarCollapsed && (
-                        <div className="pl-4 border-l border-[#30363D] ml-4.5 space-y-1 py-1">
-                          {sec.items.map(item => {
-                            const isPinned = pinnedTabs.includes(item.id);
-                            return (
-                              <div
-                                key={item.id}
-                                className="group/item flex items-center justify-between w-full"
-                              >
-                                <button
-                                  onClick={() => setActiveTab(item.id as TabId)}
-                                  className={`flex-1 text-left px-2.5 py-1.5 rounded-md text-[11px] font-semibold transition-all truncate cursor-pointer ${
-                                    activeTab === item.id
-                                      ? "text-[#F0F6FC] bg-[#21262D]/60 font-bold"
-                                      : "text-[#8B949E] hover:text-[#F0F6FC]"
-                                  }`}
-                                >
-                                  {item.label}
-                                </button>
-                                <button
-                                  onClick={(e) => togglePinTab(item.id, e)}
-                                  className={`p-1 opacity-0 group-hover/item:opacity-100 transition-opacity cursor-pointer ${
-                                    isPinned ? "opacity-100 text-yellow-500" : "text-[#484F58] hover:text-yellow-500"
-                                  }`}
-                                >
-                                  <Star size={10} className={isPinned ? "fill-yellow-500 text-yellow-500" : ""} />
-                                </button>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Sticky Bottom Area */}
-            <div className="p-3 border-t border-[#30363D]/60 space-y-2">
-              <div className="flex items-center justify-between text-[10px] text-[#8B949E] px-1.5">
-                {!isSidebarCollapsed && (
-                  <>
-                    <span>v0.1.0</span>
-                    <span>Storage: 62%</span>
-                  </>
-                )}
-              </div>
-              <button
-                onClick={toggleSidebar}
-                className="w-full flex items-center justify-center p-2 rounded-lg border border-[#30363D] bg-[#0D1117] hover:bg-[#161B22] text-[#8B949E] hover:text-[#F0F6FC] cursor-pointer transition-colors text-xs font-bold"
-              >
-                {isSidebarCollapsed ? <ChevronRight size={14} /> : "Collapse Sidebar"}
-              </button>
-            </div>
-
-            {/* Drag Handle */}
-            {!isSidebarCollapsed && (
-              <div
-                onMouseDown={startResizing}
-                className="absolute top-0 right-0 w-1.5 h-full cursor-col-resize hover:bg-[#2F81F7]/40 active:bg-[#2F81F7] transition-all z-50"
-              />
-            )}
-          </aside>
-        )}
-
-        {/* Mobile Horizontal scrollbar nav */}
-        {!isFocusMode && (
-          <aside className="md:hidden flex-shrink-0 border-b border-border pb-3">
-          <nav className="flex flex-row overflow-x-auto gap-1.5 scrollbar-none pb-1">
-            {tabsList.map(tab => {
-              const Icon = tab.icon;
-              const isActive = activeTab === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id as TabId)}
-                  className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-bold whitespace-nowrap transition-all focus:outline-none ${
-                    isActive
-                      ? "bg-surface-secondary border border-border text-text-primary"
-                      : "border border-transparent text-text-secondary hover:text-text-primary hover:bg-surface/50"
-                  }`}
+                {/* Chat Input */}
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    if (!aiAssistantInput.trim()) return;
+                    const userMsg = aiAssistantInput;
+                    setAiAssistantInput("");
+                    setAiAssistantMessages(prev => [...prev, { sender: "user", text: userMsg }]);
+                    
+                    setTimeout(() => {
+                      setAiAssistantMessages(prev => [
+                        ...prev,
+                        { sender: "assistant", text: `I've analyzed your telemetry and query: "${userMsg}". Your repository footprint indicates strong Frontend capabilities. Let's work on sharpening Backend containerization.` }
+                      ]);
+                    }, 750);
+                  }}
+                  className="mt-2 flex gap-2"
                 >
-                  <Icon size={14} className={isActive ? "text-accent" : "text-text-secondary"} />
-                  <span>{tab.label}</span>
-                </button>
-              );
-            })}
-          </nav>
-        </aside>
-        )}
-
-        {/* Tab Content window */}
-        <div className="flex-1 min-w-0">
-          {dashboardData && !isFocusMode && <DashboardHeader data={dashboardData} />}
-          <div className={isFocusMode ? "transition-all duration-300" : "border border-border bg-surface/20 rounded-xl p-6 transition-all duration-300"}>
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={activeTab}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.2 }}
-              >
-                {renderActiveTabContent()}
+                  <input
+                    type="text"
+                    placeholder="Ask assistant anything..."
+                    value={aiAssistantInput}
+                    onChange={(e) => setAiAssistantInput(e.target.value)}
+                    className="flex-1 bg-[#0D1117] border border-[#30363D] rounded-xl px-3.5 py-2 text-xs text-text-primary focus:outline-none focus:border-accent"
+                  />
+                  <button
+                    type="submit"
+                    className="px-4 bg-accent hover:bg-accent/90 text-white rounded-xl text-xs font-bold transition-all cursor-pointer"
+                  >
+                    Send
+                  </button>
+                </form>
               </motion.div>
-            </AnimatePresence>
-          </div>
-        </div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        {/* Back-To-Top floating action button */}
+        {isBackToTopVisible && (
+          <button
+            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+            className="fixed bottom-20 right-4 z-40 w-10 h-10 rounded-full bg-[#161B22] border border-[#30363D] text-text-secondary hover:text-text-primary flex items-center justify-center shadow-lg active:scale-95 transition-all cursor-pointer"
+          >
+            <ArrowUp size={16} />
+          </button>
+        )}
       </div>
-
-      {/* Floating Quick Actions FAB */}
-      {dashboardData && (
-        <QuickActionsFAB
-          githubUsername={dashboardData.profile.login}
-          onSelectTab={(t) => setActiveTab(t as TabId)}
-          onRefreshData={() => setSyncedData(null)}
-          onOpenExportModal={() => setIsExportModalOpen(true)}
-          onOpenShortcutsModal={() => setIsShortcutsModalOpen(true)}
-        />
-      )}
-
-      {/* Global Command Palette */}
-      <CommandPalette
-        isOpen={isCommandPaletteOpen}
-        onClose={() => setIsCommandPaletteOpen(false)}
-        repositories={dashboardData?.repositories || []}
-        onSelectTab={(t) => setActiveTab(t as TabId)}
-        onSelectRepo={(name) => {
-          const owner = dashboardData?.profile.login || "demo";
-          router.push(`/repository/${name}?owner=${owner}`);
-        }}
-        onRefreshData={() => setSyncedData(null)}
-      />
-
-      {/* Keyboard Shortcuts Modal */}
-      <KeyboardShortcutsModal
-        isOpen={isShortcutsModalOpen}
-        onClose={() => setIsShortcutsModalOpen(false)}
-      />
-
-      {/* Export Center Modal */}
-      <ExportCenterModal
-        isOpen={isExportModalOpen}
-        onClose={() => setIsExportModalOpen(false)}
-        data={dashboardData}
-      />
-    </div>
+    </>
   );
 }

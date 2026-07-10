@@ -63,6 +63,9 @@ export default function RootLayout({
         className={`${inter.variable} ${geist.variable} ${jetbrainsMono.variable} h-full antialiased`}
         suppressHydrationWarning
       >
+        <head>
+          <link href="https://fonts.cdnfonts.com/css/object-sans" rel="stylesheet" />
+        </head>
         <body className="min-h-full flex flex-col bg-background text-foreground font-inter">
           {children}
           <ThemeModal />
