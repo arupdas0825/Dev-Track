@@ -492,28 +492,36 @@ export default function RepositoryDetailPage() {
     setTerminalLogs([]);
     
     const logs = [
-      "[INFO] Initializing DevTrack Security Scan Engine v2.4...",
-      "[INFO] Loading vulnerability heuristic databases...",
-      "[INFO] Pulling remote files index tree from GitHub...",
-      `[INFO] Scanned ${intelligence?.checklist.length || 10} modules files from Git tree.`,
-      "[INFO] Running secret scanner signature matches...",
-      "[WARN] SEC-SECRET-FIREBASE: Leaked Firebase API Key in src/services/github/github-intelligence.service.ts on Line 1!",
-      "[INFO] Auditing container configurations...",
-      "[WARN] CFG-AUDIT-MISSING-USER: Missing USER directive in Dockerfile. Container runs as root.",
-      "[INFO] Running dynamic Code Analyzer scanner...",
-      "[WARN] OWASP-INJ: Usage of unsafe eval() code block matches in src/app/page.tsx.",
-      "[INFO] Done. Security Score calculated: 78/100."
+      "[INFO] [18:22:21] Initializing DevTrack Security Scan Engine v3.0 (Production-grade)...",
+      "[INFO] Loading vulnerability heuristic databases (OWASP Top 10, CWE, CVE)...",
+      "[INFO] Resolving GitHub repository file index tree...",
+      `[INFO] Identified ${intelligence?.checklist.length || 12} files in workspace buffers.`,
+      "[INFO] [SECRET SCANNER] Scanning for leaked credentials, API keys, and certificates...",
+      "[WARN] SEC-SECRET-FIREBASE: Leaked Firebase API Key in lib/firebase.ts on Line 6!",
+      "[WARN] SEC-SECRET-OPENAI: Exposed OpenAI API Key detected in config/openai.json!",
+      "[INFO] [DEPENDENCY SCANNER] Parsing project lockfiles and dependencies (npm, yarn, pip)...",
+      "[WARN] DEP-CVE-CVE-2020-8203: lodash < 4.17.21 Prototype Pollution vulnerability matched.",
+      "[WARN] DEP-CVE-CVE-2023-45857: axios < 1.6.0 SSRF configuration parser risk matched.",
+      "[INFO] [STATIC CODE ANALYSIS - SAST] Analyzing source codes for insecure coding patterns...",
+      "[WARN] OWASP-SQLI: Unsafe SQL concatenation query detected in src/app/api/route.ts on Line 14.",
+      "[WARN] OWASP-INJ: Usage of unsafe eval() script parser blocks in src/utils/eval.ts on Line 2.",
+      "[INFO] [CONFIGURATION AUDIT] Reviewing infrastructure and configuration settings...",
+      "[WARN] CFG-AUDIT-MISSING-USER: Dockerfile runs container as root user. USER directive missing.",
+      "[WARN] CFG-AUDIT-FIRESTORE: Firebase Firestore security rules allow public write operations.",
+      "[INFO] [COMPLIANCE] Mapping findings to compliance frameworks (OWASP Top 10, SOC 2, HIPAA)...",
+      "[INFO] Done. Security Score calculated: 64/100 (HIGH RISK)."
     ];
 
     for (const log of logs) {
       setTerminalLogs(prev => [...prev, log]);
-      await new Promise((r) => setTimeout(r, 200));
+      await new Promise((r) => setTimeout(r, 150));
     }
     
     // Update scan compile results
     const paths = intelligence?.checklist.map(c => c.name) || [];
     const filesContent: Record<string, string> = {
       "package.json": `{\n  "name": "${repoName}",\n  "license": "MIT",\n  "dependencies": {\n    "react": "^19.0.0",\n    "next": "^16.0.0",\n    "lodash": "4.17.15",\n    "axios": "1.2.0"\n  }\n}`,
+      "requirements.txt": "django==3.1.2\nrequests==2.18.4\nnumpy==1.22.0",
       "Dockerfile": "FROM node:20\nWORKDIR /app\nCOPY . .\nCMD [\"npm\", \"start\"]",
       "firestore.rules": "rules_version = '2';\nservice cloud.firestore {\n  match /databases/{database}/documents {\n    match /{document=**} {\n      allow read, write: if true;\n    }\n  }\n}"
     };
@@ -1128,12 +1136,23 @@ export default function RepositoryDetailPage() {
                       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 select-none font-mono">
                         
                         {/* Neon circular radial dial */}
-                        <div className="md:col-span-1 border border-danger/30 rounded-xl bg-danger/5 p-5 text-center flex flex-col items-center justify-center shadow-lg shadow-danger/5">
-                          <span className="text-[10px] text-text-secondary uppercase">Security Score</span>
-                          <div className="h-28 w-28 rounded-full border-4 border-danger/60 flex flex-col items-center justify-center mt-3 shadow-md shadow-danger/10">
-                            <span className="text-3xl font-black text-text-primary font-space-grotesk">{securityReport?.score || 84}</span>
+                        <div className={`md:col-span-1 border rounded-xl p-5 text-center flex flex-col items-center justify-center shadow-lg transition-all ${
+                          securityReport && securityReport.score < 70 
+                            ? "border-danger/35 bg-danger/5 shadow-danger/5" 
+                            : "border-[#2F81F7]/30 bg-[#2F81F7]/5 shadow-[#2F81F7]/5"
+                        }`}>
+                          <span className="text-[10px] text-text-secondary uppercase tracking-wider">Security Score</span>
+                          <div className={`h-28 w-28 rounded-full border-4 flex flex-col items-center justify-center mt-3 shadow-md ${
+                            securityReport && securityReport.score < 70 ? "border-danger/60 shadow-danger/10" : "border-[#2F81F7]/60 shadow-[#2F81F7]/10"
+                          }`}>
+                            <span className="text-3xl font-black text-text-primary font-space-grotesk">{securityReport?.score || 98}</span>
                             <span className="text-[8px] text-text-secondary uppercase">grade</span>
                           </div>
+                          <span className={`text-[10px] font-bold mt-2 uppercase ${
+                            securityReport && securityReport.score < 70 ? "text-danger" : "text-success"
+                          }`}>
+                            Status: {securityReport?.riskLevel || "Secure"}
+                          </span>
                         </div>
 
                         {/* Counts box */}
@@ -1161,8 +1180,8 @@ export default function RepositoryDetailPage() {
                           </div>
 
                           <div className="flex justify-between items-center text-[10px] text-text-secondary border-t border-border/40 pt-3 mt-4">
-                            <span>Last scanned: <span className="font-bold text-text-primary">{securityReport?.lastScan}</span></span>
-                            <span>Next scan: <span className="font-bold text-text-primary">{securityReport?.nextScan}</span></span>
+                            <span>Last scanned: <span className="font-bold text-text-primary">{securityReport?.lastScan || "Never"}</span></span>
+                            <span>Next scan: <span className="font-bold text-text-primary">{securityReport?.nextScan || "Daily at 04:00 AM"}</span></span>
                           </div>
                         </div>
 
@@ -1172,15 +1191,15 @@ export default function RepositoryDetailPage() {
                           <div className="space-y-2">
                             <div className="flex justify-between">
                               <span>OWASP Top 10</span>
-                              <span className={`px-2 py-0.5 rounded text-[9px] font-bold border uppercase ${securityReport?.complianceStatus.owasp === "Passed" ? "bg-success/15 border-success/30 text-success" : "bg-danger/15 border-danger/30 text-danger"}`}>{securityReport?.complianceStatus.owasp}</span>
+                              <span className={`px-2 py-0.5 rounded text-[9px] font-bold border uppercase ${securityReport?.complianceStatus.owasp === "Passed" ? "bg-success/15 border-success/30 text-success" : securityReport?.complianceStatus.owasp === "Partial" ? "bg-warning/15 border-warning/30 text-warning" : "bg-danger/15 border-danger/30 text-danger"}`}>{securityReport?.complianceStatus.owasp || "Passed"}</span>
                             </div>
                             <div className="flex justify-between">
                               <span>SOC 2 Type II</span>
-                              <span className={`px-2 py-0.5 rounded text-[9px] font-bold border uppercase ${securityReport?.complianceStatus.soc2 === "Passed" ? "bg-success/15 border-success/30 text-success" : "bg-warning/15 border-warning/30 text-warning"}`}>{securityReport?.complianceStatus.soc2}</span>
+                              <span className={`px-2 py-0.5 rounded text-[9px] font-bold border uppercase ${securityReport?.complianceStatus.soc2 === "Passed" ? "bg-success/15 border-success/30 text-success" : securityReport?.complianceStatus.soc2 === "Partial" ? "bg-warning/15 border-warning/30 text-warning" : "bg-danger/15 border-danger/30 text-danger"}`}>{securityReport?.complianceStatus.soc2 || "Passed"}</span>
                             </div>
                             <div className="flex justify-between">
                               <span>HIPAA Data Security</span>
-                              <span className={`px-2 py-0.5 rounded text-[9px] font-bold border uppercase ${securityReport?.complianceStatus.hipaa === "Passed" ? "bg-success/15 border-success/30 text-success" : "bg-danger/15 border-danger/30 text-danger"}`}>{securityReport?.complianceStatus.hipaa}</span>
+                              <span className={`px-2 py-0.5 rounded text-[9px] font-bold border uppercase ${securityReport?.complianceStatus.hipaa === "Passed" ? "bg-success/15 border-success/30 text-success" : securityReport?.complianceStatus.hipaa === "Partial" ? "bg-warning/15 border-warning/30 text-warning" : "bg-danger/15 border-danger/30 text-danger"}`}>{securityReport?.complianceStatus.hipaa || "Passed"}</span>
                             </div>
                           </div>
                         </div>
@@ -1192,32 +1211,32 @@ export default function RepositoryDetailPage() {
                         
                         {/* SVG Attack Surface Map */}
                         <div className="rounded-xl border border-border bg-[#161B22]/30 p-5 space-y-4">
-                          <h3 className="text-xs font-bold text-text-primary uppercase border-b border-border/30 pb-2">Ecosystem Attack Surface Threat Map</h3>
-                          <div className="h-64 flex items-center justify-center bg-background/50 border border-border/40 rounded-lg p-2 overflow-hidden">
-                            <svg viewBox="0 0 400 240" className="w-full h-full max-w-sm">
-                              {/* Public API Node */}
-                              <rect x="30" y="80" width="80" height="40" rx="5" fill="#161B22" stroke="#F85149" stroke-width="1" />
-                              <text x="70" y="100" fill="#F0F6FC" font-size="8" text-anchor="middle" font-family="monospace">Public Endpoint</text>
-                              <text x="70" y="112" fill="#F85149" font-size="7" font-weight="bold" text-anchor="middle" font-family="monospace">THREAT: HIGH</text>
+                          <h3 className="text-xs font-bold text-text-primary uppercase border-b border-border/30 pb-2">Attack Surface Threat Vector Map</h3>
+                          <div className="h-64 flex items-center justify-center bg-background/50 border border-border/40 rounded-lg p-2">
+                            <svg viewBox="0 0 420 240" className="w-full h-full max-w-sm">
+                              {/* Public Source */}
+                              <rect x="20" y="80" width="80" height="40" rx="5" fill="#161B22" stroke="#F85149" stroke-width="1.5" />
+                              <text x="60" y="100" fill="#F0F6FC" font-size="8" text-anchor="middle" font-family="monospace">Public Internet</text>
+                              <text x="60" y="112" fill="#F85149" font-size="7" font-weight="bold" text-anchor="middle" font-family="monospace">Threat Path</text>
 
                               {/* Connections */}
-                              <path d="M 110 100 L 190 100" fill="none" stroke="#F85149" stroke-width="1" stroke-dasharray="3 3" />
-                              <path d="M 270 100 L 330 100" fill="none" stroke="#3FB950" stroke-width="1" />
-                              <path d="M 230 120 L 230 170" fill="none" stroke="#D29922" stroke-width="1" />
+                              <path d="M 100 100 L 190 100" fill="none" stroke="#F85149" stroke-width="1.5" stroke-dasharray="3 3" />
+                              <path d="M 270 100 L 330 100" fill="none" stroke="#2F81F7" stroke-width="1" />
+                              <path d="M 230 120 L 230 170" fill="none" stroke="#D29922" stroke-width="1.5" />
 
                               {/* Gateway Node */}
-                              <circle cx="230" cy="100" r="40" fill="#161B22" stroke="#2F81F7" stroke-width="1" />
+                              <circle cx="230" cy="100" r="40" fill="#161B22" stroke="#2F81F7" stroke-width="1.5" />
                               <text x="230" y="98" fill="#F0F6FC" font-size="8" text-anchor="middle" font-family="monospace">API Gateway</text>
-                              <text x="230" y="108" fill="#58A6FF" font-size="7" text-anchor="middle" font-family="monospace">SSL Active</text>
+                              <text x="230" y="108" fill="#58A6FF" font-size="7" text-anchor="middle" font-family="monospace">SSL/TLS Active</text>
 
                               {/* Database Node */}
-                              <rect x="330" y="80" width="60" height="40" rx="5" fill="#161B22" stroke="#3FB950" stroke-width="1" />
-                              <text x="360" y="105" fill="#F0F6FC" font-size="8" text-anchor="middle" font-family="monospace">Firestore</text>
+                              <rect x="330" y="80" width="70" height="40" rx="5" fill="#161B22" stroke="#3FB950" stroke-width="1" />
+                              <text x="365" y="104" fill="#F0F6FC" font-size="8" text-anchor="middle" font-family="monospace">Database</text>
 
                               {/* Storage Node */}
-                              <rect x="190" y="170" width="80" height="40" rx="5" fill="#161B22" stroke="#D29922" stroke-width="1" />
+                              <rect x="190" y="170" width="80" height="40" rx="5" fill="#161B22" stroke="#D29922" stroke-width="1.5" />
                               <text x="230" y="190" fill="#F0F6FC" font-size="8" text-anchor="middle" font-family="monospace">Cloud Storage</text>
-                              <text x="230" y="202" fill="#D29922" font-size="7" text-anchor="middle" font-family="monospace">AUTH ONLY</text>
+                              <text x="230" y="202" fill="#D29922" font-size="7" text-anchor="middle" font-family="monospace">AUTH MISCONFIG</text>
                             </svg>
                           </div>
                         </div>
@@ -1228,29 +1247,53 @@ export default function RepositoryDetailPage() {
                           <div className="h-64 flex items-center justify-center bg-background/50 border border-border/40 rounded-lg p-2 overflow-hidden">
                             <svg viewBox="0 0 400 240" className="w-full h-full max-w-sm">
                               {/* Main Repo Node */}
-                              <circle cx="200" cy="120" r="24" fill="#161B22" stroke="#2F81F7" stroke-width="1.5" />
-                              <text x="200" y="123" fill="#F0F6FC" font-size="8" font-weight="bold" text-anchor="middle" font-family="monospace">Main</text>
+                              <circle cx="200" cy="120" r="26" fill="#161B22" stroke="#2F81F7" stroke-width="1.5" />
+                              <text x="200" y="123" fill="#F0F6FC" font-size="8" font-weight="bold" text-anchor="middle" font-family="monospace">Repository</text>
 
                               {/* Dependency links */}
-                              <line x1="200" y1="96" x2="200" y2="40" stroke="#F85149" stroke-width="1" />
-                              <line x1="176" y1="120" x2="80" y2="120" stroke="#3FB950" stroke-width="1" />
-                              <line x1="224" y1="120" x2="320" y2="120" stroke="#D29922" stroke-width="1" />
+                              <line x1="200" y1="94" x2="200" y2="40" stroke="#F85149" stroke-width="1" stroke-dasharray="2 2" />
+                              <line x1="174" y1="120" x2="80" y2="120" stroke="#3FB950" stroke-width="1" />
+                              <line x1="226" y1="120" x2="320" y2="120" stroke="#D29922" stroke-width="1" />
 
                               {/* Vulnerable File Node 1 */}
-                              <circle cx="200" cy="40" r="14" fill="#161B22" stroke="#F85149" stroke-width="1.5" />
+                              <circle cx="200" cy="40" r="15" fill="#161B22" stroke="#F85149" stroke-width="1.5" />
                               <text x="200" y="43" fill="#F85149" font-size="8" font-weight="bold" text-anchor="middle" font-family="monospace">SQLi</text>
 
                               {/* File Node 2 */}
-                              <circle cx="80" cy="120" r="14" fill="#161B22" stroke="#3FB950" stroke-width="1.5" />
+                              <circle cx="80" cy="120" r="15" fill="#161B22" stroke="#3FB950" stroke-width="1.5" />
                               <text x="80" y="123" fill="#3FB950" font-size="8" text-anchor="middle" font-family="monospace">Safe</text>
 
                               {/* File Node 3 */}
-                              <circle cx="320" cy="120" r="14" fill="#161B22" stroke="#D29922" stroke-width="1.5" />
-                              <text x="320" y="123" fill="#D29922" font-size="8" text-anchor="middle" font-family="monospace">CSRF</text>
+                              <circle cx="320" cy="120" r="15" fill="#161B22" stroke="#D29922" stroke-width="1.5" />
+                              <text x="320" y="123" fill="#D29922" font-size="8" text-anchor="middle" font-family="monospace">Secrets</text>
                             </svg>
                           </div>
                         </div>
 
+                      </div>
+
+                      {/* Real-time Ticker & Threat Monitoring Feed */}
+                      <div className="rounded-xl border border-border bg-[#161B22]/30 p-5 space-y-4 font-mono text-xs">
+                        <div className="flex justify-between items-center border-b border-border/30 pb-2">
+                          <h3 className="text-xs font-bold text-text-primary uppercase">Real-Time Security & CVE Event Stream</h3>
+                          <span className="h-2 w-2 rounded-full bg-success animate-ping" />
+                        </div>
+                        <div className="space-y-2.5 max-h-48 overflow-y-auto scrollbar-thin">
+                          {[
+                            { time: "Just now", type: "INFO", text: "Pull request audit completed on branch: patch-security-checks. Zero secrets found." },
+                            { time: "5 mins ago", type: "WARN", text: "NVD Registry released new security vulnerability definitions for Axios client configs." },
+                            { time: "1 hr ago", type: "INFO", text: "Repository health audit check finished. Current grade calculated: 64/100." },
+                            { time: "3 hrs ago", type: "ALERT", text: "Dependency audit flagged 2 security advisory warning logs in package.json." }
+                          ].map((evt, idx) => (
+                            <div key={idx} className="flex gap-4 p-2 bg-background/40 border border-border/40 rounded items-start">
+                              <span className="text-text-secondary text-[10px] w-20 flex-shrink-0">{evt.time}</span>
+                              <span className={`px-1.5 py-0.5 rounded text-[8px] font-black ${
+                                evt.type === "INFO" ? "bg-success/15 text-success border border-success/30" : evt.type === "WARN" ? "bg-warning/15 text-warning border border-warning/30" : "bg-danger/15 text-danger border border-danger/30"
+                              }`}>{evt.type}</span>
+                              <span className="text-text-primary text-[11px] font-sans">{evt.text}</span>
+                            </div>
+                          ))}
+                        </div>
                       </div>
 
                     </div>
