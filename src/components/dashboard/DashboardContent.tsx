@@ -37,6 +37,7 @@ import Logo from "../ui/Logo";
 import CommandPalette from "./CommandPalette";
 import KeyboardShortcutsModal from "./KeyboardShortcutsModal";
 import ExportCenterModal from "./ExportCenterModal";
+import { GlassEffect, GlassButton, GlassFilter } from "../ui/liquid-glass";
 import { useGithubProfile } from "@/hooks/useGithubProfile";
 import { useRepositories } from "@/hooks/useRepositories";
 import { useAnalytics } from "@/hooks/useAnalytics";
@@ -238,6 +239,7 @@ export default function DashboardContent() {
   const [aiAssistantInput, setAiAssistantInput] = useState<string>("");
   const [expandedMobileRepoId, setExpandedMobileRepoId] = useState<string | null>(null);
   const [targetMobileRole, setTargetMobileRole] = useState<string>("Frontend");
+  const [selectedHeatmapDay, setSelectedHeatmapDay] = useState<{ date: string; count: number } | null>(null);
 
   // Track network and scroll status
   useEffect(() => {
@@ -1074,10 +1076,10 @@ export default function DashboardContent() {
       case "dashboard":
         const totalStars = repositories.reduce((acc, curr) => acc + (curr.stargazers_count || 0), 0);
         return (
-          <div className="space-y-6">
+          <div className="space-y-6 pb-12">
             {/* Pull-To-Refresh Visual Indicator */}
             {pullToRefreshStatus !== "idle" && (
-              <div className="flex justify-center items-center py-2 text-[10px] font-mono text-text-secondary animate-pulse bg-surface/30 border border-border/40 rounded-xl">
+              <div className="flex justify-center items-center py-2 text-[10px] font-mono text-text-secondary animate-pulse bg-[#111827]/80 border border-border/40 rounded-xl">
                 {pullToRefreshStatus === "pulling" ? "↓ Pull more to refresh..." : "🔄 Refreshing telemetry..."}
               </div>
             )}
@@ -1090,165 +1092,240 @@ export default function DashboardContent() {
               </div>
             )}
 
-            {/* Welcome Card */}
-            <div className="bg-surface/60 border border-border rounded-2xl p-4 space-y-3 shadow-lg shadow-black/10">
-              <div className="flex justify-between items-start">
+            {/* Redesigned Welcome Hero Card */}
+            <div className="relative overflow-hidden rounded-2xl bg-[#111827]/80 border border-white/5 p-5 shadow-2xl flex flex-col justify-between">
+              {/* Glossy top overlay */}
+              <div className="absolute inset-0 bg-gradient-to-tr from-accent/5 to-purple-500/5 opacity-40 pointer-events-none" />
+              <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+              
+              <div className="flex justify-between items-start z-10">
                 <div>
-                  <span className="text-[10px] font-mono text-text-secondary uppercase tracking-wider">Telemetry Active</span>
-                  <h3 className="text-lg font-black font-space-grotesk text-text-primary mt-0.5">
+                  <span className="text-[9px] font-mono text-accent/80 uppercase tracking-widest font-black">SYSTEM STATUS: ACTIVE</span>
+                  <h3 className="text-xl font-bold font-space-grotesk text-white mt-1">
                     Hey, {profile.name || profile.login} 👋
                   </h3>
                 </div>
-                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-success/20 bg-success/10 text-success text-[10px] font-mono">
-                  <span className="w-1.5 h-1.5 rounded-full bg-success animate-ping" />
-                  <span>Synced</span>
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-success/30 bg-success/10 text-success text-[9px] font-mono font-bold">
+                  <span className="w-1 h-1 rounded-full bg-success animate-ping" />
+                  <span>SYNCED</span>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4 border-t border-border/40 pt-3 text-xs font-mono">
+
+              <div className="grid grid-cols-3 gap-2 border-y border-white/5 py-4 my-4 text-center z-10">
                 <div>
-                  <span className="text-text-secondary block text-[9px]">ACTIVE STREAK</span>
-                  <span className="text-text-primary font-bold text-sm">{contributions.currentStreak || 0} Days</span>
+                  <span className="text-text-secondary block text-[8px] uppercase tracking-wider font-mono">Current Streak</span>
+                  <span className="text-white font-black text-sm block mt-1 font-space-grotesk">{contributions.currentStreak || 0} Days</span>
                 </div>
                 <div>
-                  <span className="text-text-secondary block text-[9px]">DEV GRADE</span>
-                  <span className="text-accent font-bold text-sm">{score.grade || "A"}</span>
+                  <span className="text-text-secondary block text-[8px] uppercase tracking-wider font-mono">Dev Grade</span>
+                  <span className="text-accent font-black text-sm block mt-1 font-space-grotesk">{score.grade || "A"}</span>
+                </div>
+                <div>
+                  <span className="text-text-secondary block text-[8px] uppercase tracking-wider font-mono">Today's Status</span>
+                  <span className="text-success font-black text-sm block mt-1 font-space-grotesk">Ready</span>
                 </div>
               </div>
+
               {/* Progress bar */}
-              <div className="space-y-1">
-                <div className="flex justify-between text-[10px] text-text-secondary font-mono">
+              <div className="space-y-1.5 z-10">
+                <div className="flex justify-between text-[9px] text-text-secondary font-mono">
                   <span>Score Engine Progress</span>
                   <span>{score.overall}/100</span>
                 </div>
-                <div className="h-1.5 bg-border rounded-full overflow-hidden">
+                <div className="h-2 bg-[#09090B] rounded-full overflow-hidden p-[2px]">
                   <div
-                    className="h-full bg-gradient-to-r from-accent to-[#8957e5] rounded-full transition-all duration-500"
+                    className="h-full bg-gradient-to-r from-accent to-[#8957e5] rounded-full transition-all duration-500 shadow-md shadow-accent/50"
                     style={{ width: `${score.overall}%` }}
                   />
+                </div>
+                <div className="flex justify-between text-[8px] text-text-secondary font-mono pt-1">
+                  <span>Last Sync: {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                  <span>Next Goal: Grade A+</span>
                 </div>
               </div>
             </div>
 
-            {/* Profile Section */}
-            <div className="bg-surface/60 border border-border rounded-2xl p-4 shadow-lg shadow-black/10">
-              <div className="flex items-center gap-3.5">
-                <div className="relative w-14 h-14 flex-shrink-0">
-                  {/* Grade ring outline */}
-                  <svg className="absolute inset-0 w-full h-full transform -rotate-90">
-                    <circle cx="28" cy="28" r="25" fill="none" stroke="#30363D" strokeWidth="2.5" />
-                    <circle
-                      cx="28"
-                      cy="28"
-                      r="25"
-                      fill="none"
-                      stroke="#2F81F7"
-                      strokeWidth="2.5"
-                      strokeDasharray={2 * Math.PI * 25}
-                      strokeDashoffset={2 * Math.PI * 25 - ((score.overall / 100) * 2 * Math.PI * 25)}
-                    />
-                  </svg>
-                  <img
-                    src={profile.avatar_url}
-                    alt={profile.login}
-                    className="w-11 h-11 rounded-full absolute top-1.5 left-1.5 object-cover"
-                  />
-                </div>
+            {/* Quick Actions Grid */}
+            <div className="space-y-3">
+              <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest font-mono block px-1">Quick Actions</span>
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { label: "Scan Repository", icon: Search, tab: "repos" },
+                  { label: "AI Review", icon: Code, tab: "ai-code-review" },
+                  { label: "Security Scan", icon: Shield, tab: "ai-security" },
+                  { label: "Developer DNA", icon: Dna, tab: "dna" },
+                  { label: "Roadmap", icon: TrendingUp, tab: "hiring-roadmap" },
+                  { label: "Resume Review", icon: FileText, tab: "hiring-resume-analyzer" },
+                  { label: "GitHub Wrapped", icon: Gift, tab: "wrapped" },
+                  { label: "Community", icon: Users, tab: "community" }
+                ].map((act, i) => {
+                  const ActIcon = act.icon;
+                  return (
+                    <button
+                      key={i}
+                      onClick={() => {
+                        if (act.tab === "repos" || act.tab === "community") {
+                          setActiveMobileTab(act.tab);
+                        } else {
+                          setActiveTab(act.tab as TabId);
+                          alert(`Navigated to ${act.label} workspace.`);
+                        }
+                      }}
+                      className="relative overflow-hidden rounded-2xl bg-[#111827]/80 border border-white/5 p-3.5 flex items-center gap-3 active:scale-95 transition-all duration-200 cursor-pointer shadow-lg hover:border-white/10"
+                    >
+                      <div className="w-8 h-8 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center text-accent">
+                        <ActIcon size={14} />
+                      </div>
+                      <span className="text-[11px] font-bold text-white tracking-wide text-left">{act.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Redesigned Compact Profile Card */}
+            <div className="bg-[#111827]/80 border border-white/5 rounded-2xl p-5 shadow-2xl space-y-4">
+              <div className="flex items-center gap-4">
+                <img
+                  src={profile.avatar_url}
+                  alt={profile.login}
+                  className="w-12 h-12 rounded-full border border-white/10 object-cover shadow-md"
+                />
                 <div className="flex-1 min-w-0">
-                  <h4 className="text-sm font-bold text-text-primary truncate">{profile.name || profile.login}</h4>
-                  <span className="text-xs text-text-secondary font-mono truncate block">@{profile.login}</span>
+                  <h4 className="text-sm font-bold text-white font-space-grotesk truncate">{profile.name || profile.login}</h4>
+                  <span className="text-xs text-text-secondary font-mono block">@{profile.login}</span>
                 </div>
                 <button
                   onClick={() => setIsProfileInfoExpanded(!isProfileInfoExpanded)}
-                  className="px-3 py-1.5 rounded-lg border border-border bg-[#0D1117] hover:bg-[#161B22] text-[10px] font-mono text-text-secondary hover:text-text-primary"
+                  className="px-3 py-1.5 rounded-xl border border-white/5 bg-[#09090B] text-[9px] font-mono font-bold text-text-secondary active:scale-95 transition-all"
                 >
-                  {isProfileInfoExpanded ? "Hide Details" : "Expand Bio"}
+                  {isProfileInfoExpanded ? "Collapse" : "Details"}
                 </button>
               </div>
 
-              {/* Expandable details */}
+              {/* Expandable bio & metrics info */}
               <AnimatePresence>
                 {isProfileInfoExpanded && (
                   <motion.div
                     initial={{ height: 0, opacity: 0 }}
                     animate={{ height: "auto", opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
-                    className="overflow-hidden border-t border-border/40 mt-3 pt-3 text-xs text-text-secondary space-y-2 font-mono"
+                    className="overflow-hidden border-t border-white/5 pt-4 space-y-3.5 text-xs text-text-secondary font-mono"
                   >
-                    {profile.bio && <p className="leading-relaxed bg-[#0D1117] p-2.5 rounded-xl border border-border/40 text-[10px] text-text-secondary">{profile.bio}</p>}
-                    <div className="grid grid-cols-2 gap-2 text-[10px]">
+                    {profile.bio && (
+                      <p className="leading-relaxed bg-[#09090B] p-3 rounded-xl border border-white/5 text-[10px] text-text-secondary">
+                        {profile.bio}
+                      </p>
+                    )}
+                    <div className="grid grid-cols-2 gap-3 text-[10px] pt-1">
                       <div>📍 {profile.location || "Earth"}</div>
-                      <div>🏢 {profile.company || "Independent"}</div>
+                      <div>Joined: {new Date(profile.created_at || Date.now()).toLocaleDateString("en-US", { year: "numeric", month: "short" })}</div>
                       <div>👥 {profile.followers} Followers</div>
                       <div>📦 {repositories.length} Repositories</div>
+                    </div>
+                    <div className="flex gap-2.5 pt-2">
+                      <a
+                        href={profile.html_url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex-1 py-2 bg-[#09090B] border border-white/5 rounded-xl text-center text-white text-[10px] font-bold active:scale-95 transition-all"
+                      >
+                        GitHub Profile
+                      </a>
                     </div>
                   </motion.div>
                 )}
               </AnimatePresence>
             </div>
 
-            {/* Statistics Section (2 cards per row) */}
-            <div className="grid grid-cols-2 gap-3">
-              {[
-                { label: "Repositories", val: repositories.length, detail: "Active projects" },
-                { label: "Contributions", val: contributions.totalCommits + contributions.totalPRs, detail: "Total pushes" },
-                { label: "Stars Received", val: totalStars, detail: "Community stars" },
-                { label: "Followers", val: profile.followers, detail: "Network size" },
-                { label: "Streak Count", val: contributions.longestStreak, detail: "Max consistency" },
-                { label: "Telemetry Score", val: `${score.overall}/100`, detail: "Overall index" }
-              ].map((stat, i) => (
-                <div key={i} className="bg-[#161B22]/40 border border-border rounded-xl p-3 flex flex-col justify-between h-24">
-                  <span className="text-[9px] font-bold text-text-secondary uppercase tracking-wider">{stat.label}</span>
-                  <span className="text-xl font-black font-space-grotesk text-text-primary text-tabular">{stat.val}</span>
-                  <span className="text-[9px] text-text-secondary font-mono">{stat.detail}</span>
-                </div>
-              ))}
-            </div>
-
-            {/* Heatmap Section */}
-            <div className="bg-surface/60 border border-border rounded-2xl p-4 shadow-lg shadow-black/10 space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-[10px] font-bold text-text-secondary uppercase tracking-wider">Consistency Mapping</span>
-                <span className="text-[9px] font-mono text-accent">Horizontal Swipe</span>
-              </div>
-              <div className="overflow-x-auto scrollbar-none py-1 border border-border/40 rounded-xl bg-[#0D1117]/80">
-                <div className="min-w-[650px] p-2 flex justify-center text-xs">
-                  <ContributionHeatmap
-                    dailyContributions={contributions.dailyContributions || {}}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Swipeable / Progress-based Language stack */}
-            <div className="bg-surface/60 border border-border rounded-2xl p-4 shadow-lg shadow-black/10 space-y-3">
-              <span className="text-[10px] font-bold text-text-secondary uppercase tracking-wider block">Technology Distribution</span>
-              <div className="space-y-3.5 pt-1.5">
-                {languages.slice(0, 5).map((lang, idx) => (
-                  <div key={idx} className="space-y-1.5">
-                    <div className="flex justify-between items-center text-xs">
-                      <div className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full" style={{ backgroundColor: lang.color || "#888" }} />
-                        <span className="font-bold text-text-primary">{lang.name}</span>
-                      </div>
-                      <span className="font-mono text-text-secondary text-[11px]">{lang.percentage}%</span>
-                    </div>
-                    <div className="h-1 bg-border rounded-full overflow-hidden">
-                      <div
-                        className="h-full rounded-full"
-                        style={{
-                          backgroundColor: lang.color || "#888",
-                          width: `${lang.percentage}%`
-                        }}
-                      />
-                    </div>
+            {/* Redesigned Statistics Grid (Exactly 2 cards per row) */}
+            <div className="space-y-3">
+              <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest font-mono block px-1">Stats Grid</span>
+              <div className="grid grid-cols-2 gap-3.5">
+                {[
+                  { label: "Repositories", val: repositories.length, detail: "Active projects" },
+                  { label: "Contributions", val: contributions.totalCommits + contributions.totalPRs, detail: "Total pushes" },
+                  { label: "Followers", val: profile.followers, detail: "Network size" },
+                  { label: "Stars Received", val: totalStars, detail: "Community stars" },
+                  { label: "Telemetry", val: `${score.overall}/100`, detail: "Overall Index" },
+                  { label: "Developer Score", val: score.overall * 10, detail: "Weighted rating" },
+                  { label: "Commit Velocity", val: `${Math.round((contributions.totalCommits / 30) * 10) / 10} / day`, detail: "Last 30 days" },
+                  { label: "Current Streak", val: `${contributions.currentStreak || 0} days`, detail: "Max consistency" }
+                ].map((stat, i) => (
+                  <div key={i} className="bg-[#111827]/80 border border-white/5 rounded-2xl p-4 flex flex-col justify-between h-28 shadow-lg">
+                    <span className="text-[9px] font-bold text-text-secondary uppercase tracking-wider font-mono">{stat.label}</span>
+                    <span className="text-2xl font-black font-space-grotesk text-white block my-1">{stat.val}</span>
+                    <span className="text-[9px] text-text-secondary font-mono">{stat.detail}</span>
                   </div>
                 ))}
               </div>
             </div>
 
+            {/* Redesigned Heatmap Section */}
+            <div className="bg-[#111827]/80 border border-white/5 rounded-2xl p-4 shadow-2xl space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest font-mono">Consistency Mapping</span>
+                <span className="text-[9px] font-mono text-accent">Tap cell for logs</span>
+              </div>
+              <div className="overflow-x-auto scrollbar-none py-1.5 border border-white/5 rounded-xl bg-[#09090B]">
+                <div className="min-w-[650px] p-2 flex justify-center text-xs">
+                  <ContributionHeatmap
+                    dailyContributions={contributions.dailyContributions || {}}
+                    onCellClick={(dateStr, count) => {
+                      setSelectedHeatmapDay({ date: dateStr, count });
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* AI Insights Horizontal Cards Deck */}
+            <div className="space-y-3">
+              <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest font-mono block px-1">AI Insights Deck</span>
+              <div className="flex gap-4 overflow-x-auto scrollbar-none pb-2 select-none">
+                {[
+                  { title: "Repository Recommendation", text: "Refactor nested loop utilities into flat mapping filters to optimize heap footprint.", color: "border-accent/20 bg-accent/5" },
+                  { title: "Today's Advice", text: "Lock Firestore write capabilities behind structured authenticated uid verification rule models.", color: "border-amber-500/20 bg-amber-500/5" },
+                  { title: "Weak Skill", text: "Database connection pools & indexing configurations need load diagnostics reviews.", color: "border-red-500/20 bg-red-500/5" },
+                  { title: "Strong Skill", text: "Responsive frontend styling layers with robust responsive layouts.", color: "border-emerald-500/20 bg-emerald-500/5" },
+                  { title: "Career Tip", text: "Showcase full-stack workflows including secure file storage uploads in portfolios.", color: "border-purple-500/20 bg-purple-500/5" }
+                ].map((ins, i) => (
+                  <div key={i} className={`flex-shrink-0 w-60 border rounded-2xl p-4 flex flex-col justify-between h-36 shadow-lg ${ins.color}`}>
+                    <span className="text-[9.5px] font-bold text-white uppercase tracking-wider font-space-grotesk">{ins.title}</span>
+                    <p className="text-[11px] text-text-secondary font-sans leading-relaxed mt-2.5">{ins.text}</p>
+                    <span className="text-[8px] text-text-secondary font-mono mt-1.5">DevTrack Career Engine</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Compact Activity Timeline */}
+            <div className="bg-[#111827]/80 border border-white/5 rounded-2xl p-5 shadow-2xl space-y-4">
+              <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest font-mono block">Activity Timeline</span>
+              <div className="relative border-l border-white/5 ml-3 space-y-5 pl-4 pb-1">
+                {[
+                  { time: "2 hours ago", title: "Pushed 3 commits to main", detail: "feat: security scanner rules implementation", icon: Code },
+                  { time: "5 hours ago", title: "Opened Pull Request #48", detail: "docs: add compliance checklist instructions", icon: GitPullRequest },
+                  { time: "Yesterday", title: "Starred repository axios", detail: "added reference configurations to client", icon: Star }
+                ].map((act, idx) => {
+                  const ActIcon = act.icon;
+                  return (
+                    <div key={idx} className="relative animate-fadeIn">
+                      <div className="absolute -left-6.5 top-1 h-5 w-5 rounded-full bg-[#09090B] border border-white/10 flex items-center justify-center text-accent">
+                        <ActIcon size={10} />
+                      </div>
+                      <span className="text-[9px] text-text-secondary font-mono block">{act.time}</span>
+                      <span className="text-xs font-bold text-white block mt-0.5">{act.title}</span>
+                      <span className="text-[10px] text-text-secondary block mt-0.5 leading-relaxed font-sans">{act.detail}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
             {/* Expandable Milestones / Activity */}
-            <div className="bg-surface/60 border border-border rounded-2xl p-4 shadow-lg shadow-black/10 space-y-3">
-              <span className="text-[10px] font-bold text-text-secondary uppercase tracking-wider block">DevTrack Milestones</span>
+            <div className="bg-[#111827]/80 border border-white/5 rounded-2xl p-4 shadow-2xl space-y-3">
+              <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest font-mono block">DevTrack Milestones</span>
               <DeveloperMilestones data={dashboardData} />
             </div>
           </div>

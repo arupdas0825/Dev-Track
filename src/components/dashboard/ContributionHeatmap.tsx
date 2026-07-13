@@ -5,11 +5,13 @@ import { useState, useMemo } from "react";
 interface ContributionHeatmapProps {
   dailyContributions?: Record<string, number>;
   loading?: boolean;
+  onCellClick?: (dateStr: string, count: number) => void;
 }
 
 export default function ContributionHeatmap({
   dailyContributions = {},
   loading = false,
+  onCellClick,
 }: ContributionHeatmapProps) {
   const currentYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState<number>(currentYear);
@@ -205,6 +207,7 @@ export default function ContributionHeatmap({
                           });
                         }}
                         onMouseLeave={() => setHoveredCell(null)}
+                        onClick={() => onCellClick?.(day.dateStr, day.count)}
                         tabIndex={0}
                         aria-label={`${day.count} contributions on ${day.dateStr}`}
                         className={`h-[11px] w-[11px] rounded-[2px] transition-transform duration-150 hover:scale-125 hover:z-20 cursor-pointer ${colorClass} focus:outline-none focus:ring-1 focus:ring-[#58A6FF]`}
