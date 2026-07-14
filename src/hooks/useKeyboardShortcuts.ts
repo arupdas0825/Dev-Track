@@ -9,6 +9,7 @@ export interface KeyboardShortcutsOptions {
   onCloseDialogs: () => void;
   onNewNote?: () => void;
   onRepoSearch?: () => void;
+  onToggleSidebar?: () => void;
 }
 
 export function useKeyboardShortcuts({
@@ -18,6 +19,7 @@ export function useKeyboardShortcuts({
   onCloseDialogs,
   onNewNote,
   onRepoSearch,
+  onToggleSidebar,
 }: KeyboardShortcutsOptions) {
   const [pendingGKey, setPendingGKey] = useState(false);
 
@@ -51,6 +53,14 @@ export function useKeyboardShortcuts({
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
         onOpenCommandPalette();
+        setPendingGKey(false);
+        return;
+      }
+
+      // Ctrl+B / Cmd+B -> Toggle Sidebar
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "b") {
+        e.preventDefault();
+        if (onToggleSidebar) onToggleSidebar();
         setPendingGKey(false);
         return;
       }
@@ -139,7 +149,7 @@ export function useKeyboardShortcuts({
       window.removeEventListener("keydown", handleKeyDown);
       clearTimeout(timeoutId);
     };
-  }, [pendingGKey, onOpenCommandPalette, onSelectTab, onOpenShortcutsHelp, onCloseDialogs, onNewNote, onRepoSearch]);
+  }, [pendingGKey, onOpenCommandPalette, onSelectTab, onOpenShortcutsHelp, onCloseDialogs, onNewNote, onRepoSearch, onToggleSidebar]);
 
   return { pendingGKey };
 }

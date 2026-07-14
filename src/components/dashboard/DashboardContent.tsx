@@ -5,34 +5,10 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { DevTrackUser, subscribeToAuthChanges, logOutUser, syncUserAndReposInFirestore } from "@/lib/firebase";
 import { UserDashboardData } from "@/types";
 import Navbar from "../layout/Navbar";
-import OverviewTab from "./OverviewTab";
-import RepositoriesTab from "./RepositoriesTab";
-import ContributionsTab from "./ContributionsTab";
-import CodingCalendarTab from "./CodingCalendarTab";
-import RepositoryHealthTab from "./RepositoryHealthTab";
-import GrowthTimelineTab from "./GrowthTimelineTab";
-import LanguagesTab from "./LanguagesTab";
-import ScoreTab from "./ScoreTab";
-import AIInsightsTab from "./AIInsightsTab";
-import ProfileComparisonTab from "./ProfileComparisonTab";
-import SettingsTab from "./SettingsTab";
-import WrappedTab from "./WrappedTab";
-import TimeMachineTab from "./TimeMachineTab";
-import DeveloperDnaTab from "./DeveloperDnaTab";
 import DashboardHeader from "./DashboardHeader";
-import DeveloperWorkspaceTab from "./DeveloperWorkspaceTab";
-import DeveloperCareerHub from "./DeveloperCareerHub";
-import DeveloperChallengesHub from "./DeveloperChallengesHub";
-import DeveloperCommunityHub from "./DeveloperCommunityHub";
 import ContributionHeatmap from "./ContributionHeatmap";
 import DeveloperMilestones from "./DeveloperMilestones";
-
-import TeamWorkspaceTab from "./TeamWorkspaceTab";
-import AiCodeReviewTab from "./AiCodeReviewTab";
-import LiveActivityTab from "./LiveActivityTab";
 import QuickActionsFAB from "./QuickActionsFAB";
-import HiringDashboard from "./HiringDashboard";
-import EnterpriseHub from "./EnterpriseHub";
 import Logo from "../ui/Logo";
 import CommandPalette from "./CommandPalette";
 import KeyboardShortcutsModal from "./KeyboardShortcutsModal";
@@ -43,6 +19,33 @@ import { useRepositories } from "@/hooks/useRepositories";
 import { useAnalytics } from "@/hooks/useAnalytics";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { motion, AnimatePresence } from "framer-motion";
+import dynamic from "next/dynamic";
+import { useSidebarStore } from "@/store/sidebarStore";
+
+// Lazy-loaded heavy components
+const OverviewTab = dynamic(() => import("./OverviewTab"), { ssr: false });
+const RepositoriesTab = dynamic(() => import("./RepositoriesTab"), { ssr: false });
+const ContributionsTab = dynamic(() => import("./ContributionsTab"), { ssr: false });
+const CodingCalendarTab = dynamic(() => import("./CodingCalendarTab"), { ssr: false });
+const RepositoryHealthTab = dynamic(() => import("./RepositoryHealthTab"), { ssr: false });
+const GrowthTimelineTab = dynamic(() => import("./GrowthTimelineTab"), { ssr: false });
+const LanguagesTab = dynamic(() => import("./LanguagesTab"), { ssr: false });
+const ScoreTab = dynamic(() => import("./ScoreTab"), { ssr: false });
+const AIInsightsTab = dynamic(() => import("./AIInsightsTab"), { ssr: false });
+const ProfileComparisonTab = dynamic(() => import("./ProfileComparisonTab"), { ssr: false });
+const SettingsTab = dynamic(() => import("./SettingsTab"), { ssr: false });
+const WrappedTab = dynamic(() => import("./WrappedTab"), { ssr: false });
+const TimeMachineTab = dynamic(() => import("./TimeMachineTab"), { ssr: false });
+const DeveloperDnaTab = dynamic(() => import("./DeveloperDnaTab"), { ssr: false });
+const DeveloperWorkspaceTab = dynamic(() => import("./DeveloperWorkspaceTab"), { ssr: false });
+const DeveloperCareerHub = dynamic(() => import("./DeveloperCareerHub"), { ssr: false });
+const DeveloperChallengesHub = dynamic(() => import("./DeveloperChallengesHub"), { ssr: false });
+const DeveloperCommunityHub = dynamic(() => import("./DeveloperCommunityHub"), { ssr: false });
+const TeamWorkspaceTab = dynamic(() => import("./TeamWorkspaceTab"), { ssr: false });
+const AiCodeReviewTab = dynamic(() => import("./AiCodeReviewTab"), { ssr: false });
+const LiveActivityTab = dynamic(() => import("./LiveActivityTab"), { ssr: false });
+const HiringDashboard = dynamic(() => import("./HiringDashboard"), { ssr: false });
+const EnterpriseHub = dynamic(() => import("./EnterpriseHub"), { ssr: false });
 import {
   LayoutGrid,
   Folder,
@@ -85,7 +88,8 @@ import {
   X,
   Send,
   AlertCircle,
-  Building2
+  Building2,
+  Menu
 } from "lucide-react";
 
 type TabId =
@@ -196,7 +200,6 @@ export default function DashboardContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [currentUser, setCurrentUser] = useState<DevTrackUser | null>(null);
-  const [activeTab, setActiveTab] = useState<TabId>("overview");
   const [syncedData, setSyncedData] = useState<UserDashboardData | null>(null);
   const [githubToken, setGithubToken] = useState("");
 
@@ -205,18 +208,79 @@ export default function DashboardContent() {
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
   // Sidebar customizations
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isFocusMode, setIsFocusMode] = useState(false);
   const [newNoteTrigger, setNewNoteTrigger] = useState<(() => void) | null>(null);
 
-  // Premium sidebar redesign states
-  const [sidebarWidth, setSidebarWidth] = useState<number>(240);
+  // Zustand Store Integration
+  const {
+    isSidebarCollapsed,
+    activeTab,
+    activeAdvancedCategory,
+    visitCount,
+    pinnedTabs,
+    recentTabs,
+    activeWorkspace,
+    isWorkspaceMenuOpen,
+    toggleSidebarCollapsed,
+    setSidebarCollapsed,
+    setActiveTab,
+    toggleAdvancedCategory,
+    setAdvancedCategory,
+    incrementVisitCount,
+    togglePinTab,
+    setActiveWorkspace,
+    setWorkspaceMenuOpen,
+  } = useSidebarStore();
+
+  const [sidebarWidth, setSidebarWidth] = useState<number>(280);
   const [isResizing, setIsResizing] = useState<boolean>(false);
-  const [activeSection, setActiveSection] = useState<string>("dashboard");
-  const [pinnedTabs, setPinnedTabs] = useState<string[]>([]);
-  const [recentTabs, setRecentTabs] = useState<string[]>(["overview"]);
-  const [activeWorkspace, setActiveWorkspace] = useState<string>("Personal Workspace");
-  const [isWorkspaceMenuOpen, setIsWorkspaceMenuOpen] = useState<boolean>(false);
+  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
+
+  // Close mobile drawer on navigation
+  useEffect(() => {
+    setIsMobileDrawerOpen(false);
+  }, [activeTab]);
+
+  // Tablet: Collapsed by default, Expandable
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const handleResize = () => {
+        if (window.innerWidth >= 768 && window.innerWidth < 1024) {
+          setSidebarCollapsed(true);
+        }
+      };
+      handleResize();
+      window.addEventListener("resize", handleResize);
+      return () => window.removeEventListener("resize", handleResize);
+    }
+  }, [setSidebarCollapsed]);
+
+  // Collapsed sidebar tooltips (Fade + Scale + 150ms)
+  const Tooltip = ({ content, children }: { content: string; children: React.ReactElement }) => {
+    const [isHovered, setIsHovered] = useState(false);
+    return (
+      <div 
+        className="relative flex items-center"
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
+        {children}
+        <AnimatePresence>
+          {isHovered && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, x: 5 }}
+              animate={{ opacity: 1, scale: 1, x: 0 }}
+              exit={{ opacity: 0, scale: 0.95, x: 5 }}
+              transition={{ duration: 0.15, ease: "easeOut" }}
+              className="absolute left-full ml-3 z-50 px-2.5 py-1 text-[10px] font-medium font-sans text-white bg-slate-900 border border-white/10 rounded-md shadow-xl whitespace-nowrap pointer-events-none"
+            >
+              {content}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    );
+  };
 
   // Dedicated Mobile Experience States
   const [activeMobileTab, setActiveMobileTab] = useState<"dashboard" | "repos" | "insights" | "community" | "profile">("dashboard");
@@ -227,6 +291,7 @@ export default function DashboardContent() {
   const [isOnline, setIsOnline] = useState<boolean>(true);
   const [pullToRefreshStatus, setPullToRefreshStatus] = useState<"idle" | "pulling" | "refreshing">("idle");
   const [touchStartClientY, setTouchStartClientY] = useState<number>(0);
+  const [touchStartClientX, setTouchStartClientX] = useState<number>(0);
   const [isBackToTopVisible, setIsBackToTopVisible] = useState<boolean>(false);
   const [mobileNotificationsCount, setMobileNotificationsCount] = useState<number>(3);
   
@@ -279,45 +344,15 @@ export default function DashboardContent() {
       const storedToken = localStorage.getItem("devtrack_github_token") || "";
       setGithubToken(storedToken);
 
-      const sidebarPref = localStorage.getItem("devtrack_sidebar_collapsed");
-      if (sidebarPref) {
-        setIsSidebarCollapsed(sidebarPref === "true");
-      }
-
       const storedWidth = localStorage.getItem("devtrack_sidebar_width");
       if (storedWidth) {
         setSidebarWidth(Number(storedWidth));
       }
       
-      const storedPinned = localStorage.getItem("devtrack_pinned_tabs");
-      if (storedPinned) {
-        try {
-          setPinnedTabs(JSON.parse(storedPinned));
-        } catch (e) {}
-      }
-
-      const storedRecent = localStorage.getItem("devtrack_recent_tabs");
-      if (storedRecent) {
-        try {
-          setRecentTabs(JSON.parse(storedRecent));
-        } catch (e) {}
-      }
+      // Increment visit count for onboarding tooltips
+      incrementVisitCount();
     }
-  }, []);
-
-  // Update recent pages list
-  useEffect(() => {
-    if (activeTab) {
-      setRecentTabs(prev => {
-        const filtered = prev.filter(t => t !== activeTab);
-        const updated = [activeTab, ...filtered].slice(0, 5);
-        if (typeof window !== "undefined") {
-          localStorage.setItem("devtrack_recent_tabs", JSON.stringify(updated));
-        }
-        return updated;
-      });
-    }
-  }, [activeTab]);
+  }, [incrementVisitCount]);
 
   // Sidebar drag resizer logic
   const startResizing = (mouseDownEvent: React.MouseEvent) => {
@@ -351,18 +386,6 @@ export default function DashboardContent() {
       document.removeEventListener("mouseup", handleMouseUp);
     };
   }, [isResizing]);
-
-  // Pin / Unpin tab toggle
-  const togglePinTab = (tabId: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setPinnedTabs(prev => {
-      const updated = prev.includes(tabId) ? prev.filter(t => t !== tabId) : [...prev, tabId];
-      if (typeof window !== "undefined") {
-        localStorage.setItem("devtrack_pinned_tabs", JSON.stringify(updated));
-      }
-      return updated;
-    });
-  };
 
   // Determine target username
   let targetUser = usernameParam.trim();
@@ -441,7 +464,8 @@ export default function DashboardContent() {
     onRepoSearch: () => {
       setActiveTab("workspace");
       setIsCommandPaletteOpen(true);
-    }
+    },
+    onToggleSidebar: toggleSidebarCollapsed
   });
 
   const isLoading = !dashboardData && (profileLoading || reposLoading || analyticsLoading);
@@ -462,350 +486,185 @@ export default function DashboardContent() {
     router.push(`/dashboard?user=${user.username}`);
   };
 
-  const toggleSidebar = () => {
-    const nextState = !isSidebarCollapsed;
-    setIsSidebarCollapsed(nextState);
-    if (typeof window !== "undefined") {
-      localStorage.setItem("devtrack_sidebar_collapsed", String(nextState));
-    }
-  };
-
-  const coreTabsList = [
-    { id: "overview", label: "Overview", icon: LayoutGrid },
-    { id: "workspace", label: "Workspace", icon: Layers },
-    { id: "dna", label: "Developer DNA", icon: Dna },
-    { id: "repos", label: "Repositories", icon: Folder },
-    { id: "calendar", label: "Coding Calendar", icon: Calendar },
-    { id: "health", label: "Repo Health", icon: Activity },
-    { id: "growth", label: "Growth Timeline", icon: Award },
-    { id: "time-machine", label: "Developer Time Machine", icon: History },
-    { id: "lang", label: "Languages", icon: Code },
-    { id: "score", label: "Developer Score", icon: Star },
-    { id: "ai", label: "AI Insights", icon: Sparkles },
-    { id: "compare", label: "Compare Profile", icon: Users },
-    { id: "wrapped", label: "Wrapped", icon: Gift },
-    { id: "settings", label: "Settings", icon: Settings },
-  ] as const;
-
-  const hiringTabsList = [
-    { id: "hiring-overview", label: "Overview", icon: LayoutGrid },
-    { id: "hiring-ats", label: "ATS Score", icon: CheckCircle },
-    { id: "hiring-resume-analyzer", label: "Resume Analyzer", icon: FileText },
-    { id: "hiring-resume-match", label: "Resume Match", icon: Layers },
-    { id: "hiring-job-match", label: "Job Match", icon: Star },
-    { id: "hiring-skills-gap", label: "Skills Gap", icon: TrendingUp },
-    { id: "hiring-recruiter", label: "Recruiter View", icon: Users },
-    { id: "hiring-interview", label: "Interview Readiness", icon: HelpCircle },
-    { id: "hiring-roadmap", label: "Career Roadmap", icon: Compass },
-    { id: "hiring-applications", label: "Applications", icon: ClipboardList },
-  ] as const;
-
-  const careerTabsList = [
-    { id: "career-dashboard", label: "Career Dashboard", icon: Briefcase },
-    { id: "career-resume-builder", label: "Resume Builder", icon: FileText },
-    { id: "career-ats-analyzer", label: "ATS Resume Analyzer", icon: CheckCircle },
-    { id: "career-portfolio-analyzer", label: "Portfolio Analyzer", icon: Globe },
-    { id: "career-job-match", label: "Job Match", icon: Star },
-    { id: "career-cover-letter", label: "Cover Letter Generator", icon: FileText },
-    { id: "career-linkedin", label: "LinkedIn Optimizer", icon: Award },
-    { id: "career-skill-gap", label: "Skill Gap Analysis", icon: TrendingUp },
-    { id: "career-interview-prep", label: "Interview Preparation", icon: HelpCircle },
-    { id: "career-roadmap", label: "Career Roadmap", icon: Compass },
-    { id: "career-versions", label: "Resume Versions", icon: History },
-    { id: "career-tracker", label: "Application Tracker", icon: ClipboardList },
-    { id: "career-assistant", label: "AI Career Assistant", icon: MessageSquare },
-  ] as const;
-
-  const teamTabsList = [
-    { id: "team-overview", label: "Team Overview", icon: LayoutGrid },
-    { id: "team-members", label: "Members", icon: Users },
-    { id: "team-analytics", label: "Organization Analytics", icon: TrendingUp },
-    { id: "team-repos", label: "Repositories", icon: Folder },
-    { id: "team-leaderboard", label: "Team Leaderboard", icon: Award },
-    { id: "team-sprint", label: "Sprint Dashboard", icon: CheckCircle },
-    { id: "team-activity", label: "Activity Feed", icon: History },
-    { id: "team-reports", label: "Reports", icon: FileText },
-    { id: "team-settings", label: "Settings", icon: Settings },
-  ] as const;
-
-  const aiReviewTabsList = [
-    { id: "ai-scanner", label: "Repository Scanner", icon: Activity },
-    { id: "ai-code-review", label: "Code Review", icon: Code },
-    { id: "ai-security", label: "Security", icon: Shield },
-    { id: "ai-docs", label: "Documentation", icon: FileText },
-    { id: "ai-dependencies", label: "Dependencies", icon: Layers },
-    { id: "ai-architecture", label: "Architecture", icon: Compass },
-    { id: "ai-performance", label: "Performance", icon: TrendingUp },
-    { id: "ai-practices", label: "Best Practices", icon: CheckCircle },
-    { id: "ai-suggestions", label: "AI Suggestions", icon: Sparkles },
-    { id: "ai-reports", label: "Reports", icon: FileText },
-  ] as const;
-
-  const liveActivityTabsList = [
-    { id: "live-feed", label: "Activity Feed", icon: Activity },
-    { id: "live-notifications", label: "Notifications", icon: Bell },
-    { id: "live-repos", label: "Repository Events", icon: Folder },
-    { id: "live-prs", label: "Pull Requests", icon: GitPullRequest },
-    { id: "live-issues", label: "Issues", icon: HelpCircle },
-    { id: "live-releases", label: "Releases", icon: Tag },
-    { id: "live-social", label: "Stars & Followers", icon: Users },
-    { id: "live-timeline", label: "Live Timeline", icon: Clock },
-    { id: "live-sync", label: "Sync History", icon: RefreshCw },
-  ] as const;
-
-  const challengesTabsList = [
-    { id: "challenges-dashboard", label: "Challenges Dashboard", icon: Award },
-    { id: "challenges-daily", label: "Daily Challenges", icon: Clock },
-    { id: "challenges-weekly", label: "Weekly Challenges", icon: Calendar },
-    { id: "challenges-monthly", label: "Monthly Challenges", icon: Calendar },
-    { id: "challenges-achievements", label: "Achievements", icon: Award },
-    { id: "challenges-xp", label: "XP & Levels", icon: TrendingUp },
-    { id: "challenges-leaderboards", label: "Leaderboards", icon: Users },
-    { id: "challenges-missions", label: "Missions", icon: Compass },
-    { id: "challenges-rewards", label: "Rewards", icon: Gift },
-    { id: "challenges-history", label: "Challenge History", icon: History },
-  ] as const;
-
-  const communityTabsList = [
-    { id: "community-feed", label: "Community Feed", icon: LayoutGrid },
-    { id: "community-developers", label: "Developers Directory", icon: Users },
-    { id: "community-discussions", label: "Forums", icon: MessageSquare },
-    { id: "community-showcase", label: "Showcase", icon: Award },
-    { id: "community-opensource", label: "Open Source Hub", icon: Folder },
-    { id: "community-events", label: "Events", icon: Calendar },
-    { id: "community-studygroups", label: "Study Groups", icon: Compass },
-    { id: "community-clubs", label: "Clubs", icon: Globe },
-    { id: "community-jobs", label: "Job Board", icon: Briefcase },
-    { id: "community-notifications", label: "Inbox Notifications", icon: Bell },
-    { id: "community-messaging", label: "Direct Messages", icon: MessageSquare },
-    { id: "community-search", label: "Universal Search", icon: Search }
-  ] as const;
-
-  const enterpriseTabsList = [
-    { id: "enterprise-dashboard", label: "Enterprise Dashboard", icon: Building2 },
-    { id: "enterprise-organizations", label: "Organizations", icon: Building2 },
-    { id: "enterprise-members", label: "Members", icon: Users },
-    { id: "enterprise-teams", label: "Teams", icon: Users },
-    { id: "enterprise-admin", label: "Admin Panel", icon: Shield },
-    { id: "enterprise-api-keys", label: "API Keys", icon: Shield },
-    { id: "enterprise-usage", label: "Usage Analytics", icon: TrendingUp },
-    { id: "enterprise-billing", label: "Billing", icon: TrendingUp },
-    { id: "enterprise-audit", label: "Audit Logs", icon: FileText },
-    { id: "enterprise-security", label: "Security", icon: Shield },
-    { id: "enterprise-integrations", label: "Integrations", icon: Globe },
-  ] as const;
-
-  const tabsList = [...coreTabsList, ...hiringTabsList, ...careerTabsList, ...teamTabsList, ...aiReviewTabsList, ...liveActivityTabsList, ...challengesTabsList, ...communityTabsList, ...enterpriseTabsList];
-
-
-
-  const sidebarSections = [
+  const mainCategories = [
     {
-      id: "dashboard",
+      id: "main-dashboard",
       label: "Dashboard",
       icon: LayoutGrid,
       items: [
-        { id: "overview", label: "Overview" },
-      ]
+        { id: "main-overview", label: "Overview", icon: LayoutGrid, tab: "overview" as TabId },
+        { id: "main-live-feed", label: "Today's Activity", icon: Clock, tab: "live-feed" as TabId },
+        { id: "main-live-notifications", label: "Recent Updates", icon: Bell, tab: "live-notifications" as TabId },
+      ],
     },
     {
-      id: "hiring",
-      label: "💼 Hiring Dashboard",
-      icon: Briefcase,
+      id: "main-repositories",
+      label: "Repositories",
+      icon: Folder,
       items: [
-        { id: "hiring-overview", label: "Overview" },
-        { id: "hiring-ats", label: "ATS Score" },
-        { id: "hiring-resume-analyzer", label: "Resume Analyzer" },
-        { id: "hiring-resume-match", label: "Resume Match" },
-        { id: "hiring-job-match", label: "Job Match" },
-        { id: "hiring-skills-gap", label: "Skills Gap" },
-        { id: "hiring-recruiter", label: "Recruiter View" },
-        { id: "hiring-interview", label: "Interview Readiness" },
-        { id: "hiring-roadmap", label: "Career Roadmap" },
-        { id: "hiring-applications", label: "Applications" },
-      ]
+        { id: "main-repos", label: "Repository List", icon: Folder, tab: "repos" as TabId },
+        { id: "main-workspace", label: "Developer Workspace", icon: Layers, tab: "workspace" as TabId },
+      ],
     },
     {
-      id: "developer",
-      label: "Developer",
+      id: "main-insights",
+      label: "Insights",
+      icon: TrendingUp,
+      items: [
+        { id: "main-contrib", label: "Contribution Analytics", icon: GitPullRequest, tab: "contrib" as TabId },
+        { id: "main-score", label: "Developer Score", icon: Star, tab: "score" as TabId },
+        { id: "main-lang", label: "GitHub Stats", icon: Code, tab: "lang" as TabId },
+      ],
+    },
+    {
+      id: "main-community",
+      label: "Community",
+      icon: Users,
+      items: [
+        { id: "main-community-feed", label: "Feed", icon: LayoutGrid, tab: "community-feed" as TabId },
+        { id: "main-community-developers", label: "Developers", icon: Users, tab: "community-developers" as TabId },
+        { id: "main-community-discussions", label: "Discussions", icon: MessageSquare, tab: "community-discussions" as TabId },
+      ],
+    },
+    {
+      id: "main-profile",
+      label: "Profile & Settings",
+      icon: Users,
+      items: [
+        { id: "main-compare", label: "Public Profile", icon: Globe, tab: "compare" as TabId },
+        { id: "main-settings", label: "Settings", icon: Settings, tab: "settings" as TabId },
+      ],
+    },
+  ];
+
+  const powerToolsCategories = [
+    {
+      id: "pt-developer-suite",
+      label: "Developer Suite",
       icon: Dna,
       items: [
-        { id: "workspace", label: "Workspace" },
-        { id: "dna", label: "Developer DNA" },
-        { id: "repos", label: "Repository Explorer" },
-        { id: "calendar", label: "Coding Calendar" },
-        { id: "health", label: "Repo Health" },
-        { id: "growth", label: "Growth Timeline" },
-        { id: "time-machine", label: "Time Machine" },
-      ]
+        { id: "pt-dna", label: "Developer DNA", icon: Dna, tab: "dna" as TabId, badge: "NEW" },
+        { id: "pt-calendar", label: "Coding Calendar", icon: Calendar, tab: "calendar" as TabId },
+        { id: "pt-health", label: "Repo Health", icon: Activity, tab: "health" as TabId },
+        { id: "pt-growth", label: "Growth Timeline", icon: Award, tab: "growth" as TabId },
+        { id: "pt-time-machine", label: "Time Machine", icon: History, tab: "time-machine" as TabId, badge: "NEW" },
+      ],
     },
     {
-      id: "career",
-      label: "AI Career Suite",
+      id: "pt-career-hub",
+      label: "Career Hub",
       icon: Briefcase,
       items: [
-        { id: "career-dashboard", label: "Career Dashboard" },
-        { id: "career-resume-builder", label: "Resume Builder" },
-        { id: "career-ats-analyzer", label: "ATS Resume Analyzer" },
-        { id: "career-portfolio-analyzer", label: "Portfolio Analyzer" },
-        { id: "career-job-match", label: "Job Match" },
-        { id: "career-cover-letter", label: "Cover Letter Generator" },
-        { id: "career-linkedin", label: "LinkedIn Optimizer" },
-        { id: "career-skill-gap", label: "Skill Gap Analysis" },
-        { id: "career-interview-prep", label: "Interview Preparation" },
-        { id: "career-roadmap", label: "Career Roadmap" },
-        { id: "career-versions", label: "Resume Versions" },
-        { id: "career-tracker", label: "Application Tracker" },
-        { id: "career-assistant", label: "AI Career Assistant" },
-      ]
+        { id: "pt-career-resume", label: "Resume Analyzer", icon: FileText, tab: "career-ats-analyzer" as TabId, badge: "NEW" },
+        { id: "pt-hiring-ats", label: "ATS Score", icon: CheckCircle, tab: "hiring-ats" as TabId },
+        { id: "pt-career-job-match", label: "Job Match", icon: Star, tab: "career-job-match" as TabId },
+        { id: "pt-career-skill-gap", label: "Skill Gap", icon: TrendingUp, tab: "career-skill-gap" as TabId },
+        { id: "pt-career-roadmap", label: "Career Roadmap", icon: Compass, tab: "career-roadmap" as TabId },
+      ],
     },
     {
-      id: "challenges",
-      label: "🏆 Developer Challenges",
-      icon: Award,
-      items: [
-        { id: "challenges-dashboard", label: "Dashboard" },
-        { id: "challenges-daily", label: "Daily Challenges" },
-        { id: "challenges-weekly", label: "Weekly Challenges" },
-        { id: "challenges-monthly", label: "Monthly Challenges" },
-        { id: "challenges-achievements", label: "Achievements" },
-        { id: "challenges-xp", label: "XP & Levels" },
-        { id: "challenges-leaderboards", label: "Leaderboards" },
-        { id: "challenges-missions", label: "Missions" },
-        { id: "challenges-rewards", label: "Rewards" },
-        { id: "challenges-history", label: "Challenge History" },
-      ]
-    },
-    {
-      id: "community",
-      label: "👥 Community",
-      icon: Users,
-      items: [
-        { id: "community-feed", label: "Feed" },
-        { id: "community-developers", label: "Developers" },
-        { id: "community-discussions", label: "Discussions" },
-        { id: "community-showcase", label: "Showcase" },
-        { id: "community-opensource", label: "Open Source" },
-        { id: "community-events", label: "Events" },
-        { id: "community-studygroups", label: "Study Groups" },
-        { id: "community-clubs", label: "Clubs" },
-        { id: "community-jobs", label: "Jobs" },
-        { id: "community-notifications", label: "Notifications" },
-        { id: "community-messaging", label: "Messaging" }
-      ]
-    },
-    {
-      id: "ai-review",
-
-
-      label: "AI Review",
+      id: "pt-ai-suite",
+      label: "AI Suite",
       icon: Sparkles,
       items: [
-        { id: "ai-scanner", label: "Repository Scanner" },
-        { id: "ai-code-review", label: "Code Review" },
-        { id: "ai-security", label: "Security Audit" },
-        { id: "ai-docs", label: "Documentation" },
-        { id: "ai-dependencies", label: "Dependencies" },
-        { id: "ai-architecture", label: "Architecture" },
-        { id: "ai-performance", label: "Performance" },
-        { id: "ai-practices", label: "Best Practices" },
-        { id: "ai-suggestions", label: "AI Suggestions" },
-        { id: "ai-reports", label: "Reports" },
-      ]
+        { id: "pt-ai-code-review", label: "AI Code Review", icon: Code, tab: "ai-code-review" as TabId },
+        { id: "pt-ai-security", label: "Security Scanner", icon: Shield, tab: "ai-security" as TabId },
+        { id: "pt-career-assistant", label: "AI Assistant", icon: MessageSquare, tab: "career-assistant" as TabId, badge: "NEW" },
+        { id: "pt-ai-insights", label: "AI Insights", icon: Sparkles, tab: "ai" as TabId },
+      ],
     },
     {
-      id: "live-activity",
-      label: "Live Activity",
-      icon: Activity,
+      id: "pt-security-center",
+      label: "Security Center",
+      icon: Shield,
       items: [
-        { id: "live-feed", label: "Activity Feed" },
-        { id: "live-notifications", label: "Notifications" },
-        { id: "live-repos", label: "Repository Events" },
-        { id: "live-prs", label: "Pull Requests" },
-        { id: "live-issues", label: "Issues" },
-        { id: "live-releases", label: "Releases" },
-        { id: "live-social", label: "Stars & Followers" },
-        { id: "live-timeline", label: "Live Timeline" },
-        { id: "live-sync", label: "Sync History" },
-      ]
+        { id: "pt-ai-security-vuln", label: "Vulnerabilities", icon: Shield, tab: "ai-security" as TabId },
+        { id: "pt-ai-dependencies", label: "Dependency Health", icon: Layers, tab: "ai-dependencies" as TabId },
+        { id: "pt-ai-reports", label: "Risk Reports", icon: FileText, tab: "ai-reports" as TabId },
+      ],
     },
     {
-      id: "team",
-      label: "Team Workspace",
-      icon: Users,
+      id: "pt-growth-challenges",
+      label: "Growth & Challenges",
+      icon: Award,
       items: [
-        { id: "team-overview", label: "Overview" },
-        { id: "team-members", label: "Members" },
-        { id: "team-repos", label: "Repositories" },
-        { id: "team-sprint", label: "Sprint Dashboard" },
-        { id: "team-leaderboard", label: "Leaderboard" },
-        { id: "team-activity", label: "Activity Feed" },
-        { id: "team-reports", label: "Reports" },
-        { id: "team-settings", label: "Settings" },
-      ]
+        { id: "pt-challenges-daily", label: "Daily Challenges", icon: Clock, tab: "challenges-daily" as TabId },
+        { id: "pt-challenges-weekly", label: "Weekly Challenges", icon: Calendar, tab: "challenges-weekly" as TabId },
+        { id: "pt-challenges-achievements", label: "Achievements", icon: Award, tab: "challenges-achievements" as TabId },
+      ],
     },
     {
-      id: "analytics",
+      id: "pt-analytics-suite",
       label: "Analytics",
       icon: TrendingUp,
       items: [
-        { id: "lang", label: "Languages" },
-        { id: "score", label: "Developer Score" },
-        { id: "ai", label: "AI Insights" },
-        { id: "compare", label: "Compare Profile" },
-        { id: "wrapped", label: "Wrapped" },
-      ]
+        { id: "pt-team-analytics", label: "Deep Analytics", icon: TrendingUp, tab: "team-analytics" as TabId },
+        { id: "pt-team-reports", label: "Productivity Reports", icon: FileText, tab: "team-reports" as TabId },
+      ],
     },
     {
-      id: "settings-section",
-      label: "Settings",
-      icon: Settings,
-      items: [
-        { id: "settings", label: "Settings" }
-      ]
-    },
-    {
-      id: "enterprise",
-      label: "🏢 Enterprise",
+      id: "pt-enterprise",
+      label: "Enterprise",
       icon: Building2,
       items: [
-        { id: "enterprise-dashboard", label: "Enterprise Dashboard" },
-        { id: "enterprise-organizations", label: "Organizations" },
-        { id: "enterprise-members", label: "Members" },
-        { id: "enterprise-teams", label: "Teams" },
-        { id: "enterprise-admin", label: "Admin Panel" },
-        { id: "enterprise-api-keys", label: "API Keys" },
-        { id: "enterprise-usage", label: "Usage Analytics" },
-        { id: "enterprise-billing", label: "Billing" },
-        { id: "enterprise-audit", label: "Audit Logs" },
-        { id: "enterprise-security", label: "Security" },
-        { id: "enterprise-integrations", label: "Integrations" },
-      ]
-    }
+        { id: "pt-enterprise-dashboard", label: "Enterprise Overview", icon: Building2, tab: "enterprise-dashboard" as TabId },
+        { id: "pt-enterprise-integrations", label: "Integrations", icon: Globe, tab: "enterprise-integrations" as TabId },
+        { id: "pt-enterprise-api-keys", label: "API Keys", icon: Shield, tab: "enterprise-api-keys" as TabId },
+      ],
+    },
+    {
+      id: "pt-help-suite",
+      label: "Help & Docs",
+      icon: HelpCircle,
+      items: [
+        { id: "pt-ai-docs", label: "Documentation", icon: FileText, tab: "ai-docs" as TabId },
+        { id: "pt-faqs", label: "FAQs", icon: HelpCircle, tab: "ai-docs" as TabId },
+        { id: "pt-support", label: "Support", icon: MessageSquare, tab: "ai-docs" as TabId },
+      ],
+    },
   ];
 
+  const tabsList = useMemo(() => {
+    const seen = new Set<string>();
+    const list: { id: string; label: string; icon: React.ComponentType<any> }[] = [];
+    mainCategories.forEach(cat => {
+      cat.items.forEach(item => {
+        if (!seen.has(item.tab)) {
+          seen.add(item.tab);
+          list.push({ id: item.tab, label: item.label, icon: item.icon });
+        }
+      });
+    });
+    powerToolsCategories.forEach(cat => {
+      cat.items.forEach(item => {
+        if (!seen.has(item.tab)) {
+          seen.add(item.tab);
+          list.push({ id: item.tab, label: item.label, icon: item.icon });
+        }
+      });
+    });
+    return list;
+  }, []);
+
+  const allItems = useMemo(() => {
+    const mainItems = mainCategories.flatMap(cat => cat.items);
+    const powerItems = powerToolsCategories.flatMap(cat => cat.items);
+    return [...mainItems, ...powerItems];
+  }, []);
+
   const pinnedItemsData = useMemo(() => {
-    const allItems = sidebarSections.flatMap(sec => sec.items);
     return pinnedTabs.map(pinnedId => {
       return allItems.find(item => item.id === pinnedId);
-    }).filter(Boolean) as { id: string; label: string }[];
-  }, [pinnedTabs, sidebarSections]);
+    }).filter(Boolean) as { id: string; label: string; tab: TabId }[];
+  }, [pinnedTabs, allItems]);
 
-  const toggleSection = (sectionId: string) => {
-    if (activeSection === sectionId) {
-      setActiveSection("");
-    } else {
-      setActiveSection(sectionId);
-    }
-  };
-
-  // Expand parent section automatically when activeTab changes
+  // Expand parent advanced category automatically when activeTab changes
   useEffect(() => {
-    const parentSection = sidebarSections.find(sec => sec.items.some(item => item.id === activeTab));
-    if (parentSection) {
-      setActiveSection(parentSection.id);
+    const parentCategory = powerToolsCategories.find(cat => cat.items.some(item => item.tab === activeTab));
+    if (parentCategory) {
+      setAdvancedCategory(parentCategory.id);
     }
-  }, [activeTab]);
+  }, [activeTab, setAdvancedCategory]);
 
   // Keyboard navigation listener (Arrow keys to switch tabs)
   useEffect(() => {
@@ -1027,6 +886,328 @@ export default function DashboardContent() {
       default:
         return <OverviewTab data={dashboardData} />;
     }
+  };
+
+  const renderSidebarContent = (isDrawer = false) => {
+    const isCollapsedLocal = isDrawer ? false : isSidebarCollapsed;
+    const keyPrefix = isDrawer ? "drawer" : "desktop";
+
+    return (
+      <div className="flex flex-col h-full">
+        {/* Workspace Switcher */}
+        <div className="p-3 border-b border-white/5 flex items-center justify-between gap-2 relative">
+          <button
+            onClick={() => setWorkspaceMenuOpen(!isWorkspaceMenuOpen)}
+            className="flex items-center justify-between w-full p-2 rounded-xl border border-white/5 bg-slate-950/40 hover:bg-slate-900/60 text-xs text-[#F0F6FC] font-semibold cursor-pointer transition-all hover:border-white/10"
+          >
+            <div className="flex items-center gap-2 truncate">
+              <div className="w-5 h-5 rounded bg-gradient-to-r from-accent to-[#8957e5] text-white flex items-center justify-center font-black text-[10px]">
+                {activeWorkspace.charAt(0)}
+              </div>
+              {!isCollapsedLocal && <span className="truncate tracking-wide font-sans">{activeWorkspace}</span>}
+            </div>
+            {!isCollapsedLocal && <ChevronDown size={12} className="text-[#8B949E]" />}
+          </button>
+
+          {/* Switcher Dropdown */}
+          {isWorkspaceMenuOpen && !isCollapsedLocal && (
+            <div className="absolute top-full left-3 right-3 mt-1.5 bg-[#161B22]/95 backdrop-blur-md border border-white/5 rounded-xl shadow-2xl p-1.5 z-50 animate-fadeIn text-xs">
+              <button
+                onClick={() => {
+                  setActiveWorkspace("Personal Workspace");
+                  setWorkspaceMenuOpen(false);
+                }}
+                className="w-full flex items-center gap-2.5 p-2 hover:bg-white/5 rounded-lg text-left text-[#F0F6FC] cursor-pointer transition-all"
+              >
+                <div className="w-4.5 h-4.5 rounded bg-accent text-white flex items-center justify-center text-[9px] font-bold">P</div>
+                <span className="font-semibold">Personal Workspace</span>
+              </button>
+              <button
+                onClick={() => {
+                  setActiveWorkspace("Vercel Team");
+                  setWorkspaceMenuOpen(false);
+                }}
+                className="w-full flex items-center gap-2.5 p-2 hover:bg-white/5 rounded-lg text-left text-[#F0F6FC] cursor-pointer transition-all"
+              >
+                <div className="w-4.5 h-4.5 rounded bg-success text-white flex items-center justify-center text-[9px] font-bold">V</div>
+                <span className="font-semibold">Vercel Team</span>
+              </button>
+              <div className="border-t border-white/5 my-1.5" />
+              <button
+                onClick={() => {
+                  alert("Connect Organization workspace");
+                  setWorkspaceMenuOpen(false);
+                }}
+                className="w-full flex items-center gap-2 p-2 hover:bg-white/5 rounded-lg text-left text-[#8B949E] hover:text-[#F0F6FC] cursor-pointer transition-all"
+              >
+                <Plus size={12} className="ml-0.5" />
+                <span className="font-semibold">Connect Organization</span>
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Scrollable Navigation Sections */}
+        <div className="flex-1 overflow-y-auto p-3 space-y-5 scrollbar-thin">
+          {/* Search Shortcut */}
+          {!isCollapsedLocal && (
+            <button
+              onClick={() => setIsCommandPaletteOpen(true)}
+              className="w-full flex items-center justify-between px-3.5 py-2 rounded-xl border border-white/5 bg-slate-950/40 hover:bg-slate-900/60 text-[11px] text-[#8B949E] cursor-pointer transition-all mb-3 hover:border-white/10"
+            >
+              <div className="flex items-center gap-2">
+                <Search size={12} />
+                <span className="font-medium tracking-wide">Search commands...</span>
+              </div>
+              <kbd className="text-[9px] border border-white/10 px-1.5 py-0.5 rounded-md bg-slate-900 font-mono">Ctrl K</kbd>
+            </button>
+          )}
+
+          {/* Pinned Items */}
+          {pinnedItemsData.length > 0 && (
+            <div className="space-y-1">
+              {!isCollapsedLocal && (
+                <span className="text-[9px] font-black text-[#8B949E] uppercase tracking-wider block px-2.5 mb-2 font-mono">
+                  ⭐ Pinned
+                </span>
+              )}
+              {pinnedItemsData.map(item => (
+                <button
+                  key={`${keyPrefix}-pinned-${item.id}`}
+                  onClick={() => setActiveTab(item.tab)}
+                  className={`flex items-center justify-between w-full px-3 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer ${
+                    activeTab === item.tab
+                      ? "text-[#F0F6FC] bg-gradient-to-r from-accent/15 via-[#8957e5]/10 to-transparent border border-accent/20 shadow-[0_0_15px_rgba(47,129,247,0.15)]"
+                      : "text-[#8B949E] hover:text-[#F0F6FC] hover:bg-white/5"
+                  }`}
+                  title={isCollapsedLocal ? item.label : undefined}
+                >
+                  <div className="flex items-center gap-2 truncate">
+                    <Star size={12} className="text-yellow-500 fill-yellow-500 flex-shrink-0" />
+                    {!isCollapsedLocal && <span className="truncate">{item.label}</span>}
+                  </div>
+                  {!isCollapsedLocal && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); togglePinTab(item.id); }}
+                      className="opacity-0 group-hover:opacity-100 hover:text-danger transition-opacity p-0.5"
+                    >
+                      ×
+                    </button>
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* MAIN (Always Visible) categories */}
+          <div className="space-y-4">
+            {!isCollapsedLocal && (
+              <span className="text-[9px] font-black text-[#8B949E] uppercase tracking-widest block px-2.5 mb-2 font-mono">
+                MAIN
+              </span>
+            )}
+            {mainCategories.map(cat => {
+              const CatIcon = cat.icon;
+              const hasActiveChild = cat.items.some(item => item.tab === activeTab);
+
+              if (isCollapsedLocal) {
+                // Collapsed sidebar categories tooltip
+                return (
+                  <Tooltip key={`${keyPrefix}-main-cat-${cat.id}`} content={cat.label}>
+                    <button
+                      onClick={() => {
+                        toggleSidebarCollapsed();
+                      }}
+                      className={`flex items-center justify-center w-11 h-11 rounded-xl transition-all cursor-pointer ${
+                        hasActiveChild 
+                          ? "text-[#F0F6FC] bg-gradient-to-r from-accent/15 via-[#8957e5]/10 to-transparent border border-accent/20 shadow-[0_0_15px_rgba(47,129,247,0.15)] animate-pulse font-semibold" 
+                          : "text-[#8B949E] hover:text-[#F0F6FC] hover:bg-white/5"
+                      }`}
+                    >
+                      <CatIcon size={18} className="flex-shrink-0" />
+                    </button>
+                  </Tooltip>
+                );
+              }
+
+              return (
+                <div key={`${keyPrefix}-main-cat-${cat.id}`} className="space-y-1">
+                  <div className="flex items-center gap-2 px-2.5 py-1 text-[10px] font-bold text-[#8B949E]/70 uppercase tracking-wider font-mono">
+                    <CatIcon size={12} className="flex-shrink-0 text-[#8B949E]/50" />
+                    <span>{cat.label}</span>
+                  </div>
+                  <div className="space-y-0.5 pl-1.5 border-l border-white/5 ml-3">
+                    {cat.items.map(item => {
+                      const ItemIcon = item.icon;
+                      const isActive = activeTab === item.tab;
+                      const isPinned = pinnedTabs.includes(item.id);
+                      
+                      return (
+                        <div key={`${keyPrefix}-main-item-${item.id}`} className="group/item flex items-center justify-between w-full relative">
+                          <button
+                            onClick={() => setActiveTab(item.tab)}
+                            className={`flex-1 flex items-center gap-2.5 text-left px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all truncate cursor-pointer ${
+                              isActive
+                                ? "text-[#F0F6FC] bg-gradient-to-r from-accent/15 via-[#8957e5]/10 to-transparent border border-accent/20 shadow-[0_0_15px_rgba(47,129,247,0.15)] font-semibold"
+                                : "text-[#8B949E] hover:text-[#F0F6FC] hover:bg-white/5"
+                            }`}
+                          >
+                            <ItemIcon size={12} className={`flex-shrink-0 ${isActive ? "text-accent" : "text-[#8B949E]/70"}`} />
+                            <span className="truncate">{item.label}</span>
+                          </button>
+                          
+                          {/* Pin toggle button */}
+                          {!isCollapsedLocal && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); togglePinTab(item.id); }}
+                              className={`absolute right-2 top-1/2 -translate-y-1/2 p-1 opacity-0 group-hover/item:opacity-100 transition-opacity cursor-pointer ${
+                                isPinned ? "opacity-100 text-yellow-500" : "text-white/20 hover:text-yellow-500"
+                              }`}
+                            >
+                              <Star size={10} className={isPinned ? "fill-yellow-500 text-yellow-500" : ""} />
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* POWER TOOLS (Collapsed by Default) categories */}
+          <div className="space-y-4 pt-2 border-t border-white/5">
+            {!isCollapsedLocal && (
+              <span className="text-[9px] font-black text-[#8B949E] uppercase tracking-widest block px-2.5 mb-2 font-mono">
+                POWER TOOLS
+              </span>
+            )}
+            {powerToolsCategories.map(cat => {
+              const CatIcon = cat.icon;
+              const isExpanded = activeAdvancedCategory === cat.id;
+              const hasActiveChild = cat.items.some(item => item.tab === activeTab);
+
+              if (isCollapsedLocal) {
+                // Collapsed power tools categories tooltip
+                return (
+                  <Tooltip key={`${keyPrefix}-pt-cat-${cat.id}`} content={cat.label}>
+                    <button
+                      onClick={() => {
+                        toggleSidebarCollapsed();
+                        toggleAdvancedCategory(cat.id);
+                      }}
+                      className={`flex items-center justify-center w-11 h-11 rounded-xl transition-all cursor-pointer ${
+                        hasActiveChild 
+                          ? "text-[#F0F6FC] bg-gradient-to-r from-accent/15 via-[#8957e5]/10 to-transparent border border-accent/20 shadow-[0_0_15px_rgba(47,129,247,0.15)] animate-pulse" 
+                          : "text-[#8B949E] hover:text-[#F0F6FC] hover:bg-white/5"
+                      }`}
+                    >
+                      <CatIcon size={18} className="flex-shrink-0" />
+                    </button>
+                  </Tooltip>
+                );
+              }
+
+              return (
+                <div key={`${keyPrefix}-pt-cat-${cat.id}`} className="space-y-1">
+                  {/* Category accordion header */}
+                  <button
+                    onClick={() => toggleAdvancedCategory(cat.id)}
+                    className={`flex items-center justify-between w-full px-2.5 py-1.5 rounded-lg text-[10px] font-bold tracking-wider uppercase transition-all cursor-pointer font-mono ${
+                      hasActiveChild && !isExpanded
+                        ? "text-accent bg-accent/5 border border-accent/10"
+                        : "text-[#8B949E] hover:text-[#F0F6FC] hover:bg-white/5"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 truncate">
+                      <CatIcon size={12} className="flex-shrink-0" />
+                      <span>{cat.label}</span>
+                    </div>
+                    <ChevronDown
+                      size={12}
+                      className={`text-[#8B949E] transform transition-transform duration-200 ${
+                        isExpanded ? "rotate-0" : "-rotate-90"
+                      }`}
+                    />
+                  </button>
+
+                  {/* Accordion content */}
+                  <AnimatePresence initial={false}>
+                    {isExpanded && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="space-y-0.5 pl-1.5 border-l border-white/5 ml-3 py-1">
+                          {cat.items.map(item => {
+                            const ItemIcon = item.icon;
+                            const isActive = activeTab === item.tab;
+                            const isPinned = pinnedTabs.includes(item.id);
+                            
+                            return (
+                              <div key={`${keyPrefix}-pt-item-${item.id}`} className="group/item flex items-center justify-between w-full relative">
+                                <button
+                                  onClick={() => setActiveTab(item.tab)}
+                                  className={`flex-1 flex items-center gap-2.5 text-left px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all truncate cursor-pointer ${
+                                    isActive
+                                      ? "text-[#F0F6FC] bg-gradient-to-r from-accent/15 via-[#8957e5]/10 to-transparent border border-accent/20 shadow-[0_0_15px_rgba(47,129,247,0.15)] font-semibold"
+                                      : "text-[#8B949E] hover:text-[#F0F6FC] hover:bg-white/5"
+                                  }`}
+                                >
+                                  <ItemIcon size={12} className={`flex-shrink-0 ${isActive ? "text-accent" : "text-[#8B949E]/70"}`} />
+                                  <span className="truncate">{item.label}</span>
+                                  {item.badge && (
+                                    <span className="px-1.5 py-0.5 text-[7px] font-bold text-white bg-accent rounded-full animate-pulse tracking-widest font-mono">
+                                      {item.badge}
+                                    </span>
+                                  )}
+                                </button>
+                                
+                                {/* Pin toggle button */}
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); togglePinTab(item.id); }}
+                                  className={`absolute right-2 top-1/2 -translate-y-1/2 p-1 opacity-0 group-hover/item:opacity-100 transition-opacity cursor-pointer ${
+                                    isPinned ? "opacity-100 text-yellow-500" : "text-white/20 hover:text-yellow-500"
+                                  }`}
+                                >
+                                  <Star size={10} className={isPinned ? "fill-yellow-500 text-yellow-500" : ""} />
+                                </button>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Sticky Bottom Area */}
+        <div className="p-3 border-t border-white/5 space-y-2.5">
+          <div className="flex items-center justify-between text-[10px] text-[#8B949E] px-2 font-mono">
+            {!isCollapsedLocal && (
+              <>
+                <span className="font-semibold">v0.1.0</span>
+                <span>telemetry active</span>
+              </>
+            )}
+          </div>
+          <button
+            onClick={() => toggleSidebarCollapsed()}
+            className="w-full flex items-center justify-center p-2 rounded-xl border border-white/5 bg-slate-950/40 hover:bg-slate-900/60 text-[#8B949E] hover:text-[#F0F6FC] cursor-pointer transition-all text-xs font-bold font-mono hover:border-white/10 active:scale-95"
+          >
+            {isCollapsedLocal ? <ChevronRight size={14} /> : "Collapse Sidebar"}
+          </button>
+        </div>
+      </div>
+    );
   };
 
   if (isLoading) {
@@ -1688,208 +1869,15 @@ export default function DashboardContent() {
           {!isFocusMode && (
             <aside
               style={{ width: isSidebarCollapsed ? 72 : sidebarWidth }}
-              className="flex-shrink-0 md:flex hidden flex-col border-r border-[#30363D] bg-[#161B22]/30 select-none relative group transition-all duration-150 h-[calc(100vh-120px)] rounded-xl"
+              className="flex-shrink-0 md:flex hidden flex-col border border-white/5 bg-[#0D1117]/65 backdrop-blur-xl select-none relative group transition-all duration-300 h-[calc(100vh-120px)] rounded-2xl shadow-2xl"
             >
-              {/* Top Workspace Switcher */}
-              <div className="p-3 border-b border-[#30363D]/60 flex items-center justify-between gap-2 relative">
-                <button
-                  onClick={() => setIsWorkspaceMenuOpen(!isWorkspaceMenuOpen)}
-                  className="flex items-center justify-between w-full p-1.5 rounded-lg border border-[#30363D] bg-[#0D1117] hover:bg-[#161B22] text-xs text-[#F0F6FC] font-semibold cursor-pointer transition-colors"
-                >
-                  <div className="flex items-center gap-2 truncate">
-                    <div className="w-5 h-5 rounded bg-[#2F81F7] text-white flex items-center justify-center font-bold text-[10px]">
-                      {activeWorkspace.charAt(0)}
-                    </div>
-                    {!isSidebarCollapsed && <span className="truncate">{activeWorkspace}</span>}
-                  </div>
-                  {!isSidebarCollapsed && <ChevronDown size={14} className="text-[#8B949E]" />}
-                </button>
-
-                {/* Switcher Dropdown */}
-                {isWorkspaceMenuOpen && !isSidebarCollapsed && (
-                  <div className="absolute top-full left-3 right-3 mt-1.5 bg-[#161B22] border border-[#30363D] rounded-lg shadow-xl p-1 z-50 animate-fadeIn text-xs">
-                    <button
-                      onClick={() => {
-                        setActiveWorkspace("Personal Workspace");
-                        setIsWorkspaceMenuOpen(false);
-                      }}
-                      className="w-full flex items-center gap-2 p-2 hover:bg-[#21262D] rounded text-left text-[#F0F6FC] cursor-pointer"
-                    >
-                      <div className="w-4 h-4 rounded bg-[#2F81F7] text-white flex items-center justify-center text-[8px] font-bold">P</div>
-                      Personal Workspace
-                    </button>
-                    <button
-                      onClick={() => {
-                        setActiveWorkspace("Vercel Team");
-                        setIsWorkspaceMenuOpen(false);
-                      }}
-                      className="w-full flex items-center gap-2 p-2 hover:bg-[#21262D] rounded text-left text-[#F0F6FC] cursor-pointer"
-                    >
-                      <div className="w-4 h-4 rounded bg-[#3FB950] text-white flex items-center justify-center text-[8px] font-bold">V</div>
-                      Vercel Team
-                    </button>
-                    <div className="border-t border-[#30363D] my-1" />
-                    <button
-                      onClick={() => {
-                        alert("Connect Organization workspace");
-                        setIsWorkspaceMenuOpen(false);
-                      }}
-                      className="w-full flex items-center gap-2 p-2 hover:bg-[#21262D] rounded text-left text-[#8B949E] hover:text-[#F0F6FC] cursor-pointer"
-                    >
-                      <Plus size={12} />
-                      Connect Organization
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {/* Pinned & Scrollable Sections */}
-              <div className="flex-1 overflow-y-auto p-3 space-y-4 scrollbar-thin">
-                {/* Search Shortcut */}
-                {!isSidebarCollapsed && (
-                  <button
-                    onClick={() => setIsCommandPaletteOpen(true)}
-                    className="w-full flex items-center justify-between px-3 py-1.5 rounded-lg border border-[#30363D] bg-[#0D1117] hover:bg-[#161B22] text-[11px] text-[#8B949E] cursor-pointer transition-all mb-2"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Search size={12} />
-                      <span>Search commands...</span>
-                    </div>
-                    <kbd className="text-[9px] border border-[#30363D] px-1.5 py-0.5 rounded bg-surface">Ctrl K</kbd>
-                  </button>
-                )}
-
-                {/* Pinned Items */}
-                {pinnedItemsData.length > 0 && (
-                  <div className="space-y-1">
-                    {!isSidebarCollapsed && (
-                      <span className="text-[9px] font-bold text-[#8B949E] uppercase tracking-wider block px-2 mb-1.5">
-                        ⭐ Pinned
-                      </span>
-                    )}
-                    {pinnedItemsData.map(item => (
-                      <button
-                        key={item.id}
-                        onClick={() => setActiveTab(item.id as TabId)}
-                        className={`flex items-center justify-between w-full px-3 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                          activeTab === item.id
-                            ? "text-[#F0F6FC] bg-[#21262D] border border-[#30363D]"
-                            : "text-[#8B949E] hover:text-[#F0F6FC] hover:bg-[#161B22]/40"
-                        }`}
-                        title={isSidebarCollapsed ? item.label : undefined}
-                      >
-                        <div className="flex items-center gap-2 truncate">
-                          <Star size={12} className="text-yellow-500 fill-yellow-500 flex-shrink-0" />
-                          {!isSidebarCollapsed && <span className="truncate">{item.label}</span>}
-                        </div>
-                        {!isSidebarCollapsed && (
-                          <button
-                            onClick={(e) => togglePinTab(item.id, e)}
-                            className="opacity-0 hover:text-[#F85149] transition-opacity p-0.5 text-xs font-bold"
-                          >
-                            ×
-                          </button>
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                )}
-
-                {/* Accordion Sections */}
-                <div className="space-y-1.5">
-                  {sidebarSections.map(sec => {
-                    const SecIcon = sec.icon;
-                    const isExpanded = activeSection === sec.id;
-                    const hasActiveChild = sec.items.some(item => item.id === activeTab);
-
-                    return (
-                      <div key={sec.id} className="space-y-1 animate-fadeIn">
-                        {/* Section Title */}
-                        <button
-                          onClick={() => toggleSection(sec.id)}
-                          className={`flex items-center justify-between w-full px-3 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                            hasActiveChild && !isExpanded
-                              ? "text-[#2F81F7]"
-                              : "text-[#8B949E] hover:text-[#F0F6FC] hover:bg-[#161B22]/40"
-                          }`}
-                          title={isSidebarCollapsed ? sec.label : undefined}
-                        >
-                          <div className="flex items-center gap-2 truncate">
-                            <SecIcon size={14} className="flex-shrink-0" />
-                            {!isSidebarCollapsed && <span className="truncate">{sec.label}</span>}
-                          </div>
-                          {!isSidebarCollapsed && (
-                            <ChevronDown
-                              size={12}
-                              className={`transform transition-transform duration-200 ${
-                                isExpanded ? "" : "-rotate-90"
-                              }`}
-                            />
-                          )}
-                        </button>
-
-                        {/* Expandable sub-items */}
-                        {isExpanded && !isSidebarCollapsed && (
-                          <div className="pl-4 border-l border-[#30363D] ml-4.5 space-y-1 py-1">
-                            {sec.items.map(item => {
-                              const isPinned = pinnedTabs.includes(item.id);
-                              return (
-                                <div
-                                  key={item.id}
-                                  className="group/item flex items-center justify-between w-full"
-                                >
-                                  <button
-                                    onClick={() => setActiveTab(item.id as TabId)}
-                                    className={`flex-1 text-left px-2.5 py-1.5 rounded-md text-[11px] font-semibold transition-all truncate cursor-pointer ${
-                                      activeTab === item.id
-                                        ? "text-[#F0F6FC] bg-[#21262D]/60 font-bold"
-                                        : "text-[#8B949E] hover:text-[#F0F6FC]"
-                                    }`}
-                                  >
-                                    {item.label}
-                                  </button>
-                                  <button
-                                    onClick={(e) => togglePinTab(item.id, e)}
-                                    className={`p-1 opacity-0 group-hover/item:opacity-100 transition-opacity cursor-pointer ${
-                                      isPinned ? "opacity-100 text-yellow-500" : "text-[#484F58] hover:text-yellow-500"
-                                    }`}
-                                  >
-                                    <Star size={10} className={isPinned ? "fill-yellow-500 text-yellow-500" : ""} />
-                                  </button>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Sticky Bottom Area */}
-              <div className="p-3 border-t border-[#30363D]/60 space-y-2">
-                <div className="flex items-center justify-between text-[10px] text-[#8B949E] px-1.5">
-                  {!isSidebarCollapsed && (
-                    <>
-                      <span>v0.1.0</span>
-                      <span>Storage: 62%</span>
-                    </>
-                  )}
-                </div>
-                <button
-                  onClick={toggleSidebar}
-                  className="w-full flex items-center justify-center p-2 rounded-lg border border-[#30363D] bg-[#0D1117] hover:bg-[#161B22] text-[#8B949E] hover:text-[#F0F6FC] cursor-pointer transition-colors text-xs font-bold"
-                >
-                  {isSidebarCollapsed ? <ChevronRight size={14} /> : "Collapse Sidebar"}
-                </button>
-              </div>
-
+              {renderSidebarContent(false)}
+              
               {/* Drag Handle */}
               {!isSidebarCollapsed && (
                 <div
                   onMouseDown={startResizing}
-                  className="absolute top-0 right-0 w-1.5 h-full cursor-col-resize hover:bg-[#2F81F7]/40 active:bg-[#2F81F7] transition-all z-50"
+                  className="absolute top-0 right-0 w-1 h-full cursor-col-resize hover:bg-accent/40 active:bg-accent transition-all z-50 rounded-r-2xl"
                 />
               )}
             </aside>
@@ -1986,12 +1974,24 @@ export default function DashboardContent() {
             setTouchStartClientY(e.touches[0].clientY);
             setPullToRefreshStatus("idle");
           }
+          if (e.touches[0].clientX < 30) {
+            setTouchStartClientX(e.touches[0].clientX);
+          } else {
+            setTouchStartClientX(0);
+          }
         }}
         onTouchMove={(e) => {
           if (window.scrollY === 0 && touchStartClientY > 0) {
             const diff = e.touches[0].clientY - touchStartClientY;
             if (diff > 50 && diff < 150) {
               setPullToRefreshStatus("pulling");
+            }
+          }
+          if (touchStartClientX > 0) {
+            const diffX = e.touches[0].clientX - touchStartClientX;
+            if (diffX > 80) {
+              setIsMobileDrawerOpen(true);
+              setTouchStartClientX(0);
             }
           }
         }}
@@ -2005,12 +2005,21 @@ export default function DashboardContent() {
             }, 1200);
           } else {
             setTouchStartClientY(0);
+            setTouchStartClientX(0);
           }
         }}
       >
         {/* Sticky Mobile Header */}
         <header className="sticky top-0 z-40 bg-[#0D1117]/85 backdrop-blur-md border-b border-border/50 py-3 px-4 flex items-center justify-between">
-          <Logo size={24} showText={true} />
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setIsMobileDrawerOpen(true)}
+              className="text-text-secondary hover:text-text-primary p-1 cursor-pointer active:scale-90 transition-transform"
+            >
+              <Menu size={20} />
+            </button>
+            <Logo size={24} showText={true} />
+          </div>
           <div className="flex items-center gap-3.5">
             {/* Notification Badge Bell */}
             <button
@@ -2199,6 +2208,55 @@ export default function DashboardContent() {
                 </form>
               </motion.div>
             </div>
+          )}
+        </AnimatePresence>
+
+        {/* Mobile Off-canvas Drawer */}
+        <AnimatePresence>
+          {isMobileDrawerOpen && (
+            <>
+              {/* Backdrop overlay */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setIsMobileDrawerOpen(false)}
+                className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs md:hidden"
+              />
+
+              {/* Drawer content wrapper */}
+              <motion.div
+                initial={{ x: "-100%" }}
+                animate={{ x: 0 }}
+                exit={{ x: "-100%" }}
+                transition={{ type: "spring", damping: 25, stiffness: 220 }}
+                drag="x"
+                dragConstraints={{ left: -280, right: 0 }}
+                dragElastic={{ left: 0.05, right: 0.5 }}
+                onDragEnd={(e, info) => {
+                  if (info.offset.x < -80 || info.velocity.x < -100) {
+                    setIsMobileDrawerOpen(false);
+                  }
+                }}
+                className="fixed top-0 left-0 bottom-0 z-50 w-[280px] bg-[#0D1117]/95 backdrop-blur-md border-r border-white/5 md:hidden flex flex-col shadow-2xl"
+              >
+                {/* Header inside drawer */}
+                <div className="p-4 border-b border-white/5 flex items-center justify-between bg-slate-950/20">
+                  <Logo size={24} showText={true} />
+                  <button
+                    onClick={() => setIsMobileDrawerOpen(false)}
+                    className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-text-secondary hover:text-white transition-all active:scale-95 cursor-pointer font-bold text-lg"
+                  >
+                    ×
+                  </button>
+                </div>
+
+                {/* Sidebar Navigation Content */}
+                <div className="flex-1 overflow-hidden">
+                  {renderSidebarContent(true)}
+                </div>
+              </motion.div>
+            </>
           )}
         </AnimatePresence>
 

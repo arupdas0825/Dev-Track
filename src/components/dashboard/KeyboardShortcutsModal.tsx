@@ -15,6 +15,7 @@ export default function KeyboardShortcutsModal({
   if (!isOpen) return null;
 
   const shortcutsList = [
+    { keys: ["Ctrl", "B"], label: "Toggle Sidebar Collapse" },
     { keys: ["Ctrl", "K"], label: "Global Command Palette" },
     { keys: ["Ctrl", "Shift", "N"], label: "Create New Note (Workspace)" },
     { keys: ["Ctrl", "Shift", "R"], label: "Repository Search (Workspace)" },
