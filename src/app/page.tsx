@@ -8,6 +8,7 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { useAuthModal } from "@/components/auth/AuthModalContext";
 import DeveloperBattleModal from "@/components/card/DeveloperBattleModal";
+import { InteractiveRobotSpline } from "@/components/blocks/interactive-3d-robot";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Sparkles,
@@ -70,7 +71,6 @@ export default function LandingPage() {
   const [isSearching, setIsSearching] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [previewDevice, setPreviewDevice] = useState<"desktop" | "tablet" | "mobile">("desktop");
-  const [typedCommand, setTypedCommand] = useState("");
 
   const { openAuthModal } = useAuthModal();
   const [battleModalOpen, setBattleModalOpen] = useState(false);
@@ -82,49 +82,6 @@ export default function LandingPage() {
       setCurrentUser(user);
     });
     return () => unsubscribe();
-  }, []);
-
-  // Terminal simulated typing loop
-  useEffect(() => {
-    const commands = [
-      "git log --author=alex",
-      "devtrack-dna calculate @alex-dev",
-      "fetch-repo-intelligence dev-track --sync"
-    ];
-    let cmdIdx = 0;
-    let charIdx = 0;
-    let currentCmd = commands[cmdIdx];
-    let isDeleting = false;
-
-    const interval = setInterval(() => {
-      if (!isDeleting) {
-        setTypedCommand(currentCmd.substring(0, charIdx + 1));
-        charIdx++;
-        if (charIdx === currentCmd.length) {
-          isDeleting = true;
-          // Pause before deleting
-          clearInterval(interval);
-          setTimeout(() => {
-            // Restart typing interval
-            const restart = setInterval(() => {
-              isDeleting = true;
-              if (charIdx > 0) {
-                setTypedCommand(currentCmd.substring(0, charIdx - 1));
-                charIdx--;
-              } else {
-                isDeleting = false;
-                cmdIdx = (cmdIdx + 1) % commands.length;
-                currentCmd = commands[cmdIdx];
-                clearInterval(restart);
-                // Trigger next loop
-              }
-            }, 50);
-          }, 2500);
-        }
-      }
-    }, 80);
-
-    return () => clearInterval(interval);
   }, []);
 
   const handleLogout = async () => {
@@ -181,7 +138,7 @@ export default function LandingPage() {
       {/* Main Container */}
       <main className="flex-1 pt-16">
         {/* 1. Hero Section */}
-        <section className="relative overflow-hidden pt-24 pb-20 md:pt-36 md:pb-32 flex items-center min-h-[90vh]">
+        <section className="relative overflow-hidden pt-6 pb-10 md:pt-8 md:pb-14 flex items-center min-h-[calc(100vh-4rem)]">
           {/* Subtle grid mesh background */}
           <div className="absolute inset-0 bg-[linear-gradient(to_right,#161B22_1px,transparent_1px),linear-gradient(to_bottom,#161B22_1px,transparent_1px)] bg-[size:4rem_4rem] opacity-35" />
           <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-accent/5 rounded-full blur-3xl pointer-events-none" />
@@ -195,7 +152,7 @@ export default function LandingPage() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6 }}
                 >
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-purple-500/40 bg-purple-500/10 px-3.5 py-1 text-[10px] font-bold text-purple-300 mb-6 uppercase tracking-wider shadow-[0_0_15px_rgba(168,85,247,0.2)]">
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-purple-500/40 bg-purple-500/10 px-3.5 py-1 text-[10px] font-bold text-purple-300 mb-4 uppercase tracking-wider shadow-[0_0_15px_rgba(168,85,247,0.2)]">
                     <Sparkles size={12} className="text-accent animate-pulse" />
                     Instant AI Developer Card Generator + Battle Arena
                   </span>
@@ -205,7 +162,7 @@ export default function LandingPage() {
                     <span className="bg-gradient-to-r from-accent via-purple-400 to-[#3FB950] bg-clip-text text-transparent">AI Developer Card.</span>
                   </h1>
                   
-                  <p className="mt-4 text-xs sm:text-sm text-text-secondary max-w-lg leading-relaxed font-mono">
+                  <p className="mt-3 text-xs sm:text-sm text-text-secondary max-w-lg leading-relaxed font-mono">
                     No login. No signup. No onboarding. Enter your GitHub username to instantly sequence your AI Developer DNA, discover your collectible archetype, and clash head-to-head with friends in the battle arena.
                   </p>
                 </motion.div>
@@ -213,7 +170,7 @@ export default function LandingPage() {
                 {/* Direct Search Input */}
                 <motion.form
                   onSubmit={handleSearch}
-                  className="mt-8 max-w-lg w-full"
+                  className="mt-6 max-w-lg w-full"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: 0.15 }}
@@ -249,7 +206,7 @@ export default function LandingPage() {
 
                 {/* Quick suggest triggers */}
                 <motion.div
-                  className="mt-5 flex flex-wrap items-center gap-2 text-xs text-text-secondary font-medium"
+                  className="mt-4 flex flex-wrap items-center gap-2 text-xs text-text-secondary font-medium"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ duration: 0.6, delay: 0.3 }}
@@ -271,81 +228,18 @@ export default function LandingPage() {
                 </motion.div>
               </div>
 
-              {/* Right column Floating mockup */}
-              <div className="lg:col-span-5 relative mt-8 lg:mt-0">
+              {/* Right column: Interactive 3D Robot Whobee */}
+              <div className="lg:col-span-5 relative mt-6 lg:mt-0 h-[380px] sm:h-[460px] lg:h-[500px] w-full">
                 <motion.div
-                  className="rounded-xl border border-border bg-[#161B22]/40 overflow-hidden shadow-2xl relative"
+                  className="w-full h-full relative"
                   initial={{ opacity: 0, scale: 0.95, y: 10 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   transition={{ duration: 0.8 }}
                 >
-                  {/* Decorative glass glow overlay */}
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-accent/10 rounded-bl-full blur-xl pointer-events-none" />
-
-                  {/* Windows Bar */}
-                  <div className="flex items-center justify-between border-b border-border bg-[#0D1117]/80 px-4 py-3">
-                    <div className="flex items-center gap-1.5">
-                      <div className="h-2.5 w-2.5 rounded-full bg-[#FF5F56]" />
-                      <div className="h-2.5 w-2.5 rounded-full bg-[#FFBD2E]" />
-                      <div className="h-2.5 w-2.5 rounded-full bg-[#27C93F]" />
-                    </div>
-                    <div className="text-[10px] text-text-secondary font-mono tracking-wider">devtrack.io/dashboard</div>
-                    <div className="w-8" />
-                  </div>
-
-                  {/* Mock content */}
-                  <div className="p-5 font-mono text-[10px] leading-relaxed space-y-4 text-text-secondary">
-                    <div className="flex items-center justify-between border-b border-border/40 pb-3">
-                      <div className="flex items-center gap-2">
-                        <div className="h-8 w-8 rounded-full bg-accent/20 border border-accent/40 flex items-center justify-center text-accent text-xs font-bold font-space-grotesk">
-                          🧬
-                        </div>
-                        <div>
-                          <div className="font-bold text-text-primary text-xs">alex-developer</div>
-                          <div className="text-[9px] text-[#8B949E]">Morning Coder | Full Stack</div>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <span className="text-[8px] text-[#8B949E] uppercase block">Overall Grade</span>
-                        <span className="text-sm font-bold text-[#3FB950] font-space-grotesk">S (92/100)</span>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-2 text-[9px]">
-                      <div className="rounded border border-border/40 bg-[#0D1117]/40 p-2 flex justify-between">
-                        <span>Consistency:</span> <strong className="text-text-primary">94%</strong>
-                      </div>
-                      <div className="rounded border border-border/40 bg-[#0D1117]/40 p-2 flex justify-between">
-                        <span>Ecosystem DNA:</span> <strong className="text-text-primary">Polyglot</strong>
-                      </div>
-                      <div className="rounded border border-border/40 bg-[#0D1117]/40 p-2 flex justify-between">
-                        <span>Commits Streak:</span> <strong className="text-text-primary">45 Days</strong>
-                      </div>
-                      <div className="rounded border border-border/40 bg-[#0D1117]/40 p-2 flex justify-between">
-                        <span>Quality Score:</span> <strong className="text-[#3FB950]">Excellent</strong>
-                      </div>
-                    </div>
-
-                    {/* Sim Terminal */}
-                    <div className="bg-[#090D12] rounded p-3 border border-border/40 text-[9px] font-mono text-[#8B949E] space-y-1 relative">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-success font-bold">$</span>
-                        <span>{typedCommand}</span>
-                        <span className="w-1.5 h-3 bg-accent animate-pulse" />
-                      </div>
-                      {typedCommand.includes("calculate") && (
-                        <motion.div
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          className="text-text-primary mt-1 border-t border-border/30 pt-1"
-                        >
-                          &gt; Builder Dimension: 94%<br />
-                          &gt; Architect Score: 82%<br />
-                          &gt; Focus Stack: TypeScript (React/Next)
-                        </motion.div>
-                      )}
-                    </div>
-                  </div>
+                  <InteractiveRobotSpline
+                    scene="https://prod.spline.design/PyzDhpQ9E5f1E3MT/scene.splinecode"
+                    className="w-full h-full"
+                  />
                 </motion.div>
               </div>
             </div>

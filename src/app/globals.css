@@ -146,3 +146,16 @@ body {
 .scrollbar-thin::-webkit-scrollbar-thumb:hover {
   background: var(--surface-secondary);
 }
+
+/* Hide Spline 3D Watermark globally across normal and shadow DOM */
+#spline-watermark,
+a[href*="spline.design"],
+[class*="spline-watermark"],
+[id*="spline-watermark"] {
+  display: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+  z-index: -9999 !important;
+}
+
