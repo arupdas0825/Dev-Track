@@ -6,6 +6,8 @@ import Link from "next/link";
 import { subscribeToAuthChanges, logOutUser, DevTrackUser } from "@/lib/firebase";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import { useAuthModal } from "@/components/auth/AuthModalContext";
+import DeveloperBattleModal from "@/components/card/DeveloperBattleModal";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Sparkles,
@@ -70,6 +72,10 @@ export default function LandingPage() {
   const [previewDevice, setPreviewDevice] = useState<"desktop" | "tablet" | "mobile">("desktop");
   const [typedCommand, setTypedCommand] = useState("");
 
+  const { openAuthModal } = useAuthModal();
+  const [battleModalOpen, setBattleModalOpen] = useState(false);
+  const [battleTargetUser, setBattleTargetUser] = useState("");
+
   // Firebase auth sync
   useEffect(() => {
     const unsubscribe = subscribeToAuthChanges((user) => {
@@ -129,13 +135,13 @@ export default function LandingPage() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchUsername.trim()) return;
-    setIsSearching(true);
-    setErrorMessage(null);
-    router.push(`/dashboard?user=${encodeURIComponent(searchUsername.trim().toLowerCase())}`);
+    setBattleTargetUser(searchUsername.trim().toLowerCase());
+    setBattleModalOpen(true);
   };
 
   const handleDemoTrigger = () => {
-    router.push("/dashboard?user=demo");
+    setBattleTargetUser("demo");
+    setBattleModalOpen(true);
   };
 
   const handleLoginSuccess = (user: DevTrackUser) => {
@@ -166,7 +172,10 @@ export default function LandingPage() {
         onLoginSuccess={handleLoginSuccess}
         onLogout={handleLogout}
         onDemoTrigger={handleDemoTrigger}
-        onOpenSearch={() => router.push("/dashboard?user=demo")}
+        onOpenSearch={() => {
+          setBattleTargetUser("demo");
+          setBattleModalOpen(true);
+        }}
       />
 
       {/* Main Container */}
@@ -186,62 +195,49 @@ export default function LandingPage() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6 }}
                 >
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-[#30363D] bg-[#161B22]/60 px-3 py-1 text-[10px] font-bold text-accent mb-6 uppercase tracking-wider">
-                    <span className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse" />
-                    v3.5 Engine Sequencer
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-purple-500/40 bg-purple-500/10 px-3.5 py-1 text-[10px] font-bold text-purple-300 mb-6 uppercase tracking-wider shadow-[0_0_15px_rgba(168,85,247,0.2)]">
+                    <Sparkles size={12} className="text-accent animate-pulse" />
+                    Instant AI Developer Card Generator + Battle Arena
                   </span>
                   
                   <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight font-space-grotesk text-text-primary leading-[1.15]">
-                    Understand the <br />
-                    <span className="bg-gradient-to-r from-accent to-[#3FB950] bg-clip-text text-transparent">Story Behind Your Code.</span>
+                    Generate Your <br />
+                    <span className="bg-gradient-to-r from-accent via-purple-400 to-[#3FB950] bg-clip-text text-transparent">AI Developer Card.</span>
                   </h1>
                   
                   <p className="mt-4 text-xs sm:text-sm text-text-secondary max-w-lg leading-relaxed font-mono">
-                    DevTrack analyzes repository architectures, coding velocities, and event timelines to sequence your Developer DNA. Understand your technical footprint with Sonar-level checks.
+                    No login. No signup. No onboarding. Enter your GitHub username to instantly sequence your AI Developer DNA, discover your collectible archetype, and clash head-to-head with friends in the battle arena.
                   </p>
                 </motion.div>
 
                 {/* Direct Search Input */}
                 <motion.form
                   onSubmit={handleSearch}
-                  className="mt-8 max-w-md w-full"
+                  className="mt-8 max-w-lg w-full"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: 0.15 }}
                 >
-                  <div className="flex flex-col sm:flex-row gap-2">
+                  <div className="flex flex-col sm:flex-row gap-2.5">
                     <div className="relative flex-1">
                       <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-text-secondary text-xs">
                         <span>github.com/</span>
                       </div>
                       <input
                         type="text"
-                        placeholder="username"
+                        placeholder="username (e.g. torvalds)"
                         value={searchUsername}
                         onChange={(e) => setSearchUsername(e.target.value)}
-                        className="w-full pl-28 pr-4 py-3 rounded-lg border border-border bg-[#161B22]/50 text-text-primary placeholder:text-text-secondary/50 focus:border-accent focus:outline-none transition-all text-xs font-semibold"
+                        className="w-full pl-28 pr-4 py-3.5 rounded-xl border border-border/80 bg-[#161B22]/80 text-text-primary placeholder:text-text-secondary/50 focus:border-accent focus:ring-1 focus:ring-accent focus:outline-none transition-all text-xs font-semibold shadow-inner"
                         required
                       />
                     </div>
                     <button
                       type="submit"
-                      disabled={isSearching}
-                      className="px-6 py-3 rounded-lg bg-accent text-white font-bold text-xs transition-all hover:bg-accent/90 focus:outline-none flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer shadow-lg shadow-accent/15"
+                      className="px-6 py-3.5 rounded-xl bg-gradient-to-r from-accent to-purple-600 text-white font-bold text-xs transition-all hover:opacity-95 focus:outline-none flex items-center justify-center gap-2 cursor-pointer shadow-[0_0_25px_rgba(59,130,246,0.35)] shrink-0 active:scale-95"
                     >
-                      {isSearching ? (
-                        <>
-                          <svg className="animate-spin h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                          </svg>
-                          <span>Sequencing...</span>
-                        </>
-                      ) : (
-                        <>
-                          <span>Sequence DNA</span>
-                          <ArrowRight size={13} />
-                        </>
-                      )}
+                      <Sparkles size={15} />
+                      <span>Build Your Developer Card</span>
                     </button>
                   </div>
                   {errorMessage && (
@@ -251,21 +247,27 @@ export default function LandingPage() {
                   )}
                 </motion.form>
 
-                {/* Sub Demo triggers */}
+                {/* Quick suggest triggers */}
                 <motion.div
-                  className="mt-5 flex items-center gap-3.5 text-[10px] text-text-secondary font-medium"
+                  className="mt-5 flex flex-wrap items-center gap-2 text-xs text-text-secondary font-medium"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ duration: 0.6, delay: 0.3 }}
                 >
-                  <span>Or view sandbox profiles:</span>
-                  <button onClick={handleDemoTrigger} className="text-accent hover:text-accent/80 hover:underline transition-colors font-bold text-left cursor-pointer">
-                    gaearon (React)
-                  </button>
-                  <span>•</span>
-                  <button onClick={handleDemoTrigger} className="text-accent hover:text-accent/80 hover:underline transition-colors font-bold text-left cursor-pointer">
-                    torvalds (Linux)
-                  </button>
+                  <span className="text-[11px]">Or generate instant cards:</span>
+                  {["torvalds", "gaearon", "yyx990803", "shadcn", "demo"].map((uname) => (
+                    <button
+                      key={uname}
+                      type="button"
+                      onClick={() => {
+                        setBattleTargetUser(uname);
+                        setBattleModalOpen(true);
+                      }}
+                      className="px-2.5 py-1 rounded-md bg-[#161B22] border border-border/60 hover:border-accent/60 hover:text-white text-accent font-mono text-[11px] transition-colors cursor-pointer"
+                    >
+                      @{uname}
+                    </button>
+                  ))}
                 </motion.div>
               </div>
 
@@ -706,10 +708,14 @@ export default function LandingPage() {
             </p>
             <div className="flex flex-wrap items-center justify-center gap-3 pt-4">
               <button
-                onClick={() => router.push("/dashboard?user=demo")}
-                className="rounded-lg bg-accent px-6 py-3 text-xs font-bold text-white hover:bg-accent/90 transition-all shadow-lg shadow-accent/15 cursor-pointer active:scale-95"
+                onClick={() => {
+                  setBattleTargetUser("demo");
+                  setBattleModalOpen(true);
+                }}
+                className="rounded-lg bg-accent px-6 py-3 text-xs font-bold text-white hover:bg-accent/90 transition-all shadow-lg shadow-accent/15 cursor-pointer active:scale-95 flex items-center gap-2"
               >
-                Analyze My GitHub
+                <Sparkles size={14} />
+                <span>Build Developer Card</span>
               </button>
               <button
                 onClick={handleDemoTrigger}
@@ -721,6 +727,21 @@ export default function LandingPage() {
           </div>
         </section>
       </main>
+
+      {/* Flagship Modals */}
+      <DeveloperBattleModal
+        isOpen={battleModalOpen}
+        onClose={() => setBattleModalOpen(false)}
+        initialUsername={battleTargetUser}
+        isAuthenticated={!!currentUser}
+        onRequireAuth={(title, message) => {
+          openAuthModal({
+            title,
+            message,
+            onSuccess: handleLoginSuccess
+          });
+        }}
+      />
 
       {/* Footer */}
       <Footer />

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { DevTrackUser } from "@/lib/firebase";
-import AuthModal from "../auth/AuthModal";
+import { useAuthModal } from "@/components/auth/AuthModalContext";
 import Logo from "../ui/Logo";
 import { useTheme } from "@/components/ui/ThemeContext";
 import { Palette, Bell, Search, LogOut, Layout, ChevronDown, Sparkles } from "lucide-react";
@@ -19,7 +19,7 @@ interface NavbarProps {
 }
 
 export default function Navbar({ currentUser, onLoginSuccess, onLogout, onDemoTrigger, onOpenSearch }: NavbarProps) {
-  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const { openAuthModal } = useAuthModal();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [hoveredTab, setHoveredTab] = useState<string | null>(null);
@@ -174,7 +174,7 @@ export default function Navbar({ currentUser, onLoginSuccess, onLogout, onDemoTr
                 Demo Dashboard
               </button>
               <button
-                onClick={() => setAuthModalOpen(true)}
+                onClick={() => openAuthModal({ onSuccess: onLoginSuccess })}
                 className="rounded-lg bg-accent px-4 py-2 text-xs font-bold text-white hover:bg-accent/90 transition-all focus:outline-none shadow-lg shadow-accent/15 hover:shadow-accent/25 active:scale-95 cursor-pointer"
               >
                 GitHub Login
@@ -291,7 +291,7 @@ export default function Navbar({ currentUser, onLoginSuccess, onLogout, onDemoTr
                   </button>
                   <button
                     onClick={() => {
-                      setAuthModalOpen(true);
+                      openAuthModal({ onSuccess: onLoginSuccess });
                       setMobileMenuOpen(false);
                     }}
                     className="w-full rounded-lg bg-accent py-2 text-xs font-bold text-white hover:bg-accent/90 cursor-pointer"
@@ -302,17 +302,6 @@ export default function Navbar({ currentUser, onLoginSuccess, onLogout, onDemoTr
               )}
             </div>
           </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Login Modal */}
-      <AnimatePresence>
-        {authModalOpen && (
-          <AuthModal
-            isOpen={authModalOpen}
-            onClose={() => setAuthModalOpen(false)}
-            onSuccess={onLoginSuccess}
-          />
         )}
       </AnimatePresence>
     </header>

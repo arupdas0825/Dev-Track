@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Geist, JetBrains_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/ui/ThemeContext";
 import { ThemeModal } from "@/components/ui/ThemeModal";
+import { AuthModalProvider } from "@/components/auth/AuthModalContext";
 import "./globals.css";
 
 const inter = Inter({
@@ -67,8 +68,10 @@ export default function RootLayout({
           <link href="https://fonts.cdnfonts.com/css/object-sans" rel="stylesheet" />
         </head>
         <body className="min-h-full flex flex-col bg-background text-foreground font-inter">
-          {children}
-          <ThemeModal />
+          <AuthModalProvider>
+            {children}
+            <ThemeModal />
+          </AuthModalProvider>
         </body>
       </html>
     </ThemeProvider>
