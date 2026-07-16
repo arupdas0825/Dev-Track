@@ -146,7 +146,7 @@ export default function LandingPage() {
           <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 z-10 w-full">
             <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:gap-8 items-center">
               {/* Left copy */}
-              <div className="lg:col-span-7 flex flex-col justify-center text-left">
+              <div className="lg:col-span-7 flex flex-col justify-center text-left order-1">
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -229,7 +229,7 @@ export default function LandingPage() {
               </div>
 
               {/* Right column: Interactive 3D Robot Whobee */}
-              <div className="lg:col-span-5 relative mt-6 lg:mt-0 h-[380px] sm:h-[460px] lg:h-[500px] w-full">
+              <div className="lg:col-span-5 relative mt-6 lg:mt-0 h-[240px] md:h-[460px] lg:h-[500px] w-full order-2">
                 <motion.div
                   className="w-full h-full relative"
                   initial={{ opacity: 0, scale: 0.95, y: 10 }}
@@ -348,6 +348,7 @@ export default function LandingPage() {
                 }
               ].map((feat, idx) => {
                 const Icon = feat.icon;
+                const lineNumber = String(idx + 1).padStart(3, "0");
                 return (
                   <motion.div
                     key={idx}
@@ -355,8 +356,11 @@ export default function LandingPage() {
                     className="group rounded-xl border border-border bg-surface/30 p-6 flex flex-col justify-between hover:bg-surface/60 hover:border-text-secondary/40 transition-all duration-300 relative overflow-hidden"
                   >
                     <div className="space-y-4">
-                      <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${feat.color}`}>
-                        <Icon size={18} />
+                      <div className="flex items-center gap-3">
+                        <span className="font-mono text-xs text-text-secondary select-none">{lineNumber}</span>
+                        <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${feat.color}`}>
+                          <Icon size={18} />
+                        </div>
                       </div>
                       <div className="space-y-2">
                         <h3 className="text-sm font-bold text-text-primary font-display uppercase tracking-wider">{feat.title}</h3>
