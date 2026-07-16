@@ -122,7 +122,7 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#0D1117] selection:bg-accent/30 selection:text-text-primary overflow-x-hidden font-mono">
+    <div className="flex min-h-screen flex-col bg-background selection:bg-accent/30 selection:text-text-primary overflow-x-hidden font-mono">
       {/* Dynamic Navigation */}
       <Navbar
         currentUser={currentUser}
@@ -140,7 +140,7 @@ export default function LandingPage() {
         {/* 1. Hero Section */}
         <section className="relative overflow-hidden pt-6 pb-10 md:pt-8 md:pb-14 flex items-center min-h-[calc(100vh-4rem)]">
           {/* Subtle grid mesh background */}
-          <div className="absolute inset-0 bg-[linear-gradient(to_right,#161B22_1px,transparent_1px),linear-gradient(to_bottom,#161B22_1px,transparent_1px)] bg-[size:4rem_4rem] opacity-35" />
+          <div className="absolute inset-0 bg-[linear-gradient(to_right,var(--color-surface)_1px,transparent_1px),linear-gradient(to_bottom,var(--color-surface)_1px,transparent_1px)] bg-[size:4rem_4rem] opacity-35" />
           <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-accent/5 rounded-full blur-3xl pointer-events-none" />
 
           <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 z-10 w-full">
@@ -159,7 +159,7 @@ export default function LandingPage() {
                   
                   <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight font-display text-text-primary leading-[1.15]">
                     Generate Your <br />
-                    <span className="bg-gradient-to-r from-accent via-purple-400 to-[#3FB950] bg-clip-text text-transparent">AI Developer Card.</span>
+                    <span className="bg-gradient-to-r from-accent via-purple-400 to-diff-add bg-clip-text text-transparent">AI Developer Card.</span>
                   </h1>
                   
                   <p className="mt-3 text-xs sm:text-sm text-text-secondary max-w-lg leading-relaxed font-mono">
@@ -185,7 +185,7 @@ export default function LandingPage() {
                         placeholder="username (e.g. torvalds)"
                         value={searchUsername}
                         onChange={(e) => setSearchUsername(e.target.value)}
-                        className="w-full pl-28 pr-4 py-3.5 rounded-xl border border-border/80 bg-[#161B22]/80 text-text-primary placeholder:text-text-secondary/50 focus:border-accent focus:ring-1 focus:ring-accent focus:outline-none transition-all text-xs font-semibold shadow-inner"
+                        className="w-full pl-28 pr-4 py-3.5 rounded-xl border border-border/80 bg-surface/80 text-text-primary placeholder:text-text-secondary/50 focus:border-accent focus:ring-1 focus:ring-accent focus:outline-none transition-all text-xs font-semibold shadow-inner"
                         required
                       />
                     </div>
@@ -198,7 +198,7 @@ export default function LandingPage() {
                     </button>
                   </div>
                   {errorMessage && (
-                    <p className="mt-2 text-xs text-danger flex items-center gap-1">
+                    <p className="mt-2 text-xs text-diff-remove flex items-center gap-1">
                       <AlertCircle size={11} /> {errorMessage}
                     </p>
                   )}
@@ -220,7 +220,7 @@ export default function LandingPage() {
                         setBattleTargetUser(uname);
                         setBattleModalOpen(true);
                       }}
-                      className="px-2.5 py-1 rounded-md bg-[#161B22] border border-border/60 hover:border-accent/60 hover:text-white text-accent font-mono text-[11px] transition-colors cursor-pointer"
+                      className="px-2.5 py-1 rounded-md bg-surface border border-border/60 hover:border-accent/60 hover:text-white text-accent font-mono text-[11px] transition-colors cursor-pointer"
                     >
                       @{uname}
                     </button>
@@ -247,7 +247,7 @@ export default function LandingPage() {
         </section>
 
         {/* 2. Social Proof */}
-        <section className="py-12 border-t border-b border-border bg-[#0D1117]">
+        <section className="py-12 border-t border-b border-border bg-background">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-2 md:grid-cols-5 gap-6 text-center">
               {[
@@ -269,7 +269,7 @@ export default function LandingPage() {
         </section>
 
         {/* 3. Features Section (Major Upgrade) */}
-        <section id="features" className="py-24 bg-[#0a0e14]">
+        <section id="features" className="py-24 bg-background">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="text-center max-w-2xl mx-auto space-y-3">
               <span className="text-[10px] font-bold text-accent uppercase tracking-widest">Platform Core</span>
@@ -300,49 +300,49 @@ export default function LandingPage() {
                 {
                   title: "Repo Intelligence",
                   icon: Folder,
-                  color: "text-[#3FB950] border-[#238636]/20 bg-[#238636]/5",
+                  color: "text-diff-add border-diff-add/20 bg-diff-add/5",
                   desc: "Audits repository metadata, documentation coverage, dependabot security settings, and checklists.",
                   why: "Find which directories need cleanup or licenses."
                 },
                 {
                   title: "AI Insights",
                   icon: Brain,
-                  color: "text-[#BC8CFF] border-[#BC8CFF]/20 bg-[#BC8CFF]/5",
+                  color: "text-accent border-accent/20 bg-accent/5",
                   desc: "Generates natural language summaries outlining strengths, weaknesses, and custom roadmap milestones.",
                   why: "Translate raw metrics into career growth steps."
                 },
                 {
                   title: "Time Machine",
                   icon: Clock,
-                  color: "text-[#D29922] border-[#D29922]/20 bg-[#D29922]/5",
+                  color: "text-warning border-warning/20 bg-warning/5",
                   desc: "Interactive commit activity replay showing code velocity milestones, addition sizes, and branch metrics.",
                   why: "Trace product cycles and release momentum."
                 },
                 {
                   title: "Ecosystem Languages",
                   icon: Compass,
-                  color: "text-[#FF7B72] border-[#FF7B72]/20 bg-[#FF7B72]/5",
+                  color: "text-diff-remove border-diff-remove/20 bg-diff-remove/5",
                   desc: "Extracts language distribution values, computing balance metrics to map stack polyglot profiles.",
                   why: "Shows your technical diversity and stack focus."
                 },
                 {
                   title: "Coding Calendar",
                   icon: Calendar,
-                  color: "text-[#79C0FF] border-[#79C0FF]/20 bg-[#79C0FF]/5",
+                  color: "text-accent border-accent/20 bg-accent/5",
                   desc: "Animated heatmaps mapping daily contributions, streaks, active hours, and holiday schedules.",
                   why: "Visualize when you write code most consistently."
                 },
                 {
                   title: "Developer Score",
                   icon: Award,
-                  color: "text-[#FFC627] border-[#FFC627]/20 bg-[#FFC627]/5",
+                  color: "text-warning border-warning/20 bg-warning/5",
                   desc: "Algorithmic score indexing capability across quality, documentation, community, scale, and consistency.",
                   why: "A comprehensive benchmark of codebase standards."
                 },
                 {
                   title: "GitHub Wrapped",
                   icon: Gift,
-                  color: "text-danger border-danger/20 bg-danger/5",
+                  color: "text-diff-remove border-diff-remove/20 bg-diff-remove/5",
                   desc: "A shareable cinematic recap of your biggest achievements, milestones, top repository, and code percentile.",
                   why: "A gorgeous yearly recap card for socials."
                 }
@@ -352,7 +352,7 @@ export default function LandingPage() {
                   <motion.div
                     key={idx}
                     variants={childVariants}
-                    className="group rounded-xl border border-border bg-[#161B22]/30 p-6 flex flex-col justify-between hover:bg-[#161B22]/60 hover:border-text-secondary/40 transition-all duration-300 relative overflow-hidden"
+                    className="group rounded-xl border border-border bg-surface/30 p-6 flex flex-col justify-between hover:bg-surface/60 hover:border-text-secondary/40 transition-all duration-300 relative overflow-hidden"
                   >
                     <div className="space-y-4">
                       <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${feat.color}`}>
@@ -363,7 +363,7 @@ export default function LandingPage() {
                         <p className="text-[10px] text-text-secondary leading-relaxed font-mono">{feat.desc}</p>
                       </div>
                     </div>
-                    <div className="text-[9px] text-[#8B949E] border-t border-border/40 mt-4 pt-2 font-mono italic">
+                    <div className="text-[9px] text-text-secondary border-t border-border/40 mt-4 pt-2 font-mono italic">
                       🎯 Why it matters: {feat.why}
                     </div>
                   </motion.div>
@@ -374,10 +374,10 @@ export default function LandingPage() {
         </section>
 
         {/* 4. Live Product Preview (Interactive Mock Dashboard) */}
-        <section className="py-24 border-t border-b border-[#30363D]/50 bg-[#0D1117] relative">
+        <section className="py-24 border-t border-b border-border/50 bg-background relative">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="text-center max-w-2xl mx-auto space-y-3 mb-12">
-              <span className="text-[10px] font-bold text-[#3FB950] uppercase tracking-widest">Interactive Preview</span>
+              <span className="text-[10px] font-bold text-diff-add uppercase tracking-widest">Interactive Preview</span>
               <h2 className="text-3xl font-bold font-display text-text-primary sm:text-4xl">
                 Experience DevTrack in Real-Time
               </h2>
@@ -386,7 +386,7 @@ export default function LandingPage() {
               </p>
 
               {/* View toggle tabs */}
-              <div className="inline-flex items-center gap-1.5 p-1 rounded-xl bg-[#161B22]/60 border border-[#30363D]/60 mt-4">
+              <div className="inline-flex items-center gap-1.5 p-1 rounded-xl bg-surface/60 border border-border/60 mt-4">
                 {[
                   { id: "desktop", label: "Desktop", icon: Laptop },
                   { id: "tablet", label: "Tablet", icon: Tablet },
@@ -416,13 +416,13 @@ export default function LandingPage() {
                 animate={{
                   width: previewDevice === "desktop" ? "100%" : previewDevice === "tablet" ? "640px" : "320px"
                 }}
-                className="max-w-4xl w-full border border-border bg-[#161B22]/30 rounded-xl shadow-2xl overflow-hidden font-mono text-[10px]"
+                className="max-w-4xl w-full border border-border bg-surface/30 rounded-xl shadow-2xl overflow-hidden font-mono text-[10px]"
               >
                 {/* Header info */}
-                <div className="flex items-center justify-between border-b border-border bg-[#0D1117] px-4 py-3">
+                <div className="flex items-center justify-between border-b border-border bg-background px-4 py-3">
                   <div className="flex items-center gap-1.5">
                     <span className="h-2 w-2 rounded-full bg-accent animate-pulse" />
-                    <span className="text-[9px] text-[#8B949E] font-semibold">DevTrack Intelligence Workspace</span>
+                    <span className="text-[9px] text-text-secondary font-semibold">DevTrack Intelligence Workspace</span>
                   </div>
                   <span className="text-[9px] text-text-secondary">Demo Mode</span>
                 </div>
@@ -432,18 +432,18 @@ export default function LandingPage() {
                   {/* Grid blocks */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {/* Health Card */}
-                    <div className="rounded-lg border border-border bg-[#0D1117]/60 p-4 space-y-2">
-                      <div className="flex items-center justify-between text-[#8B949E]">
+                    <div className="rounded-lg border border-border bg-background/60 p-4 space-y-2">
+                      <div className="flex items-center justify-between text-text-secondary">
                         <span>Repository Health</span>
-                        <Activity size={12} className="text-[#3FB950]" />
+                        <Activity size={12} className="text-diff-add" />
                       </div>
                       <div className="text-lg font-bold text-text-primary font-display">S (94/100)</div>
                       <p className="text-[8px] text-text-secondary leading-relaxed">No critical vulnerabilities or licensing warnings detected.</p>
                     </div>
 
                     {/* Commit activity */}
-                    <div className="rounded-lg border border-border bg-[#0D1117]/60 p-4 space-y-2">
-                      <div className="flex items-center justify-between text-[#8B949E]">
+                    <div className="rounded-lg border border-border bg-background/60 p-4 space-y-2">
+                      <div className="flex items-center justify-between text-text-secondary">
                         <span>Coding Streak</span>
                         <TrendingUp size={12} className="text-accent" />
                       </div>
@@ -452,10 +452,10 @@ export default function LandingPage() {
                     </div>
 
                     {/* OS Contributions */}
-                    <div className="rounded-lg border border-border bg-[#0D1117]/60 p-4 space-y-2">
-                      <div className="flex items-center justify-between text-[#8B949E]">
+                    <div className="rounded-lg border border-border bg-background/60 p-4 space-y-2">
+                      <div className="flex items-center justify-between text-text-secondary">
                         <span>Open Source Index</span>
-                        <GitPullRequest size={12} className="text-[#BC8CFF]" />
+                        <GitPullRequest size={12} className="text-accent" />
                       </div>
                       <div className="text-lg font-bold text-text-primary font-display">84 PRs Merged</div>
                       <p className="text-[8px] text-text-secondary leading-relaxed">Active collaborator status mapped globally.</p>
@@ -463,11 +463,11 @@ export default function LandingPage() {
                   </div>
 
                   {/* Contribution heatmap simulation */}
-                  <div className="rounded-lg border border-border bg-[#0D1117]/60 p-4 space-y-3">
-                    <span className="text-[9px] text-[#8B949E] font-bold block uppercase tracking-wider">Contribution Density Timeline</span>
+                  <div className="rounded-lg border border-border bg-background/60 p-4 space-y-3">
+                    <span className="text-[9px] text-text-secondary font-bold block uppercase tracking-wider">Contribution Density Timeline</span>
                     <div className="flex flex-wrap gap-1">
                       {[...Array(60)].map((_, idx) => {
-                        const colors = ["bg-[#161b22]", "bg-[#0e4429]", "bg-[#006d32]", "bg-[#26a641]", "bg-[#39d353]"];
+                        const colors = ["bg-surface", "bg-diff-add/20", "bg-diff-add/40", "bg-diff-add/70", "bg-diff-add"];
                         // Pick pseudo-random color based on index
                         const colorIdx = (idx * 7 + 13) % colors.length;
                         return (
@@ -483,7 +483,7 @@ export default function LandingPage() {
         </section>
 
         {/* 5. Wrapped Section (Redesigned Cinematic Panel) */}
-        <section id="wrapped" className="py-24 bg-[#0a0e14] relative overflow-hidden">
+        <section id="wrapped" className="py-24 bg-background relative overflow-hidden">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-accent/5 rounded-full blur-3xl pointer-events-none" />
 
           <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 text-center space-y-8">
@@ -491,7 +491,7 @@ export default function LandingPage() {
               <span className="text-[10px] font-bold text-accent uppercase tracking-widest">Yearly Retrospective</span>
               <h2 className="text-4xl sm:text-5xl font-extrabold font-display text-text-primary tracking-tight leading-[1.1]">
                 Your Entire Year of Coding — <br />
-                <span className="bg-gradient-to-r from-accent to-[#BC8CFF] bg-clip-text text-transparent">Wrapped.</span>
+                <span className="bg-gradient-to-r from-accent to-accent bg-clip-text text-transparent">Wrapped.</span>
               </h2>
               <p className="text-text-secondary text-xs max-w-xl mx-auto leading-relaxed mt-2 font-mono">
                 Unlock a beautiful cinematic story summarizing your repository highlights, longest coding streak, top languages, and collaborator percentile.
@@ -499,7 +499,7 @@ export default function LandingPage() {
             </div>
 
             {/* Interactive Preview Wrapped Card */}
-            <div className="max-w-sm mx-auto rounded-xl border border-border bg-[#121820] p-6 shadow-2xl relative overflow-hidden text-left font-mono border-accent/20">
+            <div className="max-w-sm mx-auto rounded-xl border border-border bg-surface p-6 shadow-2xl relative overflow-hidden text-left font-mono border-accent/20">
               <div className="absolute top-0 right-0 h-24 w-24 bg-accent/15 rounded-bl-full blur-xl pointer-events-none" />
               
               <div className="flex items-center justify-between border-b border-border/60 pb-3">
@@ -509,31 +509,31 @@ export default function LandingPage() {
 
               <div className="mt-5 space-y-4">
                 <div>
-                  <div className="text-[8px] text-[#8B949E] uppercase tracking-wider">TOP ECOSYSTEM</div>
+                  <div className="text-[8px] text-text-secondary uppercase tracking-wider">TOP ECOSYSTEM</div>
                   <div className="text-lg font-bold font-display text-text-primary">TypeScript</div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <div className="text-[8px] text-[#8B949E] uppercase tracking-wider">ACTIVE STREAK</div>
+                    <div className="text-[8px] text-text-secondary uppercase tracking-wider">ACTIVE STREAK</div>
                     <div className="text-sm font-bold text-text-primary">45 Days</div>
                   </div>
                   <div>
-                    <div className="text-[8px] text-[#8B949E] uppercase tracking-wider">COMMITS LOGGED</div>
+                    <div className="text-[8px] text-text-secondary uppercase tracking-wider">COMMITS LOGGED</div>
                     <div className="text-sm font-bold text-text-primary">642 Pushes</div>
                   </div>
                 </div>
 
                 <div className="border-t border-border/40 pt-3 space-y-1">
-                  <div className="text-[8px] text-[#8B949E] uppercase tracking-wider">BIGGEST ACHIEVEMENT</div>
-                  <div className="text-xs font-bold text-[#3FB950]">Open Source Maverick</div>
-                  <p className="text-[9px] text-[#8B949E] leading-relaxed">Accumulated 3,000+ stars on original repositories.</p>
+                  <div className="text-[8px] text-text-secondary uppercase tracking-wider">BIGGEST ACHIEVEMENT</div>
+                  <div className="text-xs font-bold text-diff-add">Open Source Maverick</div>
+                  <p className="text-[9px] text-text-secondary leading-relaxed">Accumulated 3,000+ stars on original repositories.</p>
                 </div>
               </div>
 
-              <div className="mt-6 pt-3 border-t border-border/40 flex items-center justify-between text-[8px] text-[#8B949E]">
+              <div className="mt-6 pt-3 border-t border-border/40 flex items-center justify-between text-[8px] text-text-secondary">
                 <span>DEVTRACK.IO</span>
-                <span className="text-[#3FB950] font-bold bg-[#238636]/10 border border-[#238636]/20 px-1.5 py-0.5 rounded uppercase">TOP 1.8% WORLDWIDE</span>
+                <span className="text-diff-add font-bold bg-diff-add/10 border border-diff-add/20 px-1.5 py-0.5 rounded uppercase">TOP 1.8% WORLDWIDE</span>
               </div>
             </div>
 
@@ -551,10 +551,10 @@ export default function LandingPage() {
         </section>
 
         {/* 6. Developer Journey Timeline */}
-        <section className="py-24 border-t border-border bg-[#0D1117] relative">
+        <section className="py-24 border-t border-border bg-background relative">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="text-center max-w-2xl mx-auto space-y-3 mb-16">
-              <span className="text-[10px] font-bold text-[#BC8CFF] uppercase tracking-widest">Onboarding Timeline</span>
+              <span className="text-[10px] font-bold text-accent uppercase tracking-widest">Onboarding Timeline</span>
               <h2 className="text-3xl font-bold font-display text-text-primary sm:text-4xl">
                 The Developer Journey
               </h2>
@@ -575,7 +575,7 @@ export default function LandingPage() {
                 { step: "7", title: "Wrapped", desc: "Cinematic summaries" }
               ].map((item, idx) => (
                 <div key={idx} className="space-y-3 relative group">
-                  <div className="h-8 w-8 rounded-full border border-accent bg-[#0D1117] text-accent text-xs font-bold flex items-center justify-center mx-auto z-10 relative">
+                  <div className="h-8 w-8 rounded-full border border-accent bg-background text-accent text-xs font-bold flex items-center justify-center mx-auto z-10 relative">
                     {item.step}
                   </div>
                   <div>
@@ -589,8 +589,8 @@ export default function LandingPage() {
         </section>
 
         {/* 7. Call To Action (Premium Backdrop Mesh) */}
-        <section className="relative overflow-hidden py-24 bg-gradient-to-r from-[#161B22] to-[#0D1117] border-t border-border">
-          <div className="absolute inset-0 bg-[#000000]/30 pointer-events-none" />
+        <section className="relative overflow-hidden py-24 bg-gradient-to-r from-surface to-background border-t border-border">
+          <div className="absolute inset-0 bg-black/30 pointer-events-none" />
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[300px] bg-accent/5 rounded-full blur-[100px] pointer-events-none" />
 
           <div className="relative mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 text-center z-10 space-y-6">
@@ -613,7 +613,7 @@ export default function LandingPage() {
               </button>
               <button
                 onClick={handleDemoTrigger}
-                className="rounded-lg border border-border bg-[#161B22]/60 px-6 py-3 text-xs font-bold text-text-secondary hover:text-text-primary hover:bg-[#161B22] transition-all cursor-pointer active:scale-95"
+                className="rounded-lg border border-border bg-surface/60 px-6 py-3 text-xs font-bold text-text-secondary hover:text-text-primary hover:bg-surface transition-all cursor-pointer active:scale-95"
               >
                 View Sandbox Demo
               </button>

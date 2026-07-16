@@ -14,14 +14,14 @@ export default function Footer() {
   };
 
   return (
-    <footer className="relative w-full border-t border-[#30363D]/60 bg-[#0D1117] py-12 md:py-20 overflow-hidden font-mono mt-auto">
+    <footer className="relative w-full border-t border-border/60 bg-background py-12 md:py-20 overflow-hidden font-mono mt-auto">
       {/* Large subtle background brand typography */}
-      <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-[12vw] font-extrabold text-[#161B22]/20 select-none pointer-events-none tracking-widest font-display uppercase print:hidden">
+      <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-[12vw] font-extrabold text-surface/20 select-none pointer-events-none tracking-widest font-display uppercase print:hidden">
         DEVTRACK
       </div>
 
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 z-10">
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-8 pb-12 border-b border-[#30363D]/40">
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-8 pb-12 border-b border-border/40">
           {/* Brand Info Column */}
           <div className="col-span-2 space-y-4">
             <div className="flex items-center gap-2">
@@ -61,7 +61,7 @@ export default function Footer() {
             <h4 className="text-[11px] font-bold text-text-primary uppercase tracking-wider">Product</h4>
             <ul className="space-y-2 text-[10px] text-text-secondary">
               <li><Link href="/#features" className="hover:text-text-primary transition-colors">Features</Link></li>
-              <li><Link href="/#score-engine" className="hover:text-text-primary transition-colors">Score Engine</Link></li>
+              <li><Link href="/#features" className="hover:text-text-primary transition-colors">Score Engine</Link></li>
               <li><Link href="/#wrapped" className="hover:text-text-primary transition-colors">Wrapped Dashboard</Link></li>
               <li><Link href="/dashboard?user=demo" className="hover:text-text-primary transition-colors">Interactive Demo</Link></li>
             </ul>
@@ -93,7 +93,7 @@ export default function Footer() {
                   <ExternalLink size={10} />
                 </a>
               </li>
-              <li><Link href="/#score-engine" className="hover:text-text-primary transition-colors">Scoring Benchmarks</Link></li>
+              <li><Link href="/#features" className="hover:text-text-primary transition-colors">Scoring Benchmarks</Link></li>
             </ul>
           </div>
 
@@ -103,8 +103,8 @@ export default function Footer() {
             <ul className="space-y-2 text-[10px] text-text-secondary">
               <li><Link href="/#features" className="hover:text-text-primary transition-colors">API Docs</Link></li>
               <li><Link href="/#features" className="hover:text-text-primary transition-colors">Changelog</Link></li>
-              <li className="flex items-center gap-1.5 text-success">
-                <span className="h-1.5 w-1.5 rounded-full bg-success animate-pulse" />
+              <li className="flex items-center gap-1.5 text-diff-add">
+                <span className="h-1.5 w-1.5 rounded-full bg-diff-add animate-pulse" />
                 <span>API Status: Normal</span>
               </li>
             </ul>
@@ -130,14 +130,14 @@ export default function Footer() {
             <span>•</span>
             <span>Build: <strong className="text-text-primary">3.5.0.2026</strong></span>
             <span>•</span>
-            <span className="flex items-center gap-1 text-[#3FB950] font-semibold bg-[#238636]/10 px-1.5 py-0.5 rounded border border-[#238636]/20">
+            <span className="flex items-center gap-1 text-diff-add font-semibold bg-diff-add/10 px-1.5 py-0.5 rounded border border-diff-add/20">
               <Activity size={10} className="animate-pulse" /> Operational
             </span>
           </div>
 
           <button
             onClick={scrollToTop}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-[#161B22]/50 hover:bg-[#161B22] text-xs text-text-secondary hover:text-text-primary transition-all duration-300 active:scale-95 cursor-pointer print:hidden"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-surface/50 hover:bg-surface text-xs text-text-secondary hover:text-text-primary transition-all duration-300 active:scale-95 cursor-pointer print:hidden"
             title="Back to Top"
           >
             <span>Back to top</span>

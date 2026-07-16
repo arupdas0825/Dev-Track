@@ -1,33 +1,29 @@
 @import "tailwindcss";
 
 :root {
-  --background: #0D1117;
-  --foreground: #F0F6FC;
-  --surface: #161B22;
-  --surface-secondary: #21262D;
-  --border: #30363D;
-  --primary: #238636;
-  --accent: #2F81F7;
-  --text-primary: #F0F6FC;
-  --text-secondary: #8B949E;
-  --success: #3FB950;
+  --background: #0B0E11;
+  --surface: #12161C;
+  --surface-secondary: #191F27;
+  --border: #232B35;
+  --text-primary: #E6EDF3;
+  --text-secondary: #8A94A3;
+  --diff-add: #3FB950;
+  --diff-remove: #F85149;
+  --accent: #58A6FF;
   --warning: #D29922;
-  --danger: #F85149;
 }
 
 @theme {
   --color-background: var(--background);
-  --color-foreground: var(--foreground);
   --color-surface: var(--surface);
   --color-surface-secondary: var(--surface-secondary);
   --color-border: var(--border);
-  --color-primary: var(--primary);
-  --color-accent: var(--accent);
   --color-text-primary: var(--text-primary);
   --color-text-secondary: var(--text-secondary);
-  --color-success: var(--success);
+  --color-diff-add: var(--diff-add);
+  --color-diff-remove: var(--diff-remove);
+  --color-accent: var(--accent);
   --color-warning: var(--warning);
-  --color-danger: var(--danger);
 
   --font-display: var(--font-display);
   --font-body: var(--font-body);
@@ -36,7 +32,7 @@
 
 body {
   background-color: var(--background);
-  color: var(--foreground);
+  color: var(--text-primary);
   font-family: var(--font-body), system-ui, sans-serif;
   margin: 0;
   padding: 0;

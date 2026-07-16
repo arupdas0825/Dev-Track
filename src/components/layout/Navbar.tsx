@@ -43,7 +43,7 @@ export default function Navbar({ currentUser, onLoginSuccess, onLogout, onDemoTr
     <header
       className={`fixed top-0 left-0 right-0 z-50 h-16 flex items-center transition-all duration-300 font-mono ${
         scrolled
-          ? "bg-[#0D1117]/75 backdrop-blur-xl border-b border-[#30363D]/80 shadow-2xl shadow-black/40"
+          ? "bg-background/75 backdrop-blur-xl border-b border-border/80 shadow-2xl shadow-black/40"
           : "bg-transparent border-b border-transparent"
       }`}
     >
@@ -58,7 +58,7 @@ export default function Navbar({ currentUser, onLoginSuccess, onLogout, onDemoTr
           <nav className="hidden md:flex items-center gap-1.5 text-xs font-semibold text-text-secondary">
             {[
               { label: "Features", href: "/#features", id: "features" },
-              { label: "Score Engine", href: "/#score-engine", id: "score" },
+              { label: "Score Engine", href: "/#features", id: "score" },
               { label: "Wrapped", href: "/#wrapped", id: "wrapped" }
             ].map(tab => (
               <Link
@@ -72,7 +72,7 @@ export default function Navbar({ currentUser, onLoginSuccess, onLogout, onDemoTr
                 {hoveredTab === tab.id && (
                   <motion.span
                     layoutId="nav-hover-pill"
-                    className="absolute inset-0 bg-[#30363D]/30 border border-[#30363D]/40 rounded-lg -z-10"
+                    className="absolute inset-0 bg-border/30 border border-border/40 rounded-lg -z-10"
                     transition={{ type: "spring", stiffness: 350, damping: 30 }}
                   />
                 )}
@@ -86,7 +86,7 @@ export default function Navbar({ currentUser, onLoginSuccess, onLogout, onDemoTr
           {onOpenSearch && (
             <button
               onClick={onOpenSearch}
-              className="group flex items-center gap-2 px-3 py-1.5 rounded-lg border border-border bg-[#161B22]/40 text-xs text-text-secondary hover:text-text-primary hover:border-text-secondary/40 hover:bg-[#161B22]/80 transition-all font-mono active:scale-95"
+              className="group flex items-center gap-2 px-3 py-1.5 rounded-lg border border-border bg-surface/40 text-xs text-text-secondary hover:text-text-primary hover:border-text-secondary/40 hover:bg-surface/80 transition-all font-mono active:scale-95"
               title="Search Repositories and Tabs (Ctrl + K)"
             >
               <Search size={13} className="text-text-secondary group-hover:text-text-primary transition-colors" />
@@ -99,7 +99,7 @@ export default function Navbar({ currentUser, onLoginSuccess, onLogout, onDemoTr
 
           <button
             onClick={openModal}
-            className="rounded-full p-2 hover:bg-[#30363D]/40 text-text-secondary hover:text-text-primary transition-all duration-300 active:scale-95"
+            className="rounded-full p-2 hover:bg-border/40 text-text-secondary hover:text-text-primary transition-all duration-300 active:scale-95"
             title="Theme Settings"
           >
             <Palette size={16} />
@@ -112,7 +112,7 @@ export default function Navbar({ currentUser, onLoginSuccess, onLogout, onDemoTr
               {/* Logged in User Pill */}
               <button
                 onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-                className="flex items-center gap-2 rounded-full border border-border bg-[#161B22]/50 hover:bg-[#161B22] px-3.5 py-1.5 transition-all text-xs font-semibold text-text-primary active:scale-95 cursor-pointer"
+                className="flex items-center gap-2 rounded-full border border-border bg-surface/50 hover:bg-surface px-3.5 py-1.5 transition-all text-xs font-semibold text-text-primary active:scale-95 cursor-pointer"
               >
                 {currentUser.photoURL ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -140,12 +140,12 @@ export default function Navbar({ currentUser, onLoginSuccess, onLogout, onDemoTr
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: 10, scale: 0.95 }}
                       transition={{ duration: 0.15 }}
-                      className="absolute right-0 mt-2 w-48 rounded-xl border border-border bg-[#161B22] shadow-2xl p-1.5 z-50 text-xs font-semibold space-y-0.5"
+                      className="absolute right-0 mt-2 w-48 rounded-xl border border-border bg-surface shadow-2xl p-1.5 z-50 text-xs font-semibold space-y-0.5"
                     >
                       <Link
                         href="/dashboard"
                         onClick={() => setUserDropdownOpen(false)}
-                        className="flex items-center gap-2 px-3 py-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-[#30363D]/40 transition-colors w-full text-left"
+                        className="flex items-center gap-2 px-3 py-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-border/40 transition-colors w-full text-left"
                       >
                         <Layout size={14} />
                         <span>Dashboard</span>
@@ -155,7 +155,7 @@ export default function Navbar({ currentUser, onLoginSuccess, onLogout, onDemoTr
                           onLogout();
                           setUserDropdownOpen(false);
                         }}
-                        className="flex items-center gap-2 px-3 py-2 rounded-lg text-text-secondary hover:text-danger hover:bg-danger/10 transition-colors w-full text-left cursor-pointer"
+                        className="flex items-center gap-2 px-3 py-2 rounded-lg text-text-secondary hover:text-diff-remove hover:bg-diff-remove/10 transition-colors w-full text-left cursor-pointer"
                       >
                         <LogOut size={14} />
                         <span>Logout</span>
@@ -169,7 +169,7 @@ export default function Navbar({ currentUser, onLoginSuccess, onLogout, onDemoTr
             <div className="flex items-center gap-3">
               <button
                 onClick={onDemoTrigger}
-                className="rounded-lg border border-border bg-[#161B22]/40 px-4 py-2 text-xs font-semibold text-text-secondary hover:text-text-primary hover:bg-[#161B22]/80 transition-all focus:outline-none active:scale-95 cursor-pointer"
+                className="rounded-lg border border-border bg-surface/40 px-4 py-2 text-xs font-semibold text-text-secondary hover:text-text-primary hover:bg-surface/80 transition-all focus:outline-none active:scale-95 cursor-pointer"
               >
                 Demo Dashboard
               </button>
@@ -187,14 +187,14 @@ export default function Navbar({ currentUser, onLoginSuccess, onLogout, onDemoTr
         <div className="flex md:hidden items-center gap-3">
           <button
             onClick={openModal}
-            className="rounded-full p-2 hover:bg-[#30363D]/40 text-text-secondary transition-colors"
+            className="rounded-full p-2 hover:bg-border/40 text-text-secondary transition-colors"
           >
             <Palette size={16} />
           </button>
 
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="text-text-secondary hover:text-text-primary focus:outline-none p-1 transition-colors rounded-lg hover:bg-[#30363D]/40 active:scale-95"
+            className="text-text-secondary hover:text-text-primary focus:outline-none p-1 transition-colors rounded-lg hover:bg-border/40 active:scale-95"
             aria-label="Toggle menu"
           >
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
@@ -216,7 +216,7 @@ export default function Navbar({ currentUser, onLoginSuccess, onLogout, onDemoTr
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className="border-b border-border bg-[#0D1117] md:hidden px-6 py-5 flex flex-col gap-5 overflow-hidden shadow-2xl"
+            className="border-b border-border bg-background md:hidden px-6 py-5 flex flex-col gap-5 overflow-hidden shadow-2xl"
           >
             <nav className="flex flex-col gap-2.5 text-xs font-semibold text-text-secondary uppercase tracking-wider">
               <Link
@@ -227,7 +227,7 @@ export default function Navbar({ currentUser, onLoginSuccess, onLogout, onDemoTr
                 Features
               </Link>
               <Link
-                href="/#score-engine"
+                href="/#features"
                 onClick={() => setMobileMenuOpen(false)}
                 className="hover:text-text-primary transition-colors py-2 border-b border-border/20"
               >
@@ -273,7 +273,7 @@ export default function Navbar({ currentUser, onLoginSuccess, onLogout, onDemoTr
                       onLogout();
                       setMobileMenuOpen(false);
                     }}
-                    className="rounded-lg border border-border bg-[#161B22] px-3.5 py-1.5 text-xs font-semibold text-danger hover:bg-danger/10 transition-colors cursor-pointer"
+                    className="rounded-lg border border-border bg-surface px-3.5 py-1.5 text-xs font-semibold text-diff-remove hover:bg-diff-remove/10 transition-colors cursor-pointer"
                   >
                     Logout
                   </button>
@@ -285,7 +285,7 @@ export default function Navbar({ currentUser, onLoginSuccess, onLogout, onDemoTr
                       if (onDemoTrigger) onDemoTrigger();
                       setMobileMenuOpen(false);
                     }}
-                    className="w-full rounded-lg border border-border bg-[#161B22] py-2 text-xs font-semibold text-text-secondary hover:text-text-primary cursor-pointer"
+                    className="w-full rounded-lg border border-border bg-surface py-2 text-xs font-semibold text-text-secondary hover:text-text-primary cursor-pointer"
                   >
                     View Demo Dashboard
                   </button>
