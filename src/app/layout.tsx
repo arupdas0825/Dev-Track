@@ -1,24 +1,26 @@
 import type { Metadata } from "next";
-import { Inter, Geist, JetBrains_Mono } from "next/font/google";
+import { IBM_Plex_Sans, Inter, IBM_Plex_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/ui/ThemeContext";
 import { ThemeModal } from "@/components/ui/ThemeModal";
 import { AuthModalProvider } from "@/components/auth/AuthModalContext";
 import "./globals.css";
 
-const inter = Inter({
+const displayFont = IBM_Plex_Sans({
   subsets: ["latin"],
-  variable: "--font-inter",
+  weight: ["500", "600", "700"],
+  variable: "--font-display",
   display: "swap",
 });
 
-const geist = Geist({
+const bodyFont = Inter({
   subsets: ["latin"],
-  variable: "--font-geist",
+  variable: "--font-body",
   display: "swap",
 });
 
-const jetbrainsMono = JetBrains_Mono({
+const monoFont = IBM_Plex_Mono({
   subsets: ["latin"],
+  weight: ["400", "500", "600"],
   variable: "--font-mono",
   display: "swap",
 });
@@ -61,11 +63,10 @@ export default function RootLayout({
     <ThemeProvider>
       <html
         lang="en"
-        className={`${inter.variable} ${geist.variable} ${jetbrainsMono.variable} h-full antialiased`}
+        className={`${displayFont.variable} ${bodyFont.variable} ${monoFont.variable} h-full antialiased`}
         suppressHydrationWarning
       >
         <head>
-          <link href="https://fonts.cdnfonts.com/css/object-sans" rel="stylesheet" />
         </head>
         <body className="min-h-full flex flex-col bg-background text-foreground font-inter">
           <AuthModalProvider>

@@ -16,7 +16,7 @@ export default function Footer() {
   return (
     <footer className="relative w-full border-t border-[#30363D]/60 bg-[#0D1117] py-12 md:py-20 overflow-hidden font-mono mt-auto">
       {/* Large subtle background brand typography */}
-      <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-[12vw] font-extrabold text-[#161B22]/20 select-none pointer-events-none tracking-widest font-space-grotesk uppercase print:hidden">
+      <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-[12vw] font-extrabold text-[#161B22]/20 select-none pointer-events-none tracking-widest font-display uppercase print:hidden">
         DEVTRACK
       </div>
 

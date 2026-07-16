@@ -157,7 +157,7 @@ export default function LandingPage() {
                     Instant AI Developer Card Generator + Battle Arena
                   </span>
                   
-                  <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight font-space-grotesk text-text-primary leading-[1.15]">
+                  <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight font-display text-text-primary leading-[1.15]">
                     Generate Your <br />
                     <span className="bg-gradient-to-r from-accent via-purple-400 to-[#3FB950] bg-clip-text text-transparent">AI Developer Card.</span>
                   </h1>
@@ -258,7 +258,7 @@ export default function LandingPage() {
                 { label: "DNA Profiles Created", value: 9850, suffix: "" }
               ].map((stat, idx) => (
                 <div key={idx} className="space-y-1.5">
-                  <div className="text-xl md:text-2xl font-bold font-space-grotesk text-accent">
+                  <div className="text-xl md:text-2xl font-bold font-display text-accent">
                     <CounterUp target={stat.value} suffix={stat.suffix} />
                   </div>
                   <div className="text-[9px] text-text-secondary uppercase tracking-wider">{stat.label}</div>
@@ -273,7 +273,7 @@ export default function LandingPage() {
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="text-center max-w-2xl mx-auto space-y-3">
               <span className="text-[10px] font-bold text-accent uppercase tracking-widest">Platform Core</span>
-              <h2 className="text-3xl font-bold font-space-grotesk text-text-primary sm:text-4xl">
+              <h2 className="text-3xl font-bold font-display text-text-primary sm:text-4xl">
                 Analytics Reimagined for Engineers
               </h2>
               <p className="text-text-secondary text-xs leading-relaxed">
@@ -359,7 +359,7 @@ export default function LandingPage() {
                         <Icon size={18} />
                       </div>
                       <div className="space-y-2">
-                        <h3 className="text-sm font-bold text-text-primary font-space-grotesk uppercase tracking-wider">{feat.title}</h3>
+                        <h3 className="text-sm font-bold text-text-primary font-display uppercase tracking-wider">{feat.title}</h3>
                         <p className="text-[10px] text-text-secondary leading-relaxed font-mono">{feat.desc}</p>
                       </div>
                     </div>
@@ -378,7 +378,7 @@ export default function LandingPage() {
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="text-center max-w-2xl mx-auto space-y-3 mb-12">
               <span className="text-[10px] font-bold text-[#3FB950] uppercase tracking-widest">Interactive Preview</span>
-              <h2 className="text-3xl font-bold font-space-grotesk text-text-primary sm:text-4xl">
+              <h2 className="text-3xl font-bold font-display text-text-primary sm:text-4xl">
                 Experience DevTrack in Real-Time
               </h2>
               <p className="text-text-secondary text-xs leading-relaxed">
@@ -437,7 +437,7 @@ export default function LandingPage() {
                         <span>Repository Health</span>
                         <Activity size={12} className="text-[#3FB950]" />
                       </div>
-                      <div className="text-lg font-bold text-text-primary font-space-grotesk">S (94/100)</div>
+                      <div className="text-lg font-bold text-text-primary font-display">S (94/100)</div>
                       <p className="text-[8px] text-text-secondary leading-relaxed">No critical vulnerabilities or licensing warnings detected.</p>
                     </div>
 
@@ -447,7 +447,7 @@ export default function LandingPage() {
                         <span>Coding Streak</span>
                         <TrendingUp size={12} className="text-accent" />
                       </div>
-                      <div className="text-lg font-bold text-text-primary font-space-grotesk">45 Days</div>
+                      <div className="text-lg font-bold text-text-primary font-display">45 Days</div>
                       <p className="text-[8px] text-text-secondary leading-relaxed">Weekly average: 15.3 commits logged across major branches.</p>
                     </div>
 
@@ -457,7 +457,7 @@ export default function LandingPage() {
                         <span>Open Source Index</span>
                         <GitPullRequest size={12} className="text-[#BC8CFF]" />
                       </div>
-                      <div className="text-lg font-bold text-text-primary font-space-grotesk">84 PRs Merged</div>
+                      <div className="text-lg font-bold text-text-primary font-display">84 PRs Merged</div>
                       <p className="text-[8px] text-text-secondary leading-relaxed">Active collaborator status mapped globally.</p>
                     </div>
                   </div>
@@ -489,7 +489,7 @@ export default function LandingPage() {
           <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 text-center space-y-8">
             <div className="space-y-2">
               <span className="text-[10px] font-bold text-accent uppercase tracking-widest">Yearly Retrospective</span>
-              <h2 className="text-4xl sm:text-5xl font-extrabold font-space-grotesk text-text-primary tracking-tight leading-[1.1]">
+              <h2 className="text-4xl sm:text-5xl font-extrabold font-display text-text-primary tracking-tight leading-[1.1]">
                 Your Entire Year of Coding — <br />
                 <span className="bg-gradient-to-r from-accent to-[#BC8CFF] bg-clip-text text-transparent">Wrapped.</span>
               </h2>
@@ -510,7 +510,7 @@ export default function LandingPage() {
               <div className="mt-5 space-y-4">
                 <div>
                   <div className="text-[8px] text-[#8B949E] uppercase tracking-wider">TOP ECOSYSTEM</div>
-                  <div className="text-lg font-bold font-space-grotesk text-text-primary">TypeScript</div>
+                  <div className="text-lg font-bold font-display text-text-primary">TypeScript</div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -555,7 +555,7 @@ export default function LandingPage() {
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="text-center max-w-2xl mx-auto space-y-3 mb-16">
               <span className="text-[10px] font-bold text-[#BC8CFF] uppercase tracking-widest">Onboarding Timeline</span>
-              <h2 className="text-3xl font-bold font-space-grotesk text-text-primary sm:text-4xl">
+              <h2 className="text-3xl font-bold font-display text-text-primary sm:text-4xl">
                 The Developer Journey
               </h2>
               <p className="text-text-secondary text-xs leading-relaxed">
@@ -594,7 +594,7 @@ export default function LandingPage() {
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[300px] bg-accent/5 rounded-full blur-[100px] pointer-events-none" />
 
           <div className="relative mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 text-center z-10 space-y-6">
-            <h2 className="text-3xl sm:text-4xl font-extrabold font-space-grotesk text-text-primary tracking-tight leading-[1.2]">
+            <h2 className="text-3xl sm:text-4xl font-extrabold font-display text-text-primary tracking-tight leading-[1.2]">
               Discover the Story Behind Your Code.
             </h2>
             <p className="text-text-secondary text-xs max-w-md mx-auto leading-relaxed font-mono">
