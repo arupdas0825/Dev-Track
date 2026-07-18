@@ -134,6 +134,37 @@ export async function createPost(
 const DEFAULT_PAGE_SIZE = 20;
 
 /**
+ * Global feed across all users ("Everyone" tab).
+ * Uses single-field query + client-side sorting so no composite index is required.
+ */
+export async function getEveryoneFeed(
+  cursor?: string,
+  pageSize = DEFAULT_PAGE_SIZE
+): Promise<{ posts: DevFeedPost[]; nextCursor: string | null }> {
+  assertFirebase();
+
+  const q = query(collection(db!, "posts"), limit(200));
+  const snap = await getDocs(q);
+  const allPosts: DevFeedPost[] = [];
+  snap.forEach((s) => allPosts.push(docToPost(s)));
+
+  allPosts.sort((a, b) => (a.createdAt > b.createdAt ? -1 : 1));
+
+  let startIndex = 0;
+  if (cursor) {
+    const idx = allPosts.findIndex((p) => p.createdAt === cursor);
+    startIndex = idx !== -1 ? idx + 1 : allPosts.findIndex((p) => p.createdAt < cursor);
+    if (startIndex === -1) startIndex = allPosts.length;
+  }
+
+  const page = allPosts.slice(startIndex, startIndex + pageSize);
+  const hasMore = startIndex + pageSize < allPosts.length;
+  const nextCursor = hasMore && page.length > 0 ? page[page.length - 1].createdAt : null;
+
+  return { posts: page, nextCursor };
+}
+
+/**
  * Pull-based feed for a user: their own posts + posts from followed users.
  * Respects Firestore's 30-item `in` operator limit by chunking author IDs.
  * Uses single-field queries and client-side sorting so no composite index is required.

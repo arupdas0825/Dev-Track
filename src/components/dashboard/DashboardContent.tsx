@@ -240,6 +240,14 @@ function DashboardContent() {
   const [isResizing, setIsResizing] = useState<boolean>(false);
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
 
+  // Sync activeTab from URL query param when present (e.g., /dashboard?tab=score or /dashboard?tab=wrapped)
+  useEffect(() => {
+    const tabParam = searchParams?.get("tab");
+    if (tabParam && tabParam !== activeTab) {
+      setActiveTab(tabParam as TabId);
+    }
+  }, [searchParams, activeTab, setActiveTab]);
+
   // Close mobile drawer on navigation
   useEffect(() => {
     setIsMobileDrawerOpen(false);

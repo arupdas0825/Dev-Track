@@ -56,12 +56,16 @@ export default function Navbar({ currentUser, onLoginSuccess, onLogout, onDemoTr
 
           {/* Desktop Navigation Links with animated underlines */}
           <nav className="hidden md:flex items-center gap-1.5 text-xs font-semibold text-text-secondary">
-            {[
+            {(currentUser ? [
+              { label: "Feed", href: "/", id: "feed" },
+              { label: "Following", href: "/?tab=following", id: "following" },
+              { label: "Score Engine", href: "/dashboard?tab=score", id: "score" },
+              { label: "Wrapped", href: "/dashboard?tab=wrapped", id: "wrapped" },
+            ] : [
               { label: "Features", href: "/#features", id: "features" },
               { label: "Score Engine", href: "/#features", id: "score" },
               { label: "Wrapped", href: "/#wrapped", id: "wrapped" },
-              ...(currentUser ? [{ label: "Feed", href: "/feed", id: "feed" }] : []),
-            ].map(tab => (
+            ]).map(tab => (
               <Link
                 key={tab.id}
                 href={tab.href}
@@ -150,7 +154,7 @@ export default function Navbar({ currentUser, onLoginSuccess, onLogout, onDemoTr
                         className="flex items-center gap-2 px-3 py-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-border/40 transition-colors w-full text-left"
                       >
                         <Layout size={14} />
-                        <span>Dashboard</span>
+                        <span>My Profile</span>
                       </Link>
                       <button
                         onClick={() => {
@@ -221,31 +225,10 @@ export default function Navbar({ currentUser, onLoginSuccess, onLogout, onDemoTr
             className="border-b border-border bg-background md:hidden px-6 py-5 flex flex-col gap-5 overflow-hidden shadow-2xl"
           >
             <nav className="flex flex-col gap-2.5 text-xs font-semibold text-text-secondary uppercase tracking-wider">
-              <Link
-                href="/#features"
-                onClick={() => setMobileMenuOpen(false)}
-                className="hover:text-text-primary transition-colors py-2 border-b border-border/20"
-              >
-                Features
-              </Link>
-              <Link
-                href="/#features"
-                onClick={() => setMobileMenuOpen(false)}
-                className="hover:text-text-primary transition-colors py-2 border-b border-border/20"
-              >
-                Score Engine
-              </Link>
-              <Link
-                href="/#wrapped"
-                onClick={() => setMobileMenuOpen(false)}
-                className="hover:text-text-primary transition-colors py-2 border-b border-border/20"
-              >
-                Wrapped
-              </Link>
-              {currentUser && (
+              {currentUser ? (
                 <>
                   <Link
-                    href="/feed"
+                    href="/"
                     onClick={() => setMobileMenuOpen(false)}
                     className="hover:text-text-primary transition-colors py-2 flex items-center gap-1.5 text-accent border-b border-border/20"
                   >
@@ -253,12 +236,58 @@ export default function Navbar({ currentUser, onLoginSuccess, onLogout, onDemoTr
                     <span>Feed</span>
                   </Link>
                   <Link
+                    href="/?tab=following"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="hover:text-text-primary transition-colors py-2 flex items-center gap-1.5 text-accent border-b border-border/20"
+                  >
+                    <Sparkles size={12} />
+                    <span>Following</span>
+                  </Link>
+                  <Link
+                    href="/dashboard?tab=score"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="hover:text-text-primary transition-colors py-2 border-b border-border/20"
+                  >
+                    Score Engine
+                  </Link>
+                  <Link
+                    href="/dashboard?tab=wrapped"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="hover:text-text-primary transition-colors py-2 border-b border-border/20"
+                  >
+                    Wrapped
+                  </Link>
+                  <Link
                     href="/dashboard"
                     onClick={() => setMobileMenuOpen(false)}
                     className="hover:text-text-primary transition-colors py-2 flex items-center gap-1.5 text-accent"
                   >
-                    <Sparkles size={12} />
-                    <span>Dashboard</span>
+                    <Layout size={12} />
+                    <span>My Profile</span>
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link
+                    href="/#features"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="hover:text-text-primary transition-colors py-2 border-b border-border/20"
+                  >
+                    Features
+                  </Link>
+                  <Link
+                    href="/#features"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="hover:text-text-primary transition-colors py-2 border-b border-border/20"
+                  >
+                    Score Engine
+                  </Link>
+                  <Link
+                    href="/#wrapped"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="hover:text-text-primary transition-colors py-2 border-b border-border/20"
+                  >
+                    Wrapped
                   </Link>
                 </>
               )}

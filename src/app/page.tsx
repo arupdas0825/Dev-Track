@@ -9,6 +9,8 @@ import Footer from "@/components/layout/Footer";
 import { useAuthModal } from "@/components/auth/AuthModalContext";
 import DeveloperBattleModal from "@/components/card/DeveloperBattleModal";
 import { InteractiveRobotSpline } from "@/components/blocks/interactive-3d-robot";
+import FeedHome from "@/components/devfeed/FeedHome";
+import { ToastProvider } from "@/components/devfeed/useToast";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Sparkles,
@@ -64,9 +66,10 @@ function CounterUp({ target, suffix = "" }: { target: number; suffix?: string })
   );
 }
 
-export default function LandingPage() {
+function LandingPageInner() {
   const router = useRouter();
   const [currentUser, setCurrentUser] = useState<DevTrackUser | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
   const [searchUsername, setSearchUsername] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -80,6 +83,7 @@ export default function LandingPage() {
   useEffect(() => {
     const unsubscribe = subscribeToAuthChanges((user) => {
       setCurrentUser(user);
+      setAuthLoading(false);
     });
     return () => unsubscribe();
   }, []);
@@ -137,8 +141,20 @@ export default function LandingPage() {
 
       {/* Main Container */}
       <main className="flex-1 pt-16">
-        {/* 1. Hero Section */}
-        <section className="relative overflow-hidden pt-6 pb-10 md:pt-8 md:pb-14 flex items-center min-h-[calc(100vh-4rem)]">
+        {authLoading ? (
+          <div className="mx-auto max-w-2xl px-4 pt-24 pb-12 space-y-4 animate-pulse">
+            <div className="h-36 rounded-xl bg-surface border border-border" />
+            <div className="h-24 rounded-xl bg-surface border border-border" />
+            <div className="h-24 rounded-xl bg-surface border border-border" />
+          </div>
+        ) : currentUser ? (
+          <div className="mx-auto max-w-2xl px-4 pt-8 pb-12">
+            <FeedHome currentUser={currentUser} onLogout={handleLogout} />
+          </div>
+        ) : (
+          <>
+            {/* 1. Hero Section */}
+            <section className="relative overflow-hidden pt-6 pb-10 md:pt-8 md:pb-14 flex items-center min-h-[calc(100vh-4rem)]">
           {/* Subtle grid mesh background */}
           <div className="absolute inset-0 bg-[linear-gradient(to_right,var(--color-surface)_1px,transparent_1px),linear-gradient(to_bottom,var(--color-surface)_1px,transparent_1px)] bg-[size:4rem_4rem] opacity-35" />
           <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-accent/5 rounded-full blur-3xl pointer-events-none" />
@@ -624,6 +640,8 @@ export default function LandingPage() {
             </div>
           </div>
         </section>
+          </>
+        )}
       </main>
 
       {/* Flagship Modals */}
@@ -644,5 +662,13 @@ export default function LandingPage() {
       {/* Footer */}
       <Footer />
     </div>
+  );
+}
+
+export default function LandingPage() {
+  return (
+    <ToastProvider>
+      <LandingPageInner />
+    </ToastProvider>
   );
 }

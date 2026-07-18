@@ -50,7 +50,6 @@ import {
   FileText,
   Briefcase,
   AlertCircle,
-  BookOpen,
   Calendar,
   Share2
 } from "lucide-react";
@@ -65,6 +64,8 @@ import { subscribeToAuthChanges } from "@/lib/firebase";
 import { DevTrackUser } from "@/types/user";
 import { getUserUidByUsername } from "@/services/devfeedService";
 import dynamic from "next/dynamic";
+import DeveloperBattleModal from "@/components/card/DeveloperBattleModal";
+import { useAuthModal } from "@/components/auth/AuthModalContext";
 
 const FollowButton = dynamic(() => import("@/components/devfeed/FollowButton"), { ssr: false });
 const ProfilePostsTab = dynamic(() => import("@/components/devfeed/ProfilePostsTab"), { ssr: false });
@@ -77,12 +78,14 @@ const ToastProvider = dynamic(
 function PublicProfilePageInner() {
   const params = useParams();
   const username = (params.username as string || "").toLowerCase();
+  const { openAuthModal } = useAuthModal();
   
   const [profileData, setProfileData] = useState<UserDashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [isPrivate, setIsPrivate] = useState(false);
   const [isUnclaimed, setIsUnclaimed] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
+  const [battleModalOpen, setBattleModalOpen] = useState(false);
   const [gamificationState, setGamificationState] = useState<any>(null);
   const [currentUser, setCurrentUser] = useState<DevTrackUser | null>(null);
   const [profileUid, setProfileUid] = useState<string | null>(null);
@@ -582,6 +585,14 @@ function PublicProfilePageInner() {
                 <span>Share Profile Card</span>
               </button>
 
+              <button
+                onClick={() => setBattleModalOpen(true)}
+                className="w-full py-2.5 px-4 rounded-lg bg-accent/15 border border-accent/30 hover:bg-accent hover:text-white text-accent text-xs font-bold font-mono flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm active:scale-95"
+              >
+                <Sparkles size={13} />
+                <span>Developer Card & Battle</span>
+              </button>
+
               {/* Follow Button (shown to logged-in viewers of other people's profiles) */}
               {profileUid && (
                 <FollowButton
@@ -947,6 +958,14 @@ function PublicProfilePageInner() {
         </div>
 
       </main>
+
+      <DeveloperBattleModal
+        isOpen={battleModalOpen}
+        onClose={() => setBattleModalOpen(false)}
+        initialUsername={profile.login}
+        isAuthenticated={!!currentUser}
+        onRequireAuth={(title, message) => openAuthModal({ title, message })}
+      />
     </div>
   );
 }

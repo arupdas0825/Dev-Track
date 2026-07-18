@@ -45,6 +45,7 @@ import DeveloperMilestones from "./DeveloperMilestones";
 import ActivityTimeline from "./ActivityTimeline";
 import CountUp from "../ui/CountUp";
 import ProjectShowcase from "./ProjectShowcase";
+import DeveloperBattleModal from "@/components/card/DeveloperBattleModal";
 
 interface OverviewTabProps {
   data: UserDashboardData;
@@ -53,6 +54,7 @@ interface OverviewTabProps {
 export default function OverviewTab({ data }: OverviewTabProps) {
   const { profile, contributions, score, languages, repositories } = data;
   const [showWhyGrade, setShowWhyGrade] = useState(false);
+  const [battleModalOpen, setBattleModalOpen] = useState(false);
   const [widgetConfigs, setWidgetConfigs] = useState<WidgetConfig[]>([]);
   const [collapsedWidgets, setCollapsedWidgets] = useState<Record<string, boolean>>({});
   const [starredCharts, setStarredCharts] = useState<string[]>([]);
@@ -396,12 +398,21 @@ export default function OverviewTab({ data }: OverviewTabProps) {
                     )}
                   </div>
                 </div>
-                <button
-                  onClick={() => setShowWhyGrade(!showWhyGrade)}
-                  className="mt-2 text-[10px] font-mono text-[#58A6FF] hover:underline cursor-pointer"
-                >
-                  {showWhyGrade ? "Hide breakdown ▲" : "Why this grade? ▼"}
-                </button>
+                <div className="flex flex-col items-center gap-1.5 mt-2">
+                  <button
+                    onClick={() => setShowWhyGrade(!showWhyGrade)}
+                    className="text-[10px] font-mono text-[#58A6FF] hover:underline cursor-pointer"
+                  >
+                    {showWhyGrade ? "Hide breakdown ▲" : "Why this grade? ▼"}
+                  </button>
+                  <button
+                    onClick={() => setBattleModalOpen(true)}
+                    className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-accent/15 border border-accent/30 text-accent text-[10px] font-mono font-bold hover:bg-accent hover:text-white transition-all cursor-pointer shadow-sm active:scale-95"
+                  >
+                    <Sparkles size={11} />
+                    <span>View Card & Battle</span>
+                  </button>
+                </div>
               </div>
 
               {/* Right Column: Key Metric Grid */}
@@ -665,6 +676,14 @@ export default function OverviewTab({ data }: OverviewTabProps) {
           )}
         </div>
       )}
+
+      <DeveloperBattleModal
+        isOpen={battleModalOpen}
+        onClose={() => setBattleModalOpen(false)}
+        initialUsername={profile.login}
+        isAuthenticated={true}
+        onRequireAuth={() => {}}
+      />
     </div>
   );
 }

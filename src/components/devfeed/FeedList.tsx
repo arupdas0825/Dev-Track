@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { AnimatePresence } from "framer-motion";
 import { Rss, Loader2 } from "lucide-react";
-import { getFeedForUser } from "@/services/devfeedService";
+import { getFeedForUser, getEveryoneFeed } from "@/services/devfeedService";
 import { DevFeedPost } from "@/types/devfeed";
 import { DevTrackUser } from "@/types/user";
 import { SkeletonFeed } from "@/components/ui/SkeletonLoader";
@@ -15,9 +15,11 @@ interface FeedListProps {
   currentUser: DevTrackUser;
   /** Prepend a newly created post without re-fetching */
   newPost?: DevFeedPost | null;
+  /** Whether to show everyone's posts or only following */
+  mode?: "everyone" | "following";
 }
 
-export default function FeedList({ currentUser, newPost }: FeedListProps) {
+export default function FeedList({ currentUser, newPost, mode = "everyone" }: FeedListProps) {
   const { toast } = useToast();
   const [posts, setPosts] = useState<DevFeedPost[]>([]);
   const [loading, setLoading] = useState(true);
@@ -27,17 +29,21 @@ export default function FeedList({ currentUser, newPost }: FeedListProps) {
 
   const loadFeed = useCallback(async (cursor?: string) => {
     try {
-      const result = await getFeedForUser(currentUser.uid, cursor);
+      const result =
+        mode === "following"
+          ? await getFeedForUser(currentUser.uid, cursor)
+          : await getEveryoneFeed(cursor);
       setPosts((prev) =>
         cursor ? [...prev, ...result.posts] : result.posts
       );
       setNextCursor(result.nextCursor);
+      setError(false);
     } catch (err) {
-      console.error("getFeedForUser failed:", err);
+      console.error("loadFeed failed:", err);
       setError(true);
       toast("Failed to load feed.", "error");
     }
-  }, [currentUser.uid, toast]);
+  }, [currentUser.uid, mode, toast]);
 
   // Initial load
   useEffect(() => {
@@ -88,8 +94,12 @@ export default function FeedList({ currentUser, newPost }: FeedListProps) {
     return (
       <EmptyState
         icon={<Rss size={22} />}
-        title="Your feed is empty"
-        description="Follow other developers or create your first post to get started."
+        title={mode === "following" ? "No posts from following yet" : "No posts yet"}
+        description={
+          mode === "following"
+            ? "Follow more developers or check the Everyone tab to discover activity across DevTrack."
+            : "Be the first to share a milestone, code snippet, or discovery with the community!"
+        }
       />
     );
   }
