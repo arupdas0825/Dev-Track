@@ -1,8 +1,9 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { IBM_Plex_Sans, Inter, IBM_Plex_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/ui/ThemeContext";
 import { ThemeModal } from "@/components/ui/ThemeModal";
 import { AuthModalProvider } from "@/components/auth/AuthModalContext";
+import InstallPrompt from "@/components/ui/InstallPrompt";
 import "./globals.css";
 
 const displayFont = IBM_Plex_Sans({
@@ -40,6 +41,11 @@ export const metadata: Metadata = {
     ],
   },
   manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "DevTrack",
+  },
   openGraph: {
     title: "Dev-Track | Developer Intelligence Platform",
     description: "Dev-Track analyzes GitHub activity and transforms it into actionable developer intelligence.",
@@ -52,6 +58,13 @@ export const metadata: Metadata = {
       },
     ],
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0B0E11",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
 };
 
 export default function RootLayout({
@@ -72,6 +85,7 @@ export default function RootLayout({
           <AuthModalProvider>
             {children}
             <ThemeModal />
+            <InstallPrompt />
           </AuthModalProvider>
         </body>
       </html>

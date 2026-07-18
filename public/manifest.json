@@ -1,8 +1,10 @@
 {
+  "id": "/",
   "name": "DevTrack",
   "short_name": "DevTrack",
   "description": "DevTrack transforms GitHub activity into actionable developer intelligence.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#0d1117",
   "theme_color": "#2f81f7",
