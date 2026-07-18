@@ -1,9 +1,13 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import DashboardContent from "@/components/dashboard/DashboardContent";
+import { MAINTENANCE_MODE } from "@/lib/featureFlags";
 
 export default function DashboardPage() {
+  const router = useRouter();
+
   return (
     <Suspense
       fallback={

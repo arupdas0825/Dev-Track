@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { DevTrackUser } from "@/lib/firebase";
+import { MAINTENANCE_MODE } from "@/lib/featureFlags";
 import { useAuthModal } from "@/components/auth/AuthModalContext";
 import Logo from "../ui/Logo";
 import { useTheme } from "@/components/ui/ThemeContext";
@@ -56,7 +57,7 @@ export default function Navbar({ currentUser, onLoginSuccess, onLogout, onDemoTr
 
           {/* Desktop Navigation Links with animated underlines */}
           <nav className="hidden md:flex items-center gap-1.5 text-xs font-semibold text-text-secondary">
-            {(currentUser ? [
+            {(currentUser && !MAINTENANCE_MODE ? [
               { label: "Feed", href: "/", id: "feed" },
               { label: "Following", href: "/?tab=following", id: "following" },
               { label: "Score Engine", href: "/dashboard?tab=score", id: "score" },
@@ -108,7 +109,7 @@ export default function Navbar({ currentUser, onLoginSuccess, onLogout, onDemoTr
             className="rounded-full p-2 hover:bg-border/40 text-text-secondary hover:text-text-primary transition-all duration-300 active:scale-95"
             title="Theme Settings"
           >
-            <Palette size={16} />
+            <Palette size={15} />
           </button>
 
           <NotificationCenter />
@@ -118,7 +119,7 @@ export default function Navbar({ currentUser, onLoginSuccess, onLogout, onDemoTr
               {/* Logged in User Pill */}
               <button
                 onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-                className="flex items-center gap-2 rounded-full border border-border bg-surface/50 hover:bg-surface px-3.5 py-1.5 transition-all text-xs font-semibold text-text-primary active:scale-95 cursor-pointer"
+                className="flex items-center gap-2.5 rounded-full border border-border bg-surface/60 p-1.5 pr-3 text-xs font-semibold hover:border-accent/40 hover:bg-surface transition-all cursor-pointer"
               >
                 {currentUser.photoURL ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -191,30 +192,23 @@ export default function Navbar({ currentUser, onLoginSuccess, onLogout, onDemoTr
 
         {/* Mobile menu trigger */}
         <div className="flex md:hidden items-center gap-3">
-          <button
-            onClick={openModal}
-            className="rounded-full p-2 hover:bg-border/40 text-text-secondary transition-colors"
-          >
-            <Palette size={16} />
-          </button>
-
+          <NotificationCenter />
+          
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="text-text-secondary hover:text-text-primary focus:outline-none p-1 transition-colors rounded-lg hover:bg-border/40 active:scale-95"
-            aria-label="Toggle menu"
+            className="rounded-lg p-2 text-text-secondary hover:bg-border/40 hover:text-text-primary transition-colors focus:outline-none cursor-pointer"
+            aria-label="Toggle Menu"
           >
-            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-              {mobileMenuOpen ? (
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-              ) : (
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-              )}
-            </svg>
+            <div className="w-5 h-4 flex flex-col justify-between overflow-hidden">
+              <span className={`w-full h-0.5 bg-current transform transition-all duration-300 ${mobileMenuOpen ? "rotate-45 translate-y-1.5" : ""}`} />
+              <span className={`w-full h-0.5 bg-current transition-all duration-300 ${mobileMenuOpen ? "opacity-0 translate-x-3" : ""}`} />
+              <span className={`w-full h-0.5 bg-current transform transition-all duration-300 ${mobileMenuOpen ? "-rotate-45 -translate-y-1.5" : ""}`} />
+            </div>
           </button>
         </div>
       </div>
 
-      {/* Mobile Drawer with spring animations */}
+      {/* Mobile Menu Dropdown */}
       <AnimatePresence>
         {mobileMenuOpen && (
           <motion.div
@@ -225,7 +219,7 @@ export default function Navbar({ currentUser, onLoginSuccess, onLogout, onDemoTr
             className="border-b border-border bg-background md:hidden px-6 py-5 flex flex-col gap-5 overflow-hidden shadow-2xl"
           >
             <nav className="flex flex-col gap-2.5 text-xs font-semibold text-text-secondary uppercase tracking-wider">
-              {currentUser ? (
+              {currentUser && !MAINTENANCE_MODE ? (
                 <>
                   <Link
                     href="/"

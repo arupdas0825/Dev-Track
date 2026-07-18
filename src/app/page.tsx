@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { subscribeToAuthChanges, logOutUser, DevTrackUser } from "@/lib/firebase";
+import { MAINTENANCE_MODE } from "@/lib/featureFlags";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { useAuthModal } from "@/components/auth/AuthModalContext";
@@ -107,7 +108,9 @@ function LandingPageInner() {
 
   const handleLoginSuccess = (user: DevTrackUser) => {
     setCurrentUser(user);
-    router.push(`/dashboard?user=${user.username}`);
+    if (!MAINTENANCE_MODE) {
+      router.push(`/dashboard?user=${user.username}`);
+    }
   };
 
   // Stagger container animation
@@ -141,18 +144,30 @@ function LandingPageInner() {
 
       {/* Main Container */}
       <main className="flex-1 pt-16">
-        {authLoading ? (
+        {!MAINTENANCE_MODE && authLoading ? (
           <div className="mx-auto max-w-2xl px-4 pt-24 pb-12 space-y-4 animate-pulse">
             <div className="h-36 rounded-xl bg-surface border border-border" />
             <div className="h-24 rounded-xl bg-surface border border-border" />
             <div className="h-24 rounded-xl bg-surface border border-border" />
           </div>
-        ) : currentUser ? (
+        ) : !MAINTENANCE_MODE && currentUser ? (
           <div className="mx-auto max-w-2xl px-4 pt-8 pb-12">
             <FeedHome currentUser={currentUser} onLogout={handleLogout} />
           </div>
         ) : (
           <>
+            {MAINTENANCE_MODE && (
+              <div className="bg-surface/90 border-b border-border py-2.5 px-4 text-center font-mono">
+                <div className="mx-auto max-w-7xl flex flex-col sm:flex-row items-center justify-center gap-2 text-xs text-text-secondary">
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-warning/40 bg-warning/10 px-2.5 py-0.5 text-[10px] font-bold text-warning uppercase tracking-wider shrink-0">
+                    🚧 Under Maintenance
+                  </span>
+                  <span className="leading-relaxed">
+                    DevFeed (our social platform for developers) is currently under maintenance and temporarily unavailable. You can still generate your free Developer Card and explore GitHub analytics below.
+                  </span>
+                </div>
+              </div>
+            )}
             {/* 1. Hero Section */}
             <section className="relative overflow-hidden pt-6 pb-10 md:pt-8 md:pb-14 flex items-center min-h-[calc(100vh-4rem)]">
           {/* Subtle grid mesh background */}

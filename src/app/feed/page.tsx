@@ -1,23 +1,34 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { subscribeToAuthChanges, logOutUser } from "@/lib/firebase";
 import { DevTrackUser } from "@/types/user";
+import { MAINTENANCE_MODE } from "@/lib/featureFlags";
 import Navbar from "@/components/layout/Navbar";
 import FeedHome from "@/components/devfeed/FeedHome";
 import { ToastProvider } from "@/components/devfeed/useToast";
 
 function FeedPageInner() {
+  const router = useRouter();
   const [currentUser, setCurrentUser] = useState<DevTrackUser | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
 
   useEffect(() => {
+    if (MAINTENANCE_MODE) {
+      router.replace("/");
+      return;
+    }
     const unsub = subscribeToAuthChanges((user) => {
       setCurrentUser(user);
       setAuthLoading(false);
     });
     return unsub;
-  }, []);
+  }, [router]);
+
+  if (MAINTENANCE_MODE) {
+    return null;
+  }
 
   const handleLogout = async () => {
     await logOutUser();

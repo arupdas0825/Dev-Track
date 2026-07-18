@@ -31,6 +31,7 @@ installSerwist({
     entries: [
       {
         url: "/~offline",
+        revision: "1",
         matcher({ request }) {
           return request.destination === "document";
         },

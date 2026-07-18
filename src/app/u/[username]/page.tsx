@@ -51,8 +51,10 @@ import {
   Briefcase,
   AlertCircle,
   Calendar,
-  Share2
+  Share2,
+  Layout
 } from "lucide-react";
+import Link from "next/link";
 import ShareModal from "@/components/dashboard/ShareModal";
 import ContributionHeatmap from "@/components/dashboard/ContributionHeatmap";
 import Navbar from "@/components/layout/Navbar";
@@ -89,7 +91,7 @@ function PublicProfilePageInner() {
   const [gamificationState, setGamificationState] = useState<any>(null);
   const [currentUser, setCurrentUser] = useState<DevTrackUser | null>(null);
   const [profileUid, setProfileUid] = useState<string | null>(null);
-  const [activeProfileTab, setActiveProfileTab] = useState<"overview" | "posts">("overview");
+  const [activeProfileTab, setActiveProfileTab] = useState<"overview" | "posts" | "dashboard">("overview");
 
   useEffect(() => {
     if (!username) return;
@@ -412,7 +414,7 @@ function PublicProfilePageInner() {
   if (loading || isFetchingLive) {
     return (
       <div className="flex min-h-screen flex-col bg-background select-none">
-        <Navbar currentUser={null} onLoginSuccess={() => {}} onLogout={() => {}} onOpenSearch={() => {}} />
+        <Navbar currentUser={currentUser} onLoginSuccess={() => {}} onLogout={() => {}} onOpenSearch={() => {}} />
         <div className="flex-grow flex flex-col items-center justify-center text-text-secondary font-mono pt-24">
           <svg className="animate-spin h-8 w-8 text-accent mb-4" fill="none" viewBox="0 0 24 24">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
@@ -428,7 +430,7 @@ function PublicProfilePageInner() {
   if (isPrivate) {
     return (
       <div className="flex min-h-screen flex-col bg-background">
-        <Navbar currentUser={null} onLoginSuccess={() => {}} onLogout={() => {}} onOpenSearch={() => {}} />
+        <Navbar currentUser={currentUser} onLoginSuccess={() => {}} onLogout={() => {}} onOpenSearch={() => {}} />
         <div className="flex-grow flex flex-col items-center justify-center p-8 text-center max-w-md mx-auto font-mono pt-24">
           <div className="h-12 w-12 rounded-lg bg-surface border border-border flex items-center justify-center text-text-secondary mb-4">
             <ShieldAlert size={20} />
@@ -446,7 +448,7 @@ function PublicProfilePageInner() {
   if (!activeData) {
     return (
       <div className="flex min-h-screen flex-col bg-background">
-        <Navbar currentUser={null} onLoginSuccess={() => {}} onLogout={() => {}} onOpenSearch={() => {}} />
+        <Navbar currentUser={currentUser} onLoginSuccess={() => {}} onLogout={() => {}} onOpenSearch={() => {}} />
         <div className="flex-grow flex flex-col items-center justify-center p-8 text-center max-w-md mx-auto font-mono pt-24">
           <div className="h-12 w-12 rounded-lg bg-danger/10 text-danger flex items-center justify-center mb-4">
             <AlertCircle size={20} />
@@ -472,7 +474,7 @@ function PublicProfilePageInner() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      <Navbar currentUser={null} onLoginSuccess={() => {}} onLogout={() => {}} onOpenSearch={() => {}} />
+      <Navbar currentUser={currentUser} onLoginSuccess={() => {}} onLogout={() => {}} onOpenSearch={() => {}} />
 
       {/* SEO structured schema */}
       <script
@@ -593,6 +595,14 @@ function PublicProfilePageInner() {
                 <span>Developer Card & Battle</span>
               </button>
 
+              <Link
+                href={`/dashboard?user=${profile.login}`}
+                className="w-full py-2.5 px-4 rounded-lg bg-emerald-500/15 border border-emerald-500/30 hover:bg-emerald-500 hover:text-white text-emerald-400 text-xs font-bold font-mono flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm active:scale-95"
+              >
+                <Layout size={13} />
+                <span>Open Interactive Dashboard</span>
+              </Link>
+
               {/* Follow Button (shown to logged-in viewers of other people's profiles) */}
               {profileUid && (
                 <FollowButton
@@ -603,10 +613,10 @@ function PublicProfilePageInner() {
               )}
             </div>
 
-            {/* Profile tab switcher: Overview | Posts */}
+            {/* Profile tab switcher: Overview | Posts | Dashboard */}
             <div className="w-full pt-3 border-t border-border/40">
               <div className="flex rounded-lg overflow-hidden border border-border">
-                {(["overview", "posts"] as const).map((t) => (
+                {(["overview", "posts", "dashboard"] as const).map((t) => (
                   <button
                     key={t}
                     onClick={() => setActiveProfileTab(t)}
@@ -700,7 +710,28 @@ function PublicProfilePageInner() {
 
         {/* Right Column: Dashboard Statistics & Timelines (Span 8) */}
         <div className="lg:col-span-8 space-y-6">
-          {activeProfileTab === "posts" ? (
+          {activeProfileTab === "dashboard" ? (
+            <div className="rounded-xl border border-border bg-[#161B22]/65 p-8 text-center font-mono space-y-4 shadow-xl">
+              <div className="h-14 w-14 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 flex items-center justify-center mx-auto shadow-lg shadow-emerald-500/10">
+                <Layout size={28} />
+              </div>
+              <h3 className="text-base font-bold font-space-grotesk text-text-primary">
+                Interactive Developer Dashboard Suite
+              </h3>
+              <p className="text-xs text-text-secondary max-w-md mx-auto leading-relaxed">
+                Explore full interactive repository analytics, contribution health, coding DNA, and AI Career Assessment for @{profile.login}.
+              </p>
+              <div className="pt-2">
+                <Link
+                  href={`/dashboard?user=${profile.login}`}
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs transition-all shadow-lg shadow-emerald-500/20 active:scale-95"
+                >
+                  <Layout size={15} />
+                  <span>Launch Interactive Dashboard Suite</span>
+                </Link>
+              </div>
+            </div>
+          ) : activeProfileTab === "posts" ? (
             <ProfilePostsTab
               username={profile.login}
               currentUser={currentUser}
