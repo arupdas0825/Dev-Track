@@ -61,9 +61,20 @@ import { useGithubProfile } from "@/hooks/useGithubProfile";
 import { useRepositories } from "@/hooks/useRepositories";
 import { useAnalytics } from "@/hooks/useAnalytics";
 import { getLevelRankTitle } from "@/services/challengesEngine";
+import { subscribeToAuthChanges } from "@/lib/firebase";
+import { DevTrackUser } from "@/types/user";
+import { getUserUidByUsername } from "@/services/devfeedService";
+import dynamic from "next/dynamic";
+
+const FollowButton = dynamic(() => import("@/components/devfeed/FollowButton"), { ssr: false });
+const ProfilePostsTab = dynamic(() => import("@/components/devfeed/ProfilePostsTab"), { ssr: false });
+const ToastProvider = dynamic(
+  () => import("@/components/devfeed/useToast").then(m => ({ default: m.ToastProvider })),
+  { ssr: false }
+);
 
 
-export default function PublicProfilePage() {
+function PublicProfilePageInner() {
   const params = useParams();
   const username = (params.username as string || "").toLowerCase();
   
@@ -73,6 +84,9 @@ export default function PublicProfilePage() {
   const [isUnclaimed, setIsUnclaimed] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const [gamificationState, setGamificationState] = useState<any>(null);
+  const [currentUser, setCurrentUser] = useState<DevTrackUser | null>(null);
+  const [profileUid, setProfileUid] = useState<string | null>(null);
+  const [activeProfileTab, setActiveProfileTab] = useState<"overview" | "posts">("overview");
 
   useEffect(() => {
     if (!username) return;
@@ -126,6 +140,18 @@ export default function PublicProfilePage() {
     };
 
     loadProfile();
+  }, [username]);
+
+  // Subscribe to logged-in viewer for FollowButton
+  useEffect(() => {
+    const unsub = subscribeToAuthChanges((user) => setCurrentUser(user));
+    return unsub;
+  }, []);
+
+  // Resolve the profile owner's UID for FollowButton
+  useEffect(() => {
+    if (!username) return;
+    getUserUidByUsername(username).then(setProfileUid).catch(() => {});
   }, [username]);
 
   // Construct fallback preview data for unclaimed users
@@ -547,7 +573,7 @@ export default function PublicProfilePage() {
             </div>
 
             {/* Social Share Trigger */}
-            <div className="w-full pt-2">
+            <div className="w-full pt-2 space-y-2">
               <button
                 onClick={() => setShareOpen(true)}
                 className="w-full py-2.5 px-4 rounded-lg bg-surface border border-border hover:bg-surface-secondary text-text-primary text-xs font-bold font-mono flex items-center justify-center gap-2 transition-all cursor-pointer"
@@ -555,8 +581,37 @@ export default function PublicProfilePage() {
                 <Share2 size={13} />
                 <span>Share Profile Card</span>
               </button>
+
+              {/* Follow Button (shown to logged-in viewers of other people's profiles) */}
+              {profileUid && (
+                <FollowButton
+                  viewerUid={currentUser?.uid ?? null}
+                  profileUid={profileUid}
+                  className="w-full justify-center"
+                />
+              )}
+            </div>
+
+            {/* Profile tab switcher: Overview | Posts */}
+            <div className="w-full pt-3 border-t border-border/40">
+              <div className="flex rounded-lg overflow-hidden border border-border">
+                {(["overview", "posts"] as const).map((t) => (
+                  <button
+                    key={t}
+                    onClick={() => setActiveProfileTab(t)}
+                    className={`flex-1 py-1.5 text-[10px] font-bold uppercase tracking-wider transition-colors cursor-pointer ${
+                      activeProfileTab === t
+                        ? "bg-accent text-white"
+                        : "bg-surface text-text-secondary hover:bg-surface-secondary"
+                    }`}
+                  >
+                    {t}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
+
 
           {/* Recruiter Snapshot Card */}
           <div className="rounded-xl border border-border bg-[#161B22]/40 p-6 space-y-4 font-mono">
@@ -634,9 +689,15 @@ export default function PublicProfilePage() {
 
         {/* Right Column: Dashboard Statistics & Timelines (Span 8) */}
         <div className="lg:col-span-8 space-y-6">
-          
-          {/* Circular Grade & AI Summary Block */}
-          <div className="rounded-xl border border-border bg-[#161B22]/65 p-6 grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+          {activeProfileTab === "posts" ? (
+            <ProfilePostsTab
+              username={profile.login}
+              currentUser={currentUser}
+            />
+          ) : (
+            <>
+              {/* Circular Grade & AI Summary Block */}
+              <div className="rounded-xl border border-border bg-[#161B22]/65 p-6 grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
             
             {/* Left circular gauge */}
             <div className="md:col-span-4 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-border/40 pb-6 md:pb-0 md:pr-6">
@@ -881,10 +942,20 @@ export default function PublicProfilePage() {
               </div>
             )}
           </div>
-
+            </>
+          )}
         </div>
 
       </main>
     </div>
   );
 }
+
+export default function PublicProfilePage() {
+  return (
+    <ToastProvider>
+      <PublicProfilePageInner />
+    </ToastProvider>
+  );
+}
+

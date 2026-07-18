@@ -25,4 +25,8 @@ export interface UserProfileDoc {
   lastLogin: string;
   privacy?: "public" | "unlisted" | "private";
   pinnedRepos?: string[];
+  // DevFeed native social counters (separate from GitHub-sourced followers/following)
+  devFeedFollowersCount?: number;
+  devFeedFollowingCount?: number;
+  postsCount?: number;
 }

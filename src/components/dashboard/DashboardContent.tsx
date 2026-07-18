@@ -46,6 +46,7 @@ const AiCodeReviewTab = dynamic(() => import("./AiCodeReviewTab"), { ssr: false 
 const LiveActivityTab = dynamic(() => import("./LiveActivityTab"), { ssr: false });
 const HiringDashboard = dynamic(() => import("./HiringDashboard"), { ssr: false });
 const EnterpriseHub = dynamic(() => import("./EnterpriseHub"), { ssr: false });
+const DevFeedTab = dynamic(() => import("@/components/devfeed/DevFeedTab"), { ssr: false });
 import {
   LayoutGrid,
   Folder,
@@ -89,8 +90,10 @@ import {
   Send,
   AlertCircle,
   Building2,
-  Menu
+  Menu,
+  Rss
 } from "lucide-react";
+import { ToastProvider } from "@/components/devfeed/useToast";
 
 type TabId =
   | "overview"
@@ -192,11 +195,12 @@ type TabId =
   | "enterprise-billing"
   | "enterprise-audit"
   | "enterprise-security"
-  | "enterprise-integrations";
+  | "enterprise-integrations"
+  | "devfeed";
 
 
 
-export default function DashboardContent() {
+function DashboardContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [currentUser, setCurrentUser] = useState<DevTrackUser | null>(null);
@@ -521,7 +525,8 @@ export default function DashboardContent() {
       label: "Community",
       icon: Users,
       items: [
-        { id: "main-community-feed", label: "Feed", icon: LayoutGrid, tab: "community-feed" as TabId },
+        { id: "main-devfeed", label: "DevFeed", icon: Rss, tab: "devfeed" as TabId, badge: "NEW" },
+        { id: "main-community-feed", label: "Community Hub", icon: LayoutGrid, tab: "community-feed" as TabId },
         { id: "main-community-developers", label: "Developers", icon: Users, tab: "community-developers" as TabId },
         { id: "main-community-discussions", label: "Discussions", icon: MessageSquare, tab: "community-discussions" as TabId },
       ],
@@ -882,6 +887,12 @@ export default function DashboardContent() {
             activeSubTab={activeTab}
             setActiveSubTab={(t) => setActiveTab(t as TabId)}
           />
+        );
+      case "devfeed":
+        return currentUser ? (
+          <DevFeedTab currentUser={currentUser} />
+        ) : (
+          <OverviewTab data={dashboardData} />
         );
       default:
         return <OverviewTab data={dashboardData} />;
@@ -2273,3 +2284,13 @@ export default function DashboardContent() {
     </>
   );
 }
+
+export default function DashboardContentWithToast() {
+  return (
+    <ToastProvider>
+      <DashboardContent />
+    </ToastProvider>
+  );
+}
+
+

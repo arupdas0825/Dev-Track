@@ -102,7 +102,9 @@ export type TabId =
   | "enterprise-billing"
   | "enterprise-audit"
   | "enterprise-security"
-  | "enterprise-integrations";
+  | "enterprise-integrations"
+  | "devfeed";
+
 
 interface SidebarState {
   isSidebarCollapsed: boolean;

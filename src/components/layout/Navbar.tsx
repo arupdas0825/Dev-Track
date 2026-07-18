@@ -59,7 +59,8 @@ export default function Navbar({ currentUser, onLoginSuccess, onLogout, onDemoTr
             {[
               { label: "Features", href: "/#features", id: "features" },
               { label: "Score Engine", href: "/#features", id: "score" },
-              { label: "Wrapped", href: "/#wrapped", id: "wrapped" }
+              { label: "Wrapped", href: "/#wrapped", id: "wrapped" },
+              ...(currentUser ? [{ label: "Feed", href: "/feed", id: "feed" }] : []),
             ].map(tab => (
               <Link
                 key={tab.id}
@@ -79,6 +80,7 @@ export default function Navbar({ currentUser, onLoginSuccess, onLogout, onDemoTr
               </Link>
             ))}
           </nav>
+
         </div>
 
         {/* Action Controls */}
@@ -241,14 +243,24 @@ export default function Navbar({ currentUser, onLoginSuccess, onLogout, onDemoTr
                 Wrapped
               </Link>
               {currentUser && (
-                <Link
-                  href="/dashboard"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="hover:text-text-primary transition-colors py-2 flex items-center gap-1.5 text-accent"
-                >
-                  <Sparkles size={12} />
-                  <span>Dashboard</span>
-                </Link>
+                <>
+                  <Link
+                    href="/feed"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="hover:text-text-primary transition-colors py-2 flex items-center gap-1.5 text-accent border-b border-border/20"
+                  >
+                    <Sparkles size={12} />
+                    <span>Feed</span>
+                  </Link>
+                  <Link
+                    href="/dashboard"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="hover:text-text-primary transition-colors py-2 flex items-center gap-1.5 text-accent"
+                  >
+                    <Sparkles size={12} />
+                    <span>Dashboard</span>
+                  </Link>
+                </>
               )}
             </nav>
 
