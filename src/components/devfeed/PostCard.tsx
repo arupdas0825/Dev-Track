@@ -1,179 +1,269 @@
-"use client";
+'use client';
 
-import React, { useState } from "react";
-import Link from "next/link";
-import { motion } from "framer-motion";
-import { MessageCircle, ExternalLink } from "lucide-react";
-import { DevFeedPost, PostType } from "@/types/devfeed";
-import { DevTrackUser } from "@/types/user";
-import LikeButton from "./LikeButton";
-import CommentSection from "./CommentSection";
+import React, { useState } from 'react';
+import { motion } from 'framer-motion';
+import { 
+  Heart, 
+  MessageSquare, 
+  Bookmark, 
+  Share2, 
+  Sparkles, 
+  ExternalLink, 
+  Rocket, 
+  GitBranch, 
+  Code2, 
+  FileText,
+  Check
+} from 'lucide-react';
+import { GithubIcon } from '@/components/ui/GithubIcon';
+import Link from 'next/link';
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
-
-function formatRelativeTime(iso: string): string {
-  const diff = Date.now() - new Date(iso).getTime();
-  const secs = Math.floor(diff / 1000);
-  if (secs < 60) return `${secs}s ago`;
-  const mins = Math.floor(secs / 60);
-  if (mins < 60) return `${mins}m ago`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  const days = Math.floor(hrs / 24);
-  if (days < 30) return `${days}d ago`;
-  return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+export interface FeedPost {
+  id: string;
+  author?: {
+    name: string;
+    username: string;
+    avatarUrl: string;
+    archetype: string;
+  };
+  authorId?: string;
+  authorUsername?: string;
+  authorDisplayName?: string | null;
+  authorAvatarUrl?: string | null;
+  type: string;
+  content: string;
+  repoUrl?: string;
+  codeSnippet?: string | null;
+  codeLanguage?: string | null;
+  imageUrl?: string | null;
+  likesCount: number;
+  commentsCount: number;
+  createdAt: string;
+  aiSummary?: string;
 }
-
-const TYPE_BADGE: Record<PostType, { label: string; className: string }> = {
-  milestone: { label: "🏆 Milestone", className: "border-accent/40 text-accent bg-accent/5" },
-  launch:    { label: "🚀 Launch",    className: "border-diff-add/40 text-diff-add bg-diff-add/5" },
-  learning:  { label: "📚 Learning",  className: "border-warning/40 text-warning bg-warning/5" },
-  general:   { label: "General",      className: "border-border text-text-secondary" },
-};
-
-// ── Component ─────────────────────────────────────────────────────────────────
 
 interface PostCardProps {
-  post: DevFeedPost;
-  currentUser: DevTrackUser | null;
+  post: FeedPost;
+  currentUser?: any;
+  onRequireAuth?: () => void;
 }
 
-export default function PostCard({ post, currentUser }: PostCardProps) {
-  const [commentsOpen, setCommentsOpen] = useState(false);
-  const badge = TYPE_BADGE[post.type];
+export const PostCard: React.FC<PostCardProps> = ({ post, onRequireAuth }) => {
+  const [likes, setLikes] = useState(post.likesCount);
+  const [liked, setLiked] = useState(false);
+  const [bookmarked, setBookmarked] = useState(false);
+  const [showComments, setShowComments] = useState(false);
+  const [commentInput, setCommentInput] = useState('');
+  const [commentsList, setCommentsList] = useState<string[]>([]);
+
+  const authorName = post.author?.name || post.authorDisplayName || post.authorUsername || 'Developer';
+  const authorUsername = post.author?.username || post.authorUsername || 'developer';
+  const authorAvatarUrl = post.author?.avatarUrl || post.authorAvatarUrl || `https://api.dicebear.com/7.x/identicon/svg?seed=${authorUsername}`;
+  const archetype = post.author?.archetype || 'Core Engineer';
+
+  const handleLike = () => {
+    const user = typeof window !== 'undefined' ? localStorage.getItem('devtrack_current_user') : null;
+    if (!user && onRequireAuth) {
+      onRequireAuth();
+      return;
+    }
+    if (liked) {
+      setLikes(likes - 1);
+      setLiked(false);
+    } else {
+      setLikes(likes + 1);
+      setLiked(true);
+    }
+  };
+
+  const handleBookmark = () => {
+    const user = typeof window !== 'undefined' ? localStorage.getItem('devtrack_current_user') : null;
+    if (!user && onRequireAuth) {
+      onRequireAuth();
+      return;
+    }
+    setBookmarked(!bookmarked);
+  };
+
+  const handleAddComment = (e: React.FormEvent) => {
+    e.preventDefault();
+    const user = typeof window !== 'undefined' ? localStorage.getItem('devtrack_current_user') : null;
+    if (!user && onRequireAuth) {
+      onRequireAuth();
+      return;
+    }
+    if (!commentInput.trim()) return;
+    setCommentsList([...commentsList, commentInput]);
+    setCommentInput('');
+  };
+
+  const getTypeIcon = (type: string) => {
+    switch (type) {
+      case 'project_launch':
+      case 'launch':
+        return <Rocket className="h-3.5 w-3.5 text-indigo-400" />;
+      case 'repo_update':
+      case 'milestone':
+        return <GitBranch className="h-3.5 w-3.5 text-purple-400" />;
+      case 'code_snippet':
+      case 'learning':
+        return <Code2 className="h-3.5 w-3.5 text-cyan-400" />;
+      default:
+        return <FileText className="h-3.5 w-3.5 text-emerald-400" />;
+    }
+  };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 8 }}
+    <motion.article
+      initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -4 }}
-      transition={{ duration: 0.2, ease: "easeOut" }}
-      className="rounded-xl border border-border bg-surface overflow-hidden"
+      className="rounded-3xl border border-white/10 bg-slate-900/80 p-6 shadow-xl backdrop-blur-xl transition-all hover:border-white/20"
     >
-      <div className="p-4 space-y-3">
-        {/* Header: author + meta */}
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex items-center gap-2.5 min-w-0">
-            {post.authorAvatarUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={post.authorAvatarUrl}
-                alt={post.authorUsername}
-                className="h-8 w-8 rounded-full object-cover border border-border flex-shrink-0"
-              />
-            ) : (
-              <div className="h-8 w-8 rounded-full bg-surface-secondary border border-border flex items-center justify-center text-[11px] font-bold text-text-secondary flex-shrink-0">
-                {post.authorUsername.slice(0, 2).toUpperCase()}
-              </div>
-            )}
-            <div className="min-w-0">
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <Link
-                  href={`/u/${post.authorUsername}`}
-                  className="text-xs font-bold text-text-primary hover:text-accent transition-colors truncate"
-                >
-                  {post.authorDisplayName || post.authorUsername}
-                </Link>
-                <Link
-                  href={`/u/${post.authorUsername}`}
-                  className="text-[10px] text-text-secondary hover:text-text-primary transition-colors font-mono"
-                >
-                  @{post.authorUsername}
-                </Link>
-              </div>
-              <span className="text-[10px] text-text-secondary font-mono">
-                {formatRelativeTime(post.createdAt)}
+      {/* Post Header */}
+      <div className="flex items-start justify-between">
+        <div className="flex items-center gap-3">
+          <Link href={`/u/${authorUsername}`}>
+            <img
+              src={authorAvatarUrl}
+              alt={authorName}
+              className="h-11 w-11 rounded-2xl object-cover ring-2 ring-white/10 hover:ring-indigo-500 transition-all"
+            />
+          </Link>
+
+          <div>
+            <div className="flex items-center gap-2">
+              <Link
+                href={`/u/${authorUsername}`}
+                className="text-sm font-bold text-white hover:text-indigo-400 transition-colors"
+              >
+                {authorName}
+              </Link>
+              <span className="text-xs text-indigo-400 font-medium">@{authorUsername}</span>
+            </div>
+            <div className="flex items-center gap-2 mt-0.5">
+              <span className="rounded-md bg-white/5 border border-white/10 px-2 py-0.5 text-[10px] font-semibold text-slate-300">
+                {archetype}
               </span>
+              <span className="text-[10px] text-slate-500">• {post.createdAt}</span>
             </div>
           </div>
-
-          {/* Post type badge */}
-          {post.type !== "general" && (
-            <span
-              className={`flex-shrink-0 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${badge.className}`}
-            >
-              {badge.label}
-            </span>
-          )}
         </div>
 
-        {/* Content */}
-        <p className="text-sm text-text-primary leading-relaxed whitespace-pre-wrap break-words">
-          {post.content}
-        </p>
-
-        {/* Code snippet */}
-        {post.codeSnippet && (
-          <div className="rounded-lg border border-border bg-background overflow-hidden">
-            <div className="flex items-center justify-between px-3 py-1.5 border-b border-border bg-surface-secondary">
-              <span className="text-[10px] font-mono text-text-secondary uppercase tracking-wider">
-                {post.codeLanguage || "code"}
-              </span>
-              <button
-                onClick={() => {
-                  if (navigator.clipboard) {
-                    navigator.clipboard.writeText(post.codeSnippet!);
-                  }
-                }}
-                className="text-[10px] text-text-secondary hover:text-text-primary transition-colors cursor-pointer"
-                title="Copy"
-              >
-                Copy
-              </button>
-            </div>
-            <pre className="overflow-x-auto p-3 text-[12px] text-text-primary font-mono leading-relaxed scrollbar-thin">
-              <code>{post.codeSnippet}</code>
-            </pre>
-          </div>
-        )}
-
-        {/* Image */}
-        {post.imageUrl && (
-          <div className="rounded-lg overflow-hidden border border-border">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={post.imageUrl}
-              alt="Post attachment"
-              className="w-full max-h-80 object-cover"
-              onError={(e) => {
-                (e.currentTarget as HTMLImageElement).style.display = "none";
-              }}
-            />
-          </div>
-        )}
-
-        {/* Action row */}
-        <div className="flex items-center gap-4 pt-1 border-t border-border/40">
-          <LikeButton
-            postId={post.id}
-            initialCount={post.likesCount}
-            currentUser={currentUser}
-          />
-
-          <button
-            onClick={() => setCommentsOpen(!commentsOpen)}
-            className="flex items-center gap-1.5 text-[11px] text-text-secondary hover:text-accent transition-colors cursor-pointer"
-          >
-            <MessageCircle size={14} />
-            <span>{post.commentsCount}</span>
-          </button>
-
-          <a
-            href={`/u/${post.authorUsername}`}
-            className="ml-auto text-[10px] text-text-secondary hover:text-accent transition-colors flex items-center gap-1"
-          >
-            <ExternalLink size={11} />
-          </a>
+        {/* Post Type Badge */}
+        <div className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-slate-950/60 px-3 py-1 text-xs font-semibold text-slate-300">
+          {getTypeIcon(post.type)}
+          <span className="capitalize">{post.type.replace('_', ' ')}</span>
         </div>
       </div>
 
-      {/* Comments section (expand/collapse) */}
-      {commentsOpen && (
-        <CommentSection
-          postId={post.id}
-          currentUser={currentUser}
-        />
+      {/* Content */}
+      <div className="mt-4 space-y-3">
+        <p className="text-xs text-slate-200 leading-relaxed whitespace-pre-line">
+          {post.content}
+        </p>
+
+        {/* Repo Link Box */}
+        {post.repoUrl && (
+          <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-slate-950/60 p-3.5 hover:border-indigo-500/40 transition-all">
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-800 text-white">
+                <GithubIcon className="h-5 w-5" />
+              </div>
+              <div className="min-w-0">
+                <h5 className="truncate text-xs font-bold text-white">{post.repoUrl}</h5>
+                <p className="text-[11px] text-slate-400">View Open Source Codebase</p>
+              </div>
+            </div>
+            <a
+              href={post.repoUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-1 rounded-xl bg-indigo-500/20 border border-indigo-500/30 px-3 py-1.5 text-xs font-semibold text-indigo-300 hover:bg-indigo-500/30 transition-all"
+            >
+              <span>Repo</span>
+              <ExternalLink className="h-3 w-3" />
+            </a>
+          </div>
+        )}
+
+        {/* AI Insight Pill */}
+        {post.aiSummary && (
+          <div className="flex items-start gap-2.5 rounded-2xl border border-purple-500/20 bg-purple-500/10 p-3 text-xs text-purple-200">
+            <Sparkles className="h-4 w-4 text-purple-400 shrink-0 mt-0.5" />
+            <p className="text-[11px] leading-relaxed">{post.aiSummary}</p>
+          </div>
+        )}
+      </div>
+
+      {/* Footer Actions */}
+      <div className="mt-5 flex items-center justify-between border-t border-white/10 pt-3">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={handleLike}
+            className={`flex items-center gap-1.5 text-xs font-semibold transition-colors ${
+              liked ? 'text-rose-400' : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <Heart className={`h-4 w-4 ${liked ? 'fill-rose-400 text-rose-400' : ''}`} />
+            <span>{likes}</span>
+          </button>
+
+          <button
+            onClick={() => setShowComments(!showComments)}
+            className="flex items-center gap-1.5 text-xs font-semibold text-slate-400 hover:text-white transition-colors"
+          >
+            <MessageSquare className="h-4 w-4" />
+            <span>{post.commentsCount + commentsList.length}</span>
+          </button>
+
+          <button
+            onClick={handleBookmark}
+            className={`flex items-center gap-1.5 text-xs font-semibold transition-colors ${
+              bookmarked ? 'text-amber-400' : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <Bookmark className={`h-4 w-4 ${bookmarked ? 'fill-amber-400 text-amber-400' : ''}`} />
+          </button>
+        </div>
+
+        <button
+          onClick={() => navigator.clipboard.writeText(window.location.href)}
+          className="flex items-center gap-1.5 text-xs font-semibold text-slate-400 hover:text-white transition-colors"
+        >
+          <Share2 className="h-4 w-4" />
+          <span className="hidden sm:inline">Share</span>
+        </button>
+      </div>
+
+      {/* Expandable Comments Drawer */}
+      {showComments && (
+        <div className="mt-4 pt-3 border-t border-white/5 space-y-3">
+          <form onSubmit={handleAddComment} className="flex gap-2">
+            <input
+              type="text"
+              value={commentInput}
+              onChange={(e) => setCommentInput(e.target.value)}
+              placeholder="Add technical feedback or question..."
+              className="flex-1 rounded-xl border border-white/10 bg-slate-950/60 px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none"
+            />
+            <button
+              type="submit"
+              className="rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white hover:bg-indigo-500 transition-all"
+            >
+              Reply
+            </button>
+          </form>
+
+          {commentsList.map((cmt, idx) => (
+            <div key={idx} className="rounded-xl border border-white/5 bg-slate-950/40 p-2.5 text-xs text-slate-300">
+              <span className="font-bold text-indigo-400 mr-2">@you:</span>
+              {cmt}
+            </div>
+          ))}
+        </div>
       )}
-    </motion.div>
+    </motion.article>
   );
-}
+};
+
+export default PostCard;

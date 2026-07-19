@@ -27,9 +27,10 @@ const monoFont = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Dev-Track | Developer Intelligence Platform",
-  description: "Dev-Track analyzes GitHub activity and transforms it into actionable developer intelligence. Understand your coding consistency, repository quality, strengths, and career trajectory.",
-  keywords: ["GitHub analytics", "developer intelligence", "profile analysis", "coding metrics", "career insights"],
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"),
+  title: "DevTrack 2.0 — The Professional Network for Developers",
+  description: "Build your professional developer identity. DevTrack transforms raw GitHub commits, pull requests, and repositories into verified profile cards, real-time developer scores, and a social developer network.",
+  keywords: ["developer identity", "developer network", "GitHub profile card", "developer score", "open source portfolio", "developer ecosystem"],
   icons: {
     icon: [
       { url: "/favicon.ico?v=1" },
@@ -47,14 +48,14 @@ export const metadata: Metadata = {
     title: "DevTrack",
   },
   openGraph: {
-    title: "Dev-Track | Developer Intelligence Platform",
-    description: "Dev-Track analyzes GitHub activity and transforms it into actionable developer intelligence.",
+    title: "DevTrack 2.0 — The Professional Network for Developers",
+    description: "Build your professional developer identity. Transform GitHub activity into verified profile cards and developer scores.",
     images: [
       {
         url: "/og-image.png?v=1",
         width: 1200,
         height: 1200,
-        alt: "Dev-Track Logo",
+        alt: "DevTrack Logo",
       },
     ],
   },

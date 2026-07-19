@@ -1,16 +1,21 @@
 @import "tailwindcss";
 
 :root {
-  --background: #0B0E11;
-  --surface: #12161C;
-  --surface-secondary: #191F27;
-  --border: #232B35;
-  --text-primary: #E6EDF3;
-  --text-secondary: #8A94A3;
-  --diff-add: #3FB950;
-  --diff-remove: #F85149;
-  --accent: #58A6FF;
-  --warning: #D29922;
+  --background: #090D14;
+  --surface: #0F172A;
+  --surface-secondary: #1E293B;
+  --surface-glass: rgba(15, 23, 42, 0.75);
+  --border: rgba(255, 255, 255, 0.1);
+  --border-highlight: rgba(99, 102, 241, 0.3);
+  --text-primary: #F8FAFC;
+  --text-secondary: #94A3B8;
+  --text-muted: #64748B;
+  --accent-primary: #6366F1;
+  --accent-secondary: #8B5CF6;
+  --accent-cyan: #06B6D4;
+  --accent-emerald: #10B981;
+  --diff-add: #10B981;
+  --diff-remove: #EF4444;
 }
 
 @theme {
@@ -20,131 +25,129 @@
   --color-border: var(--border);
   --color-text-primary: var(--text-primary);
   --color-text-secondary: var(--text-secondary);
-  --color-diff-add: var(--diff-add);
-  --color-diff-remove: var(--diff-remove);
-  --color-accent: var(--accent);
-  --color-warning: var(--warning);
-
-  --font-display: var(--font-display);
-  --font-body: var(--font-body);
-  --font-mono: var(--font-mono);
+  --color-accent-primary: var(--accent-primary);
+  --color-accent-secondary: var(--accent-secondary);
+  --color-accent-cyan: var(--accent-cyan);
 }
 
 body {
   background-color: var(--background);
   color: var(--text-primary);
-  font-family: var(--font-body), system-ui, sans-serif;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   margin: 0;
   padding: 0;
+  overflow-x: hidden;
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.12) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(139, 92, 246, 0.1) 0px, transparent 50%),
+    radial-gradient(at 50% 50%, rgba(6, 182, 212, 0.05) 0px, transparent 70%);
+  background-attachment: fixed;
 }
 
-/* Premium Typography utilities */
-
-.font-mono {
-  font-family: var(--font-mono), monospace;
+/* Glassmorphism Utilities */
+.glass-panel {
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.text-display-hero {
-  font-size: 60px;
-  line-height: 1.1;
-  letter-spacing: -0.03em;
-  font-weight: 800;
+.glass-card {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.15);
 }
 
-.text-hero {
-  font-size: 48px;
-  line-height: 1.1;
-  letter-spacing: -0.03em;
-  font-weight: 700;
+.glass-card-hover {
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.text-dashboard-heading {
-  font-size: 36px;
-  line-height: 1.1;
-  letter-spacing: -0.02em;
-  font-weight: 700;
+.glass-card-hover:hover {
+  transform: translateY(-4px);
+  border-color: rgba(99, 102, 241, 0.4);
+  box-shadow: 0 25px 50px -12px rgba(99, 102, 241, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.25);
 }
 
-.text-section-heading {
-  font-size: 28px;
-  line-height: 1.2;
-  letter-spacing: -0.02em;
-  font-weight: 600;
+.glass-input {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(8px);
+  color: var(--text-primary);
+  transition: all 0.2s ease;
 }
 
-.text-card-heading {
-  font-size: 22px;
-  line-height: 1.35;
-  letter-spacing: -0.01em;
-  font-weight: 600;
+.glass-input:focus {
+  outline: none;
+  border-color: #6366F1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
 }
 
-.text-sub-heading {
-  font-size: 18px;
-  line-height: 1.4;
-  font-weight: 500;
+/* Gradient text */
+.text-gradient {
+  background: linear-gradient(135deg, #FFFFFF 0%, #CBD5E1 50%, #818CF8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
-.text-body-large {
-  font-size: 16px;
-  line-height: 1.6;
+.text-gradient-primary {
+  background: linear-gradient(135deg, #818CF8 0%, #C084FC 50%, #38BDF8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
-.text-body {
-  font-size: 15px;
-  line-height: 1.6;
+/* Glow effects */
+.glow-primary {
+  box-shadow: 0 0 30px -5px rgba(99, 102, 241, 0.5);
 }
 
-.text-small-text {
-  font-size: 13px;
-  line-height: 1.5;
+.glow-cyan {
+  box-shadow: 0 0 30px -5px rgba(6, 182, 212, 0.5);
 }
 
-.text-caption {
-  font-size: 12px;
-  line-height: 1.5;
+/* Scrollbar customization */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
 }
 
-.text-label {
-  font-size: 11px;
-  line-height: 1.4;
-  letter-spacing: 0.02em;
+::-webkit-scrollbar-track {
+  background: #090D14;
 }
 
-/* Tabular figures for stats alignment */
-.text-tabular {
-  font-variant-numeric: tabular-nums;
-  letter-spacing: -0.02em;
+::-webkit-scrollbar-thumb {
+  background: #1E293B;
+  border-radius: 4px;
+  border: 2px solid #090D14;
 }
 
-/* Custom styles for charts or overlays */
-.scrollbar-thin::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+::-webkit-scrollbar-thumb:hover {
+  background: #334155;
 }
 
-.scrollbar-thin::-webkit-scrollbar-track {
-  background: var(--surface);
+/* Keyframe Animations */
+@keyframes pulseGlow {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(1.05); }
 }
 
-.scrollbar-thin::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 3px;
+.animate-pulse-glow {
+  animation: pulseGlow 6s ease-in-out infinite;
 }
 
-.scrollbar-thin::-webkit-scrollbar-thumb:hover {
-  background: var(--surface-secondary);
+@keyframes floatSlow {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-10px) rotate(1deg); }
 }
 
-/* Hide Spline 3D Watermark globally across normal and shadow DOM */
+.animate-float-slow {
+  animation: floatSlow 8s ease-in-out infinite;
+}
+
+/* Hide Spline watermark */
 #spline-watermark,
 a[href*="spline.design"],
-[class*="spline-watermark"],
-[id*="spline-watermark"] {
+[class*="spline-watermark"] {
   display: none !important;
-  opacity: 0 !important;
-  pointer-events: none !important;
-  visibility: hidden !important;
-  z-index: -9999 !important;
 }
-

@@ -28,7 +28,7 @@ interface DeveloperBattleModalProps {
   onClose: () => void;
   initialUsername: string;
   isAuthenticated: boolean;
-  onRequireAuth: (title: string, message: string) => void;
+  onRequireAuth: (title: string, message: string, resume: () => void) => void;
 }
 
 type ModalState = "loading" | "card" | "battle_input" | "battle_loading" | "battle_result" | "error";
@@ -150,9 +150,58 @@ export default function DeveloperBattleModal({
     }
   };
 
-  const handleLockedAction = (actionTitle: string, actionMessage: string, callback?: () => void) => {
+  const exportCardPNG = (username: string) => {
+    const canvas = document.createElement("canvas");
+    canvas.width = 600;
+    canvas.height = 400;
+    const ctx = canvas.getContext("2d");
+    if (ctx) {
+      ctx.fillStyle = "#0D1117";
+      ctx.fillRect(0, 0, 600, 400);
+      ctx.fillStyle = "#6366F1";
+      ctx.font = "bold 24px sans-serif";
+      ctx.fillText("DevTrack 2.0 Identity Card", 40, 50);
+      ctx.fillStyle = "#FFFFFF";
+      ctx.font = "bold 20px sans-serif";
+      ctx.fillText(`Developer: @${username}`, 40, 100);
+      ctx.fillStyle = "#94A3B8";
+      ctx.font = "14px sans-serif";
+      ctx.fillText("Verified DevTrack Score & Profile Card", 40, 130);
+
+      canvas.toBlob((blob) => {
+        if (!blob) return;
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `devtrack_card_${username}.png`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+      });
+    }
+  };
+
+  const shareCard = (username: string) => {
+    const shareUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/u/${username}`;
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      navigator.clipboard.writeText(shareUrl);
+      alert(`DevTrack profile URL copied to clipboard: ${shareUrl}`);
+    } else {
+      alert(`DevTrack profile URL: ${shareUrl}`);
+    }
+  };
+
+  const handleLockedAction = (
+    actionTitle: string,
+    actionMessage: string,
+    callback?: () => void
+  ) => {
     if (!isAuthenticated) {
-      onRequireAuth(actionTitle, actionMessage);
+      onRequireAuth(actionTitle, actionMessage, () => {
+        if (callback) callback();
+        else alert("Feature activated! Preparing your high-resolution asset...");
+      });
     } else if (callback) {
       callback();
     } else {
@@ -169,7 +218,7 @@ export default function DeveloperBattleModal({
     const o = getDeveloperCardInfo(opponentData);
 
     if (p.score > o.score) {
-      return `🏆 VERDICT: @${p.username} (${p.archetype}) outclasses @${o.username} (${o.archetype}) by ${p.score - o.score} points! With higher overall metrics and ${p.stars.toLocaleString()} total stars, @${p.username} claims total victory in this coding clash.`;
+      return `🏆 VERDICT: @${p.username} (${p.archetype}) outclasses @${o.username} (${o.archetype}) by ${p.score - o.score} points! With higher overall metrics and ${(p.stars ?? p.totalStars ?? 0).toLocaleString()} total stars, @${p.username} claims total victory in this coding clash.`;
     } else if (o.score > p.score) {
       return `👑 VERDICT: @${o.username} (${o.archetype}) takes the crown! Outscoring @${p.username} by ${o.score - p.score} points with elite ${o.topLanguage} craftsmanship and Level ${o.level} stats.`;
     } else {
@@ -253,7 +302,7 @@ export default function DeveloperBattleModal({
             >
               {/* Left: The Collectible Card */}
               <div className="flex-1 flex justify-center w-full max-w-[400px]">
-                <DeveloperCard data={primaryData} animate={true} />
+                <DeveloperCard data={getDeveloperCardInfo(primaryData)} />
               </div>
 
               {/* Right: Action Controls & Battle Launcher */}
@@ -300,7 +349,8 @@ export default function DeveloperBattleModal({
                   <button
                     onClick={() => handleLockedAction(
                       "Download High-Resolution Card",
-                      "Sign in with GitHub to export your collectible card PNG, customize holographic borders, and unlock dark/light themes."
+                      "Sign in with GitHub to export your collectible card PNG, customize holographic borders, and unlock dark/light themes.",
+                      () => exportCardPNG(primaryData?.profile?.login || initialUsername)
                     )}
                     className="flex items-center justify-between p-3.5 rounded-xl bg-[#161B22] border border-border/60 hover:border-accent/50 transition-colors text-left group"
                   >
@@ -314,7 +364,8 @@ export default function DeveloperBattleModal({
                   <button
                     onClick={() => handleLockedAction(
                       "Share to X & LinkedIn",
-                      "Sign in with GitHub to generate your custom public share card URL and showcase your badge to recruiters."
+                      "Sign in with GitHub to generate your custom public share card URL and showcase your badge to recruiters.",
+                      () => shareCard(primaryData?.profile?.login || initialUsername)
                     )}
                     className="flex items-center justify-between p-3.5 rounded-xl bg-[#161B22] border border-border/60 hover:border-accent/50 transition-colors text-left group"
                   >
@@ -329,7 +380,8 @@ export default function DeveloperBattleModal({
                 <button
                   onClick={() => handleLockedAction(
                     "Sequence Full Developer DNA",
-                    "Sign in to access your comprehensive repository diagnostics, 12-month consistency heatmap, and AI career recommendations."
+                    "Sign in to access your comprehensive repository diagnostics, 12-month consistency heatmap, and AI career recommendations.",
+                    () => { if (typeof window !== "undefined") window.location.href = "/ai"; }
                   )}
                   className="w-full py-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-xs font-bold font-space-grotesk text-white transition-all flex items-center justify-center gap-2"
                 >
@@ -483,14 +535,14 @@ export default function DeveloperBattleModal({
                   <span className="text-xs font-bold uppercase tracking-wider text-accent mb-3 block">
                     CHALLENGER (YOU)
                   </span>
-                  <DeveloperCard data={primaryData} animate={true} />
+                  <DeveloperCard data={getDeveloperCardInfo(primaryData)} />
                 </div>
 
                 <div className="w-full flex flex-col items-center">
                   <span className="text-xs font-bold uppercase tracking-wider text-purple-400 mb-3 block">
                     OPPONENT
                   </span>
-                  <DeveloperCard data={opponentData} animate={true} />
+                  <DeveloperCard data={getDeveloperCardInfo(opponentData)} />
                 </div>
               </div>
 
@@ -507,14 +559,22 @@ export default function DeveloperBattleModal({
                   const pInfo = getDeveloperCardInfo(primaryData);
                   const oInfo = getDeveloperCardInfo(opponentData);
 
+                  const pLevel = pInfo.level ?? 1;
+                  const oLevel = oInfo.level ?? 1;
+                  const pStars = pInfo.totalStars || pInfo.stars || 0;
+                  const oStars = oInfo.totalStars || oInfo.stars || 0;
+                  const pRepos = pInfo.publicRepos || 0;
+                  const oRepos = oInfo.publicRepos || 0;
+                  const pFollowers = pInfo.followers || 0;
+                  const oFollowers = oInfo.followers || 0;
+
                   const metrics = [
                     { label: "Overall Score", p: `${pInfo.score}/100`, o: `${oInfo.score}/100`, pWin: pInfo.score > oInfo.score, oWin: oInfo.score > pInfo.score },
-                    { label: "Developer Level", p: `LVL ${pInfo.level}`, o: `LVL ${oInfo.level}`, pWin: pInfo.level > oInfo.level, oWin: oInfo.level > pInfo.level },
-                    { label: "Repositories", p: pInfo.repos, o: oInfo.repos, pWin: pInfo.repos > oInfo.repos, oWin: oInfo.repos > pInfo.repos },
-                    { label: "Total Stars Earned", p: pInfo.stars.toLocaleString(), o: oInfo.stars.toLocaleString(), pWin: pInfo.stars > oInfo.stars, oWin: oInfo.stars > pInfo.stars },
-                    { label: "Followers Network", p: pInfo.followers.toLocaleString(), o: oInfo.followers.toLocaleString(), pWin: pInfo.followers > oInfo.followers, oWin: oInfo.followers > pInfo.followers },
-                    { label: "Longest Streak", p: `${pInfo.longestStreak} days`, o: `${oInfo.longestStreak} days`, pWin: pInfo.longestStreak > oInfo.longestStreak, oWin: oInfo.longestStreak > pInfo.longestStreak },
-                    { label: "Top Stack", p: pInfo.topLanguage, o: oInfo.topLanguage, pWin: false, oWin: false }
+                    { label: "Developer Level", p: `LVL ${pLevel}`, o: `LVL ${oLevel}`, pWin: pLevel > oLevel, oWin: oLevel > pLevel },
+                    { label: "Repositories", p: pRepos, o: oRepos, pWin: pRepos > oRepos, oWin: oRepos > pRepos },
+                    { label: "Total Stars Earned", p: pStars.toLocaleString(), o: oStars.toLocaleString(), pWin: pStars > oStars, oWin: oStars > pStars },
+                    { label: "Followers Network", p: pFollowers.toLocaleString(), o: oFollowers.toLocaleString(), pWin: pFollowers > oFollowers, oWin: oFollowers > pFollowers },
+                    { label: "Top Stack", p: pInfo.topLanguage || "TypeScript", o: oInfo.topLanguage || "TypeScript", pWin: false, oWin: false }
                   ];
 
                   return (
