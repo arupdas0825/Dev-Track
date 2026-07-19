@@ -1,6 +1,6 @@
 import { initializeApp, getApps, getApp, FirebaseApp } from "firebase/app";
 import { getAuth, signInWithPopup, GithubAuthProvider, signOut, onAuthStateChanged, User, Auth } from "firebase/auth";
-import { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs, writeBatch, Firestore } from "firebase/firestore";
+import { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs, writeBatch, increment as firestoreIncrement, Firestore } from "firebase/firestore";
 import { getAnalytics, isSupported, Analytics } from "firebase/analytics";
 import { UserDashboardData, GitHubRepository, GitHubProfile, ContributionStats, DeveloperScore, UserProfileDoc, UserAnalyticsDoc, DevTrackUser } from "../types";
 export type { DevTrackUser };
@@ -406,3 +406,27 @@ export async function updatePublicProfileSettings(
   const userDocRef = doc(db, "users", uid);
   await setDoc(userDocRef, { privacy, pinnedRepos }, { merge: true });
 }
+
+
+/**
+ * Increments the profileViewsCount for a user identified by uid.
+ * Debounced per session: only fires once per (viewerUid, profileUid) pair per session.
+ * Should be called when a logged-in user views another user's profile.
+ */
+export async function incrementProfileView(profileUid: string, viewerUid: string): Promise<void> {
+  if (!isFirebaseEnabled || !db) return;
+  if (typeof window === "undefined") return;
+  if (viewerUid === profileUid) return; // Don't count own views
+
+  const sessionKey = `devtrack_pv_${profileUid}`;
+  if (sessionStorage.getItem(sessionKey)) return; // Already counted this session
+  sessionStorage.setItem(sessionKey, "1");
+
+  try {
+    const userDocRef = doc(db, "users", profileUid);
+    await setDoc(userDocRef, { profileViewsCount: firestoreIncrement(1) }, { merge: true });
+  } catch {
+    // Non-critical; silently ignore
+  }
+}
+

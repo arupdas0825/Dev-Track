@@ -29,4 +29,7 @@ export interface UserProfileDoc {
   devFeedFollowersCount?: number;
   devFeedFollowingCount?: number;
   postsCount?: number;
+  // Profile analytics counters
+  profileViewsCount?: number;
+  postImpressionsCount?: number;
 }

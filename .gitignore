@@ -47,3 +47,8 @@ firebase-admin-key.json
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# markdown files rule (AGENTS.md rule: do not commit or push any .md except README.md)
+*.md
+!README.md
+

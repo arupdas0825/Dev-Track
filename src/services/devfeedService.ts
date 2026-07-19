@@ -434,3 +434,175 @@ export async function getUserUidByUsername(
   if (snap.empty) return null;
   return (snap.docs[0].data() as { uid: string }).uid;
 }
+
+/**
+ * Returns up to `limitCount` users that the current user doesn't already follow,
+ * ordered by their devFeedFollowersCount descending.
+ * Excludes the current user.
+ */
+export interface SuggestedDeveloper {
+  uid: string;
+  username: string;
+  displayName: string | null;
+  avatarUrl: string | null;
+  bio: string | null;
+  devFeedFollowersCount: number;
+}
+
+export async function getSuggestedDevelopers(
+  currentUserId: string,
+  limitCount = 5
+): Promise<SuggestedDeveloper[]> {
+  if (!isFirebaseEnabled || !db) return [];
+  try {
+    // Get all users this person already follows
+    const followsSnap = await getDocs(
+      query(collection(db, "follows"), where("followerId", "==", currentUserId))
+    );
+    const alreadyFollowing = new Set<string>([currentUserId]);
+    followsSnap.forEach((s) => {
+      const d = s.data() as { followingId: string };
+      alreadyFollowing.add(d.followingId);
+    });
+
+    // Get top users by follower count
+    const usersSnap = await getDocs(
+      query(collection(db, "users"), orderBy("devFeedFollowersCount", "desc"), limit(50))
+    );
+
+    const results: SuggestedDeveloper[] = [];
+    usersSnap.forEach((s) => {
+      if (results.length >= limitCount) return;
+      const d = s.data() as {
+        uid: string;
+        username: string;
+        displayName?: string | null;
+        avatarUrl?: string | null;
+        bio?: string | null;
+        devFeedFollowersCount?: number;
+      };
+      if (alreadyFollowing.has(d.uid)) return;
+      results.push({
+        uid: d.uid,
+        username: d.username,
+        displayName: d.displayName ?? null,
+        avatarUrl: d.avatarUrl ?? null,
+        bio: d.bio ?? null,
+        devFeedFollowersCount: d.devFeedFollowersCount ?? 0,
+      });
+    });
+    return results;
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Fetches all comments by a specific user (for the profile Comments tab).
+ */
+export async function getCommentsByAuthorId(
+  authorId: string,
+  pageSize = 20
+): Promise<DevFeedComment[]> {
+  assertFirebase();
+  const q = query(
+    collection(db!, "comments"),
+    where("authorId", "==", authorId),
+    orderBy("createdAt", "desc"),
+    limit(pageSize)
+  );
+  const snap = await getDocs(q);
+  const comments: DevFeedComment[] = [];
+  snap.forEach((s) => comments.push(docToComment(s)));
+  return comments;
+}
+
+/**
+ * Fetches all bookmarked (liked) post IDs for a user.
+ */
+export async function getLikedPostIds(userId: string): Promise<string[]> {
+  if (!isFirebaseEnabled || !db) return [];
+  try {
+    const q = query(collection(db, "likes"), where("userId", "==", userId), limit(200));
+    const snap = await getDocs(q);
+    const ids: string[] = [];
+    snap.forEach((s) => {
+      const d = s.data() as DevFeedLike;
+      ids.push(d.postId);
+    });
+    return ids;
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Fetches posts by an array of post IDs (for saved/bookmarked view).
+ */
+export async function getPostsByIds(postIds: string[]): Promise<DevFeedPost[]> {
+  if (!isFirebaseEnabled || !db || postIds.length === 0) return [];
+  try {
+    const chunks = chunkArray(postIds, 30);
+    const all: DevFeedPost[] = [];
+    await Promise.all(
+      chunks.map(async (chunk) => {
+        const q = query(collection(db!, "posts"), where("__name__", "in", chunk));
+        const snap = await getDocs(q);
+        snap.forEach((s) => all.push(docToPost(s)));
+      })
+    );
+    all.sort((a, b) => (a.createdAt > b.createdAt ? -1 : 1));
+    return all;
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Fetches users that `uid` is following (for the network panel).
+ */
+export async function getFollowingUsers(uid: string): Promise<SuggestedDeveloper[]> {
+  if (!isFirebaseEnabled || !db) return [];
+  try {
+    const followsSnap = await getDocs(
+      query(collection(db, "follows"), where("followerId", "==", uid), limit(100))
+    );
+    const followingIds: string[] = [];
+    followsSnap.forEach((s) => {
+      const d = s.data() as { followingId: string };
+      followingIds.push(d.followingId);
+    });
+    if (followingIds.length === 0) return [];
+
+    const chunks = chunkArray(followingIds, 30);
+    const users: SuggestedDeveloper[] = [];
+    await Promise.all(
+      chunks.map(async (chunk) => {
+        const q = query(collection(db!, "users"), where("uid", "in", chunk));
+        const snap = await getDocs(q);
+        snap.forEach((s) => {
+          const d = s.data() as {
+            uid: string;
+            username: string;
+            displayName?: string | null;
+            avatarUrl?: string | null;
+            bio?: string | null;
+            devFeedFollowersCount?: number;
+          };
+          users.push({
+            uid: d.uid,
+            username: d.username,
+            displayName: d.displayName ?? null,
+            avatarUrl: d.avatarUrl ?? null,
+            bio: d.bio ?? null,
+            devFeedFollowersCount: d.devFeedFollowersCount ?? 0,
+          });
+        });
+      })
+    );
+    return users;
+  } catch {
+    return [];
+  }
+}
+
