@@ -476,13 +476,13 @@ export function DevTrackRobotDisplay({ text = 'DevTrack' }: { text?: string }) {
   return (
     <div className="relative w-full h-full min-h-[460px] flex flex-col items-center justify-center overflow-hidden rounded-3xl">
       {/* Background DevTrack Branding Text */}
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none z-0">
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none z-0 px-4">
         <h1
-          className="font-sans font-black text-center whitespace-nowrap bg-gradient-to-b from-white/20 via-indigo-300/10 to-indigo-500/5 bg-clip-text text-transparent tracking-tighter"
+          className="font-sans font-black text-center whitespace-nowrap bg-gradient-to-b from-white/30 via-indigo-200/20 to-indigo-500/10 bg-clip-text text-transparent tracking-tight max-w-full"
           style={{
-            fontSize: 'clamp(4rem, 12vw, 10rem)',
+            fontSize: 'clamp(2.2rem, 5vw, 4.8rem)',
             lineHeight: 1,
-            transform: 'translateY(-20px)',
+            transform: 'translateY(-30px)',
           }}
         >
           {text}
