@@ -145,9 +145,36 @@ body {
   animation: floatSlow 8s ease-in-out infinite;
 }
 
+@keyframes orbit {
+  0% {
+    transform: rotate(0deg) translateY(calc(var(--radius) * 1px)) rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg) translateY(calc(var(--radius) * 1px)) rotate(-360deg);
+  }
+}
+
+.animate-orbit {
+  animation: orbit calc(var(--duration) * 1s) linear infinite;
+}
+
+@keyframes ripple {
+  0%, 100% {
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(0.9);
+  }
+}
+
+.animate-ripple {
+  animation: ripple 3s ease-in-out infinite;
+}
+
 /* Hide Spline watermark */
 #spline-watermark,
 a[href*="spline.design"],
 [class*="spline-watermark"] {
   display: none !important;
 }
+

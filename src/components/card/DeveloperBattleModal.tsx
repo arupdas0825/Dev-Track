@@ -217,12 +217,15 @@ export default function DeveloperBattleModal({
     const p = getDeveloperCardInfo(primaryData);
     const o = getDeveloperCardInfo(opponentData);
 
-    if (p.score > o.score) {
-      return `🏆 VERDICT: @${p.username} (${p.archetype}) outclasses @${o.username} (${o.archetype}) by ${p.score - o.score} points! With higher overall metrics and ${(p.stars ?? p.totalStars ?? 0).toLocaleString()} total stars, @${p.username} claims total victory in this coding clash.`;
-    } else if (o.score > p.score) {
-      return `👑 VERDICT: @${o.username} (${o.archetype}) takes the crown! Outscoring @${p.username} by ${o.score - p.score} points with elite ${o.topLanguage} craftsmanship and Level ${o.level} stats.`;
+    const pScore = p.score || p.numericScore || 50;
+    const oScore = o.score || o.numericScore || 50;
+
+    if (pScore > oScore) {
+      return `🏆 VERDICT: @${p.username} (${p.archetype}) outclasses @${o.username} (${o.archetype}) by ${pScore - oScore} points! With higher overall metrics and ${(p.stars ?? p.totalStars ?? 0).toLocaleString()} total stars, @${p.username} claims total victory in this coding clash.`;
+    } else if (oScore > pScore) {
+      return `👑 VERDICT: @${o.username} (${o.archetype}) takes the crown! Outscoring @${p.username} by ${oScore - pScore} points with elite ${o.topLanguage} craftsmanship and Level ${o.level} stats.`;
     } else {
-      return `⚡ VERDICT: DEAD HEAT TIE! Both @${p.username} and @${o.username} stand equal at ${p.score}/100. True kindred spirits of the engineering arena!`;
+      return `⚡ VERDICT: DEAD HEAT TIE! Both @${p.username} and @${o.username} stand equal at ${pScore}/100. True kindred spirits of the engineering arena!`;
     }
   };
 
@@ -568,8 +571,11 @@ export default function DeveloperBattleModal({
                   const pFollowers = pInfo.followers || 0;
                   const oFollowers = oInfo.followers || 0;
 
+                  const pScore = pInfo.score || pInfo.numericScore || 0;
+                  const oScore = oInfo.score || oInfo.numericScore || 0;
+
                   const metrics = [
-                    { label: "Overall Score", p: `${pInfo.score}/100`, o: `${oInfo.score}/100`, pWin: pInfo.score > oInfo.score, oWin: oInfo.score > pInfo.score },
+                    { label: "Overall Score", p: `${pScore}/100`, o: `${oScore}/100`, pWin: pScore > oScore, oWin: oScore > pScore },
                     { label: "Developer Level", p: `LVL ${pLevel}`, o: `LVL ${oLevel}`, pWin: pLevel > oLevel, oWin: oLevel > pLevel },
                     { label: "Repositories", p: pRepos, o: oRepos, pWin: pRepos > oRepos, oWin: oRepos > pRepos },
                     { label: "Total Stars Earned", p: pStars.toLocaleString(), o: oStars.toLocaleString(), pWin: pStars > oStars, oWin: oStars > pStars },

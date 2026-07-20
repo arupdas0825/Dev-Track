@@ -9,11 +9,14 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@react-three/drei": "^10.7.7",
+    "@react-three/fiber": "^9.6.1",
     "@serwist/next": "^9.5.11",
     "@serwist/precaching": "^9.5.11",
     "@serwist/sw": "^9.5.11",
     "@splinetool/react-spline": "^4.1.0",
     "@splinetool/runtime": "^1.12.98",
+    "@types/three": "^0.185.1",
     "clsx": "^2.1.1",
     "firebase": "^12.15.0",
     "framer-motion": "^12.40.0",
@@ -21,9 +24,11 @@
     "next": "16.2.9",
     "react": "19.2.4",
     "react-dom": "19.2.4",
+    "react-icons": "^5.7.0",
     "recharts": "^3.8.1",
     "serwist": "^9.5.11",
     "tailwind-merge": "^3.6.0",
+    "three": "^0.185.1",
     "zustand": "^5.0.14"
   },
   "devDependencies": {

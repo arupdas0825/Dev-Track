@@ -213,7 +213,7 @@ function StatCard({
   delay,
   iconColor,
 }: {
-  icon: React.ElementType;
+  icon: any;
   label: string;
   rawValue: number;
   displaySuffix?: string;

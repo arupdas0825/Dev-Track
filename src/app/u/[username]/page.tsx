@@ -26,6 +26,8 @@ import {
 import { GithubIcon } from '@/components/ui/GithubIcon';
 import Link from 'next/link';
 
+import { GitHubCardService } from '@/services/github/github-card.service';
+
 interface PageProps {
   params: Promise<{ username: string }>;
 }
@@ -39,54 +41,31 @@ export default function UserProfilePage({ params }: PageProps) {
     username: username,
     name: username.charAt(0).toUpperCase() + username.slice(1),
     avatarUrl: `https://api.dicebear.com/7.x/identicon/svg?seed=${username}`,
-    bio: 'Software engineer building modern developer identity tools, design systems, and distributed web applications.',
-    location: 'San Francisco, CA',
-    publicRepos: 34,
-    followers: 1240,
-    totalStars: 4890,
-    totalCommits: 3120,
-    score: 915,
-    rankTitle: 'Principal Developer',
-    archetype: 'Full-Stack Systems Architect',
+    bio: 'Software engineer building modern developer tools and open source software.',
+    location: 'Global Remote',
+    publicRepos: 12,
+    followers: 42,
+    following: 10,
+    totalStars: 100,
+    totalForks: 20,
+    totalCommits: null,
+    score: 750,
+    rankTitle: 'Core Developer',
+    archetype: 'Full-Stack Developer',
     topLanguages: [
       { name: 'TypeScript', percent: 65, color: '#3178C6' },
-      { name: 'Rust', percent: 20, color: '#DEA584' },
+      { name: 'Python', percent: 20, color: '#3572A5' },
       { name: 'Go', percent: 15, color: '#00ADD8' },
     ],
-    contributions: [12, 18, 24, 15, 30, 22, 35, 28, 40, 32, 29, 38, 45, 50],
+    contributions: null,
   });
 
   const [isAuthOpen, setIsAuthOpen] = useState(false);
 
   useEffect(() => {
-    // Try to fetch public profile live from GitHub API
-    fetch(`https://api.github.com/users/${username}`)
-      .then((res) => (res.ok ? res.json() : null))
-      .then((gh) => {
-        if (gh) {
-          setProfileData({
-            username: gh.login,
-            name: gh.name || gh.login,
-            avatarUrl: gh.avatar_url,
-            bio: gh.bio || 'Building scalable systems, open-source software, and developer tools.',
-            location: gh.location || 'Global Remote',
-            publicRepos: gh.public_repos || 24,
-            followers: gh.followers || 310,
-            totalStars: Math.floor((gh.followers || 50) * 5),
-            totalCommits: Math.floor((gh.public_repos || 15) * 90),
-            score: Math.min(999, Math.floor(750 + (gh.public_repos * 2) + (gh.followers * 0.4))),
-            rankTitle: 'Top Developer',
-            archetype: 'Core Software Architect',
-            topLanguages: [
-              { name: 'TypeScript', percent: 60, color: '#3178C6' },
-              { name: 'Python', percent: 25, color: '#3572A5' },
-              { name: 'Rust', percent: 15, color: '#DEA584' },
-            ],
-            contributions: [8, 14, 20, 25, 30, 22, 18, 32, 28, 35, 42, 38, 45, 52],
-          });
-        }
-      })
-      .catch(() => {});
+    GitHubCardService.fetchRealDeveloperCardData(username)
+      .then((data) => setProfileData(data))
+      .catch((err) => console.error('Failed to fetch user profile:', err));
   }, [username]);
 
   const pinnedProjects = [
@@ -269,17 +248,19 @@ export default function UserProfilePage({ params }: PageProps) {
                 <span className="text-xs font-semibold text-emerald-400">1,489 Contributions in 2026</span>
               </div>
 
-              <div className="grid grid-cols-14 gap-2 rounded-2xl border border-white/5 bg-slate-950/60 p-4">
-                {profileData.contributions.map((c, i) => (
-                  <div
-                    key={i}
-                    title={`${c} contributions`}
-                    className={`h-8 rounded-lg ${
-                      c > 35 ? 'bg-indigo-500 shadow-lg shadow-indigo-500/50' : c > 20 ? 'bg-indigo-600/80' : 'bg-indigo-950/60'
-                    }`}
-                  />
-                ))}
-              </div>
+              {profileData.contributions && profileData.contributions.length > 0 && (
+                <div className="grid grid-cols-14 gap-2 rounded-2xl border border-white/5 bg-slate-950/60 p-4">
+                  {profileData.contributions.map((c, i) => (
+                    <div
+                      key={i}
+                      title={`${c} contributions`}
+                      className={`h-8 rounded-lg ${
+                        c > 35 ? 'bg-indigo-500 shadow-lg shadow-indigo-500/50' : c > 20 ? 'bg-indigo-600/80' : 'bg-indigo-950/60'
+                      }`}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 

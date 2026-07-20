@@ -1,151 +1,64 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, forwardRef, useImperativeHandle } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, ArrowRight, Loader2, RefreshCw, Layers } from 'lucide-react';
+import { Sparkles, Loader2, X, Lock, CheckCircle2, AlertCircle } from 'lucide-react';
 import { GithubIcon } from '@/components/ui/GithubIcon';
 import { DeveloperCard, DeveloperCardData } from './DeveloperCard';
+import { GitHubCardService } from '@/services/github/github-card.service';
 
-const SAMPLE_PROFILES: Record<string, DeveloperCardData> = {
-  torvalds: {
-    username: 'torvalds',
-    name: 'Linus Torvalds',
-    avatarUrl: 'https://avatars.githubusercontent.com/u/1024025?v=4',
-    bio: 'Creator of Linux and Git. Systems Architect & Kernel Master.',
-    publicRepos: 7,
-    followers: 215000,
-    totalStars: 185000,
-    stars: 185000,
-    totalCommits: 14200,
-    score: 998,
-    rankTitle: 'Grand Architect',
-    archetype: 'System Kernel Creator',
-    topLanguages: [
-      { name: 'C', percent: 85, color: '#555555' },
-      { name: 'Assembly', percent: 10, color: '#6E4C13' },
-      { name: 'Shell', percent: 5, color: '#89E051' },
-    ],
-    contributions: [15, 22, 18, 25, 30, 28, 40, 32, 19, 24, 35, 42, 29, 31],
-  },
-  gaearon: {
-    username: 'gaearon',
-    name: 'Dan Abramov',
-    avatarUrl: 'https://avatars.githubusercontent.com/u/810438?v=4',
-    bio: 'Co-created Redux & Create React App. Building developer experiences.',
-    publicRepos: 265,
-    followers: 84000,
-    totalStars: 120000,
-    stars: 120000,
-    totalCommits: 8900,
-    score: 945,
-    rankTitle: 'Principal Frontend Architect',
-    archetype: 'UI & State Pioneer',
-    topLanguages: [
-      { name: 'JavaScript', percent: 60, color: '#F7DF1E' },
-      { name: 'TypeScript', percent: 35, color: '#3178C6' },
-      { name: 'HTML', percent: 5, color: '#E34F26' },
-    ],
-    contributions: [8, 12, 15, 10, 22, 18, 14, 25, 20, 16, 28, 19, 22, 30],
-  },
-  shadcn: {
-    username: 'shadcn',
-    name: 'shadcn',
-    avatarUrl: 'https://avatars.githubusercontent.com/u/124599?v=4',
-    bio: 'Designing and building open source UI components. Re-usable design systems.',
-    publicRepos: 92,
-    followers: 67000,
-    totalStars: 98000,
-    stars: 98000,
-    totalCommits: 6400,
-    score: 962,
-    rankTitle: 'Design System Master',
-    archetype: 'UI Engineering Lead',
-    topLanguages: [
-      { name: 'TypeScript', percent: 70, color: '#3178C6' },
-      { name: 'React', percent: 20, color: '#61DAFB' },
-      { name: 'Tailwind', percent: 10, color: '#06B6D4' },
-    ],
-    contributions: [12, 18, 24, 29, 35, 22, 19, 31, 28, 40, 32, 26, 38, 45],
-  },
-};
+export interface CardGeneratorRef {
+  focusInput: () => void;
+}
 
 interface CardGeneratorProps {
   onRequireAuth: (actionTitle: string, actionMessage?: string, resume?: () => void) => void;
 }
 
-export const CardGenerator: React.FC<CardGeneratorProps> = ({ onRequireAuth }) => {
+export const CardGenerator = forwardRef<CardGeneratorRef, CardGeneratorProps>(({ onRequireAuth }, ref) => {
   const [inputUsername, setInputUsername] = useState('shadcn');
   const [loading, setLoading] = useState(false);
-  const [cardData, setCardData] = useState<DeveloperCardData>(SAMPLE_PROFILES['shadcn']);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [cardData, setCardData] = useState<DeveloperCardData | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const inputRef = React.useRef<HTMLInputElement>(null);
 
-  const handleGenerate = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    const cleanUser = inputUsername.trim().toLowerCase() || 'shadcn';
+  useImperativeHandle(ref, () => ({
+    focusInput: () => {
+      inputRef.current?.focus();
+      inputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    },
+  }));
+
+  const fetchAndShowCard = async (username: string) => {
+    const cleanUser = username.trim().replace(/^@/, '') || 'shadcn';
     setLoading(true);
+    setErrorMessage(null);
 
     try {
-      const res = await fetch(`https://api.github.com/users/${cleanUser}`);
-      if (res.ok) {
-        const gh = await res.json();
-        const score = Math.min(999, Math.floor(700 + (gh.public_repos * 3) + (gh.followers * 0.5)));
-        const starsCalculated = Math.floor((gh.followers || 20) * 4.5);
-        
-        setCardData({
-          username: gh.login,
-          name: gh.name || gh.login,
-          avatarUrl: gh.avatar_url,
-          bio: gh.bio || 'Passionate software engineer building modern digital products.',
-          location: gh.location || 'Global Remote',
-          publicRepos: gh.public_repos || 12,
-          followers: gh.followers || 42,
-          totalStars: starsCalculated,
-          stars: starsCalculated,
-          totalCommits: Math.floor((gh.public_repos || 10) * 85),
-          score,
-          rankTitle: score > 900 ? 'Top 1% Architect' : score > 800 ? 'Senior Engineer' : 'Core Developer',
-          archetype: 'Full-Stack Developer',
-          topLanguages: [
-            { name: 'TypeScript', percent: 55, color: '#3178C6' },
-            { name: 'Python', percent: 25, color: '#3572A5' },
-            { name: 'Rust', percent: 20, color: '#DEA584' },
-          ],
-          contributions: [5, 12, 8, 14, 20, 15, 22, 18, 10, 16, 25, 30, 22, 28],
-        });
-      } else if (SAMPLE_PROFILES[cleanUser]) {
-        setCardData(SAMPLE_PROFILES[cleanUser]);
-      } else {
-        setCardData({
-          username: cleanUser,
-          name: cleanUser.charAt(0).toUpperCase() + cleanUser.slice(1),
-          avatarUrl: `https://api.dicebear.com/7.x/identicon/svg?seed=${cleanUser}`,
-          bio: `Full-stack developer building open source software under @${cleanUser}.`,
-          publicRepos: 24,
-          followers: 148,
-          totalStars: 340,
-          stars: 340,
-          totalCommits: 1850,
-          score: 840,
-          rankTitle: 'Core Software Specialist',
-          archetype: 'Systems & Web Architect',
-          topLanguages: [
-            { name: 'TypeScript', percent: 50, color: '#3178C6' },
-            { name: 'Go', percent: 30, color: '#00ADD8' },
-            { name: 'Docker', percent: 20, color: '#2496ED' },
-          ],
-          contributions: [8, 14, 12, 19, 25, 22, 18, 30, 24, 28, 32, 26, 35, 40],
-        });
-      }
-    } catch {
-      if (SAMPLE_PROFILES[cleanUser]) {
-        setCardData(SAMPLE_PROFILES[cleanUser]);
-      }
+      const data = await GitHubCardService.fetchRealDeveloperCardData(cleanUser);
+      setCardData(data);
+      setIsModalOpen(true);
+    } catch (err: any) {
+      console.error('Error fetching Developer Card data:', err);
+      setErrorMessage(err.message || 'Failed to fetch verified GitHub developer data.');
     } finally {
       setLoading(false);
     }
   };
 
+  const handleGenerate = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    fetchAndShowCard(inputUsername);
+  };
+
+  const handleSampleClick = (sample: string) => {
+    setInputUsername(sample);
+    fetchAndShowCard(sample);
+  };
+
   return (
-    <div className="w-full space-y-6">
+    <div className="w-full space-y-3">
       {/* Input Form Box */}
       <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-4 sm:p-5 shadow-2xl backdrop-blur-xl">
         <form onSubmit={handleGenerate} className="flex flex-col sm:flex-row gap-3">
@@ -154,9 +67,13 @@ export const CardGenerator: React.FC<CardGeneratorProps> = ({ onRequireAuth }) =
               <GithubIcon className="h-5 w-5" />
             </div>
             <input
+              ref={inputRef}
               type="text"
               value={inputUsername}
-              onChange={(e) => setInputUsername(e.target.value)}
+              onChange={(e) => {
+                setInputUsername(e.target.value);
+                if (errorMessage) setErrorMessage(null);
+              }}
               placeholder="Enter GitHub username (e.g. shadcn, torvalds)"
               className="w-full rounded-2xl border border-white/10 bg-slate-950/60 pl-11 pr-4 py-3.5 text-sm text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
             />
@@ -172,38 +89,95 @@ export const CardGenerator: React.FC<CardGeneratorProps> = ({ onRequireAuth }) =
             ) : (
               <Sparkles className="h-4 w-4" />
             )}
-            <span>Generate Card</span>
+            <span>{loading ? 'Fetching API...' : 'Generate Card'}</span>
           </button>
         </form>
 
-        {/* Quick presets */}
-        <div className="mt-3 flex items-center gap-2 text-xs text-slate-400">
-          <span className="font-medium text-slate-500">Quick Samples:</span>
-          {['shadcn', 'gaearon', 'torvalds'].map((sample) => (
-            <button
-              key={sample}
-              onClick={() => {
-                setInputUsername(sample);
-                setCardData(SAMPLE_PROFILES[sample]);
-              }}
-              className="rounded-lg border border-white/5 bg-slate-950/40 px-2.5 py-1 text-[11px] font-mono text-indigo-300 hover:border-indigo-500/40 transition-all"
-            >
-              @{sample}
-            </button>
-          ))}
+        {/* Error State Notice */}
+        {errorMessage && (
+          <div className="mt-3 flex items-center gap-2 rounded-xl border border-rose-500/30 bg-rose-500/10 p-3 text-xs text-rose-300">
+            <AlertCircle className="h-4 w-4 text-rose-400 shrink-0" />
+            <span>{errorMessage}</span>
+          </div>
+        )}
+
+        {/* Quick presets & info */}
+        <div className="mt-3 flex items-center justify-between flex-wrap gap-2 text-xs">
+          <div className="flex items-center gap-2 text-slate-400">
+            <span className="font-medium text-slate-500">Quick Samples:</span>
+            {['shadcn', 'gaearon', 'torvalds'].map((sample) => (
+              <button
+                key={sample}
+                type="button"
+                onClick={() => handleSampleClick(sample)}
+                className="rounded-lg border border-white/5 bg-slate-950/40 px-2.5 py-1 text-[11px] font-mono text-indigo-300 hover:border-indigo-500/40 hover:bg-slate-900 transition-all"
+              >
+                @{sample}
+              </button>
+            ))}
+          </div>
+          <span className="flex items-center gap-1 text-[11px] text-slate-400">
+            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" /> Live GitHub API Data
+          </span>
         </div>
       </div>
 
-      {/* Live Preview Card Output */}
-      <div className="flex justify-center">
-        <AnimatePresence mode="wait">
-          <DeveloperCard
-            key={cardData.username}
-            data={cardData}
-            onRequireAuth={onRequireAuth}
-          />
-        </AnimatePresence>
-      </div>
+      {/* Developer Card Preview Modal */}
+      <AnimatePresence>
+        {isModalOpen && cardData && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-hidden">
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsModalOpen(false)}
+              className="fixed inset-0 bg-slate-950/85 backdrop-blur-md"
+            />
+
+            {/* Modal Container */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              transition={{ duration: 0.25 }}
+              className="relative z-10 w-full max-w-md rounded-2xl border border-white/15 bg-slate-900 p-3 sm:p-4 shadow-2xl space-y-3 max-h-[95vh] overflow-hidden"
+            >
+              {/* Developer Card Display */}
+              <div className="flex justify-center">
+                <DeveloperCard
+                  data={cardData}
+                  onClose={() => setIsModalOpen(false)}
+                  onRequireAuth={(action) => {
+                    setIsModalOpen(false);
+                    onRequireAuth(action);
+                  }}
+                />
+              </div>
+
+              {/* Modal Footer Banner */}
+              <div className="rounded-xl border border-indigo-500/30 bg-indigo-500/10 p-2.5 flex items-center justify-between text-xs gap-2">
+                <div className="flex items-center gap-2 text-indigo-200 text-[11px]">
+                  <Lock className="h-3.5 w-3.5 text-indigo-400 shrink-0" />
+                  <span>Sign in with GitHub to claim and share your verified card!</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsModalOpen(false);
+                    onRequireAuth('Claim & Save Verified Developer Identity');
+                  }}
+                  className="shrink-0 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-600 px-3 py-1.5 text-xs font-bold text-white shadow-md hover:opacity-90 transition-all"
+                >
+                  Sign In
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
-};
+});
+
+CardGenerator.displayName = 'CardGenerator';
