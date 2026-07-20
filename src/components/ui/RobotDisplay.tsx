@@ -475,18 +475,30 @@ export function DevTrackRobotDisplay({ text = 'DevTrack' }: { text?: string }) {
 
   return (
     <div className="relative w-full h-full min-h-[460px] flex flex-col items-center justify-center overflow-hidden rounded-3xl">
-      {/* Background DevTrack Branding Text */}
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none z-0 px-4">
-        <h1
-          className="font-sans font-black text-center whitespace-nowrap bg-gradient-to-b from-white/30 via-indigo-200/20 to-indigo-500/10 bg-clip-text text-transparent tracking-tight max-w-full"
-          style={{
-            fontSize: 'clamp(2.2rem, 5vw, 4.8rem)',
-            lineHeight: 1,
-            transform: 'translateY(-30px)',
-          }}
-        >
-          {text}
-        </h1>
+      {/* Background DevTrack Branding Text (Auto-scaling SVG to prevent any text clipping) */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none z-0 px-2">
+        <svg viewBox="0 0 700 160" className="w-full h-auto max-h-[340px] max-w-full">
+          <defs>
+            <linearGradient id="devTrackTitleGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#ffffff" stopOpacity="0.30" />
+              <stop offset="50%" stopColor="#a5b4fc" stopOpacity="0.15" />
+              <stop offset="100%" stopColor="#6366f1" stopOpacity="0.05" />
+            </linearGradient>
+          </defs>
+          <text
+            x="50%"
+            y="50%"
+            textAnchor="middle"
+            dominantBaseline="central"
+            fill="url(#devTrackTitleGradient)"
+            fontFamily="system-ui, -apple-system, sans-serif"
+            fontWeight="900"
+            fontSize="125"
+            letterSpacing="-5"
+          >
+            {text}
+          </text>
+        </svg>
       </div>
 
       {/* 3D Robot Canvas */}
