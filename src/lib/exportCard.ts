@@ -1,6 +1,3 @@
-import { toPng } from 'html-to-image';
-import jsPDF from 'jspdf';
-
 export function isUserAuthenticated(): boolean {
   if (typeof window === 'undefined') return false;
   try {
@@ -16,6 +13,9 @@ export async function exportCardToPNG(cardElement: HTMLElement, username: string
   if (!cardElement) {
     throw new Error('Card element not found for export.');
   }
+
+  // Dynamic client-side import of html-to-image
+  const { toPng } = await import('html-to-image');
 
   // High resolution export (pixelRatio 3x)
   const dataUrl = await toPng(cardElement, {
@@ -43,6 +43,10 @@ export async function exportCardToPDF(cardElement: HTMLElement, username: string
   if (!cardElement) {
     throw new Error('Card element not found for export.');
   }
+
+  // Dynamic client-side imports
+  const { toPng } = await import('html-to-image');
+  const { default: jsPDF } = await import('jspdf');
 
   // Generate PNG data URL first
   const dataUrl = await toPng(cardElement, {
