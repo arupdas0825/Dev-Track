@@ -147,6 +147,7 @@ export const CardGenerator = forwardRef<CardGeneratorRef, CardGeneratorProps>(({
               <div className="flex justify-center">
                 <DeveloperCard
                   data={cardData}
+                  isLoading={loading}
                   onClose={() => setIsModalOpen(false)}
                   onRequireAuth={(action) => {
                     setIsModalOpen(false);

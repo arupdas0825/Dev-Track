@@ -148,8 +148,8 @@ export default function OverviewTab({ data }: OverviewTabProps) {
   }, [languages, repositories, contributions]);
 
   const getGradeStyle = (gradeStr: string, isAvail: boolean) => {
-    if (!isAvail || gradeStr === "Grade unavailable") {
-      return { color: "text-[#8B949E]", stroke: "#8B949E", label: "Grade Unavailable" };
+    if (!isAvail || gradeStr === "Grade unavailable" || gradeStr === "Not Available from GitHub") {
+      return { color: "text-[#8B949E]", stroke: "#8B949E", label: "Not Available from GitHub" };
     }
     if (gradeStr === "S" || gradeStr === "A+") return { color: "text-[#3FB950]", stroke: "#3FB950", label: `Grade ${gradeStr}` };
     if (gradeStr === "A" || gradeStr === "B+") return { color: "text-[#58A6FF]", stroke: "#58A6FF", label: `Grade ${gradeStr}` };

@@ -19,7 +19,7 @@ export function calculateDeveloperScore(
   if (!contributions) {
     return {
       overall: 0,
-      grade: "Grade unavailable",
+      grade: "Not Available from GitHub",
       isAvailable: false,
       revalidated: false,
       categories: {
@@ -40,14 +40,14 @@ export function calculateDeveloperScore(
       projectScale: 0,
       complexity: 0,
       breakdown: {
-        consistencyReason: "Data unavailable",
-        repoQualityReason: "Data unavailable",
-        diversityReason: "Data unavailable",
-        openSourceReason: "Data unavailable",
-        complexityReason: "Data unavailable",
-        communityImpactReason: "Data unavailable",
-        documentationReason: "Data unavailable",
-        projectScaleReason: "Data unavailable",
+        consistencyReason: "Not Available from GitHub",
+        repoQualityReason: "Not Available from GitHub",
+        diversityReason: "Not Available from GitHub",
+        openSourceReason: "Not Available from GitHub",
+        complexityReason: "Not Available from GitHub",
+        communityImpactReason: "Not Available from GitHub",
+        documentationReason: "Not Available from GitHub",
+        projectScaleReason: "Not Available from GitHub",
       },
     };
   }

@@ -69,7 +69,7 @@ export class GitHubContributionService {
     token: string
   ): Promise<ContributionStats> {
     const query = `
-      query($username: String!) {
+      query($username: String!, $prQuery: String!) {
         user(login: $username) {
           contributionsCollection {
             totalCommitContributions
@@ -88,6 +88,9 @@ export class GitHubContributionService {
             }
           }
         }
+        prSearch: search(query: $prQuery, type: ISSUE) {
+          issueCount
+        }
       }
     `;
 
@@ -97,7 +100,13 @@ export class GitHubContributionService {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ query, variables: { username } }),
+      body: JSON.stringify({
+        query,
+        variables: {
+          username,
+          prQuery: `type:pr author:${username}`,
+        },
+      }),
     });
 
     if (!res.ok) {
@@ -128,12 +137,11 @@ export class GitHubContributionService {
 
     const { currentStreak, longestStreak } = this.calculateStreaks(dailyContributions);
 
-    // Sum details
+    // Exact sums from live GitHub GraphQL data
     const totalCommits = collection.totalCommitContributions || 0;
-    const totalPRs = (collection.totalPullRequestContributions || 0) + (collection.totalPullRequestReviewContributions || 0);
+    const totalPRs = json.data?.prSearch?.issueCount ?? (collection.totalPullRequestContributions || 0);
     const totalIssues = collection.totalIssueContributions || 0;
 
-    // Estimate active months count from contribution calendar
     const activeDates = Object.entries(dailyContributions)
       .filter(([_, count]) => count > 0)
       .map(([date]) => date.substring(0, 7)); // YYYY-MM
@@ -188,12 +196,40 @@ export class GitHubContributionService {
     const last365DaysContributions = rawContribs.filter(c => c.date >= startDateStr);
     const totalContributions = last365DaysContributions.reduce((sum, c) => sum + c.count, 0);
 
-    // Compute streaks on full history for maximum accuracy!
+    // Compute streaks on full history for maximum accuracy
     const { currentStreak, longestStreak } = this.calculateStreaks(dailyContributions);
 
-    // Estimate breakdown based on total contributions in the last 365 days
-    const totalPRs = Math.max(0, Math.round(totalContributions * 0.02));
-    const totalIssues = Math.max(0, Math.round(totalContributions * 0.01));
+    // Fetch real PRs count using GitHub REST Search API (never fabricate or estimate values)
+    let totalPRs = 0;
+    try {
+      const searchRes = await fetch(`https://api.github.com/search/issues?q=type:pr+author:${username}`, {
+        headers: { Accept: "application/vnd.github.v3+json" }
+      });
+      if (searchRes.ok) {
+        const searchJson = await searchRes.json();
+        if (typeof searchJson.total_count === "number") {
+          totalPRs = searchJson.total_count;
+        }
+      }
+    } catch (e) {
+      // Leave totalPRs as 0 if unverified
+    }
+
+    let totalIssues = 0;
+    try {
+      const searchRes = await fetch(`https://api.github.com/search/issues?q=type:issue+author:${username}`, {
+        headers: { Accept: "application/vnd.github.v3+json" }
+      });
+      if (searchRes.ok) {
+        const searchJson = await searchRes.json();
+        if (typeof searchJson.total_count === "number") {
+          totalIssues = searchJson.total_count;
+        }
+      }
+    } catch (e) {
+      // Leave totalIssues as 0 if unverified
+    }
+
     const totalCommits = Math.max(0, totalContributions - totalPRs - totalIssues);
 
     // Estimate active months count from last 365 days
@@ -224,9 +260,10 @@ export class GitHubContributionService {
     username: string,
     token?: string
   ): Promise<ContributionStats> {
-    if (token) {
+    const resolvedToken = token || (typeof window !== "undefined" ? localStorage.getItem("devtrack_github_token") : undefined);
+    if (resolvedToken) {
       try {
-        return await this.fetchContributionsFromGraphQL(username, token);
+        return await this.fetchContributionsFromGraphQL(username, resolvedToken);
       } catch (graphqlError) {
         console.warn("GraphQL contributions fetch failed, falling back to scraper:", graphqlError);
         return await this.fetchContributionsFromScraper(username);

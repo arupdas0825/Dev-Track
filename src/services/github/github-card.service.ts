@@ -1,4 +1,5 @@
 import { DeveloperCardData, DeveloperTier, DeveloperGrade } from '@/components/card/DeveloperCard';
+import { GitHubContributionService } from './github-contribution.service';
 
 const LANGUAGE_COLORS: Record<string, string> = {
   TypeScript: '#3178C6',
@@ -42,9 +43,11 @@ export class GitHubCardService {
       throw new Error('Please enter a valid GitHub username.');
     }
 
+    const resolvedToken: string | undefined = token || (typeof window !== 'undefined' ? (localStorage.getItem('devtrack_github_token') ?? undefined) : undefined);
+
     // 1. Fetch User Profile
     const profileRes = await fetch(`https://api.github.com/users/${cleanUser}`, {
-      headers: this.defaultHeaders(token),
+      headers: this.defaultHeaders(resolvedToken),
     });
 
     if (!profileRes.ok) {
@@ -62,7 +65,7 @@ export class GitHubCardService {
     // 2. Fetch User Repositories (up to 100 sorted by updated)
     const reposRes = await fetch(
       `https://api.github.com/users/${cleanUser}/repos?per_page=100&sort=updated`,
-      { headers: this.defaultHeaders(token) }
+      { headers: this.defaultHeaders(resolvedToken) }
     );
 
     let repos: any[] = [];
@@ -100,6 +103,105 @@ export class GitHubCardService {
       })
       .sort((a, b) => b.percent - a.percent)
       .slice(0, 3); // Strictly Top 3 Languages
+
+    // 4. Fetch Real Pull Requests (Created & Merged)
+    let pullRequestsDisplay: string | number | null = null;
+    try {
+      if (resolvedToken) {
+        const prQuery = `
+          query($username: String!, $createdQuery: String!, $mergedQuery: String!) {
+            user(login: $username) {
+              pullRequests {
+                totalCount
+              }
+            }
+            createdSearch: search(query: $createdQuery, type: ISSUE) {
+              issueCount
+            }
+            mergedSearch: search(query: $mergedQuery, type: ISSUE) {
+              issueCount
+            }
+          }
+        `;
+        const gqlRes = await fetch('https://api.github.com/graphql', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${resolvedToken}`,
+          },
+          body: JSON.stringify({
+            query: prQuery,
+            variables: {
+              username: cleanUser,
+              createdQuery: `type:pr author:${cleanUser}`,
+              mergedQuery: `type:pr author:${cleanUser} is:merged`,
+            },
+          }),
+        });
+
+        if (gqlRes.ok) {
+          const gqlJson = await gqlRes.json();
+          if (!gqlJson.errors) {
+            const totalCreated = gqlJson.data?.user?.pullRequests?.totalCount ?? gqlJson.data?.createdSearch?.issueCount;
+            const totalMerged = gqlJson.data?.mergedSearch?.issueCount;
+
+            if (typeof totalCreated === 'number') {
+              if (typeof totalMerged === 'number') {
+                pullRequestsDisplay = `${totalCreated} (${totalMerged} merged)`;
+              } else {
+                pullRequestsDisplay = totalCreated;
+              }
+            }
+          }
+        }
+      }
+
+      // Fallback via GitHub REST Search API
+      if (pullRequestsDisplay === null) {
+        const createdRes = await fetch(
+          `https://api.github.com/search/issues?q=type:pr+author:${cleanUser}`,
+          { headers: this.defaultHeaders(resolvedToken) }
+        );
+        if (createdRes.ok) {
+          const createdData = await createdRes.json();
+          const totalCreated = createdData.total_count;
+
+          const mergedRes = await fetch(
+            `https://api.github.com/search/issues?q=type:pr+author:${cleanUser}+is:merged`,
+            { headers: this.defaultHeaders(resolvedToken) }
+          );
+          if (mergedRes.ok) {
+            const mergedData = await mergedRes.json();
+            const totalMerged = mergedData.total_count;
+            pullRequestsDisplay = `${totalCreated} (${totalMerged} merged)`;
+          } else if (typeof totalCreated === 'number') {
+            pullRequestsDisplay = totalCreated;
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Pull request metrics live fetch failed:', e);
+      pullRequestsDisplay = null;
+    }
+
+    // 5. Fetch Real Total Contributions & Current Streak from live GitHub calendar
+    let totalContributionsDisplay: number | null = null;
+    let currentStreakDisplay: number | null = null;
+
+    try {
+      const contribStats = await GitHubContributionService.fetchUserContributions(cleanUser, resolvedToken);
+      if (contribStats) {
+        if (contribStats.dailyContributions) {
+          const contribValues = Object.values(contribStats.dailyContributions);
+          totalContributionsDisplay = contribValues.reduce((sum, val) => sum + val, 0);
+        }
+        currentStreakDisplay = contribStats.currentStreak;
+      }
+    } catch (e) {
+      console.warn('Contribution telemetry live fetch failed:', e);
+      totalContributionsDisplay = null;
+      currentStreakDisplay = null;
+    }
 
     // Deterministic Multi-Factor Tier & Grade Calculation (0 - 100)
     const repoPts = Math.min(25, publicRepos * 1.5);
@@ -153,10 +255,9 @@ export class GitHubCardService {
       following,
       totalStars,
       totalForks,
-      // Metrics requiring OAuth telemetry are set to null when unauthenticated, rendered as "Unavailable"
-      pullRequests: null,
-      totalContributions: null,
-      currentStreak: null,
+      pullRequests: pullRequestsDisplay,
+      totalContributions: totalContributionsDisplay,
+      currentStreak: currentStreakDisplay,
       tier,
       tierEmoji,
       grade,
@@ -174,3 +275,4 @@ export class GitHubCardService {
     };
   }
 }
+

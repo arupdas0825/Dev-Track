@@ -33,9 +33,9 @@ export interface DeveloperCardData {
   totalForks?: number;
   followers: number;
   following?: number;
-  pullRequests?: number | null;
-  totalContributions?: number | null;
-  currentStreak?: number | null;
+  pullRequests?: number | string | null;
+  totalContributions?: number | string | null;
+  currentStreak?: number | string | null;
   tier?: DeveloperTier;
   tierEmoji?: string;
   grade?: DeveloperGrade;
@@ -110,6 +110,7 @@ export function getDeveloperCardInfo(user: any): DeveloperCardData {
 
 interface DeveloperCardProps {
   data: DeveloperCardData;
+  isLoading?: boolean;
   onRequireAuth?: (action: string) => void;
   onClose?: () => void;
   interactive?: boolean;
@@ -117,6 +118,7 @@ interface DeveloperCardProps {
 
 export const DeveloperCard: React.FC<DeveloperCardProps> = ({
   data,
+  isLoading = false,
   onRequireAuth,
   onClose,
   interactive = true,
@@ -133,23 +135,29 @@ export const DeveloperCard: React.FC<DeveloperCardProps> = ({
   const getTierColorClass = (t: DeveloperTier) => {
     switch (t) {
       case 'Emerald':
-        return 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300';
+        return 'border-emerald-500/40 bg-gradient-to-r from-emerald-500/25 via-teal-500/15 to-emerald-500/10 text-emerald-300 shadow-[0_0_14px_rgba(16,185,129,0.25)]';
       case 'Diamond':
-        return 'border-cyan-500/40 bg-cyan-500/10 text-cyan-300';
+        return 'border-cyan-500/40 bg-gradient-to-r from-cyan-500/25 via-sky-500/15 to-blue-500/10 text-cyan-300 shadow-[0_0_14px_rgba(6,182,212,0.25)]';
       case 'Gold':
-        return 'border-amber-500/40 bg-amber-500/10 text-amber-300';
+        return 'border-amber-500/40 bg-gradient-to-r from-amber-500/25 via-yellow-500/15 to-amber-500/10 text-amber-300 shadow-[0_0_14px_rgba(245,158,11,0.25)]';
       case 'Silver':
-        return 'border-slate-400/40 bg-slate-400/10 text-slate-200';
+        return 'border-slate-400/40 bg-gradient-to-r from-slate-400/25 via-slate-300/15 to-slate-400/10 text-slate-200 shadow-[0_0_14px_rgba(148,163,184,0.2)]';
       default:
-        return 'border-amber-700/40 bg-amber-700/10 text-amber-400';
+        return 'border-amber-700/40 bg-gradient-to-r from-amber-700/25 via-orange-600/15 to-amber-700/10 text-amber-400 shadow-[0_0_14px_rgba(217,119,6,0.2)]';
     }
   };
 
   const getGradeBadgeClass = (g: DeveloperGrade) => {
-    if (g === 'A+' || g === 'A') return 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-emerald-500/20';
-    if (g === 'B+') return 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-indigo-500/20';
-    if (g === 'B') return 'bg-gradient-to-r from-blue-500 to-cyan-600 text-white';
-    return 'bg-slate-700 text-slate-200';
+    if (g === 'A+' || g === 'A') {
+      return 'border-amber-400/40 bg-gradient-to-r from-amber-500/20 via-emerald-500/20 to-teal-500/20 text-amber-300 shadow-md shadow-amber-500/10 backdrop-blur-md';
+    }
+    if (g === 'B+') {
+      return 'border-indigo-400/40 bg-gradient-to-r from-indigo-500/20 via-purple-500/20 to-cyan-500/20 text-indigo-200 shadow-md shadow-indigo-500/10 backdrop-blur-md';
+    }
+    if (g === 'B') {
+      return 'border-blue-400/40 bg-gradient-to-r from-blue-500/20 via-cyan-500/20 to-teal-500/20 text-blue-200 shadow-md shadow-blue-500/10 backdrop-blur-md';
+    }
+    return 'border-slate-700 bg-slate-800/80 text-slate-300 backdrop-blur-md';
   };
 
   // Fallback defaults for tier, grade, and forks
@@ -174,28 +182,23 @@ export const DeveloperCard: React.FC<DeveloperCardProps> = ({
       {/* 1. TOP HEADER */}
       <div className="relative z-10 flex items-center justify-between border-b border-white/10 pb-3">
         {/* Tier Badge (Top Left) */}
-        <div className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-bold ${getTierColorClass(currentTier)}`}>
-          <span>{currentEmoji}</span>
-          <span>{currentTier} Tier</span>
-        </div>
-
-        {/* Live GitHub Verified Indicator */}
-        <div className="flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 text-[10px] font-mono text-emerald-400">
-          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-          <span>✓ Live GitHub Verified</span>
+        <div className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-extrabold tracking-wide ${getTierColorClass(currentTier)}`}>
+          <span className="text-sm">{currentEmoji}</span>
+          <span>{currentTier} Developer</span>
         </div>
 
         {/* Developer Grade (Top Right area before close button) */}
         <div className="flex items-center gap-2">
-          <div className={`rounded-lg px-2.5 py-1 text-xs font-extrabold shadow-sm ${getGradeBadgeClass(currentGrade)}`}>
-            Grade {currentGrade}
+          <div className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-extrabold shadow-sm backdrop-blur-md ${getGradeBadgeClass(currentGrade)}`}>
+            <span className="text-amber-400 text-xs">★</span>
+            <span>Grade {currentGrade}</span>
           </div>
 
           {onClose && (
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg p-1 text-slate-400 hover:bg-white/10 hover:text-white transition-colors"
+              className="rounded-lg p-1.5 text-slate-400 hover:bg-white/10 hover:text-white transition-colors"
             >
               <X className="h-4 w-4" />
             </button>
@@ -285,27 +288,45 @@ export const DeveloperCard: React.FC<DeveloperCardProps> = ({
 
         {/* Second Stat Row: Pull Requests, Total Contributions, Current Streak */}
         <div className="mt-2 grid grid-cols-3 gap-2 text-center text-xs">
-          <div className="rounded-lg bg-slate-900/40 p-1.5 border border-white/5">
+          <div className="rounded-lg bg-slate-900/40 p-1.5 border border-white/5 min-h-[52px] flex flex-col justify-center">
             <span className="block text-[9px] font-semibold text-slate-400 uppercase tracking-wider">Pull Requests</span>
             <span className="text-[11px] font-bold text-slate-300 flex items-center justify-center gap-1 mt-0.5">
-              <GitPullRequest className="h-3 w-3 text-purple-400" /> 
-              {data.pullRequests !== null && data.pullRequests !== undefined ? data.pullRequests : 'Unavailable'}
+              <GitPullRequest className="h-3 w-3 text-purple-400 shrink-0" /> 
+              {isLoading ? (
+                <span className="h-3 w-12 bg-slate-800 animate-pulse rounded inline-block" />
+              ) : data.pullRequests !== null && data.pullRequests !== undefined ? (
+                data.pullRequests
+              ) : (
+                <span className="text-[9px] text-slate-400 font-normal italic">Not Available from GitHub</span>
+              )}
             </span>
           </div>
 
-          <div className="rounded-lg bg-slate-900/40 p-1.5 border border-white/5">
+          <div className="rounded-lg bg-slate-900/40 p-1.5 border border-white/5 min-h-[52px] flex flex-col justify-center">
             <span className="block text-[9px] font-semibold text-slate-400 uppercase tracking-wider">Contributions</span>
             <span className="text-[11px] font-bold text-slate-300 flex items-center justify-center gap-1 mt-0.5">
-              <Activity className="h-3 w-3 text-emerald-400" />
-              {data.totalContributions !== null && data.totalContributions !== undefined ? data.totalContributions : 'Unavailable'}
+              <Activity className="h-3 w-3 text-emerald-400 shrink-0" />
+              {isLoading ? (
+                <span className="h-3 w-12 bg-slate-800 animate-pulse rounded inline-block" />
+              ) : data.totalContributions !== null && data.totalContributions !== undefined ? (
+                data.totalContributions
+              ) : (
+                <span className="text-[9px] text-slate-400 font-normal italic">Not Available from GitHub</span>
+              )}
             </span>
           </div>
 
-          <div className="rounded-lg bg-slate-900/40 p-1.5 border border-white/5">
+          <div className="rounded-lg bg-slate-900/40 p-1.5 border border-white/5 min-h-[52px] flex flex-col justify-center">
             <span className="block text-[9px] font-semibold text-slate-400 uppercase tracking-wider">Streak</span>
             <span className="text-[11px] font-bold text-slate-300 flex items-center justify-center gap-1 mt-0.5">
-              <Flame className="h-3 w-3 text-amber-400" />
-              {data.currentStreak !== null && data.currentStreak !== undefined ? `${data.currentStreak}d` : 'Unavailable'}
+              <Flame className="h-3 w-3 text-amber-400 shrink-0" />
+              {isLoading ? (
+                <span className="h-3 w-12 bg-slate-800 animate-pulse rounded inline-block" />
+              ) : data.currentStreak !== null && data.currentStreak !== undefined ? (
+                typeof data.currentStreak === 'number' ? `${data.currentStreak}d` : data.currentStreak
+              ) : (
+                <span className="text-[9px] text-slate-400 font-normal italic">Not Available from GitHub</span>
+              )}
             </span>
           </div>
         </div>
