@@ -204,9 +204,9 @@ export const DeveloperCard: React.FC<DeveloperCardProps> = ({
   };
 
   const calculatedInfo = getDeveloperCardInfo(data);
-  const tier = data.tier || calculatedInfo.tier;
+  const tier: DeveloperTier = (data.tier as DeveloperTier) || calculatedInfo.tier;
   const tierEmoji = data.tierEmoji || calculatedInfo.tierEmoji;
-  const grade = data.grade || calculatedInfo.grade;
+  const grade: DeveloperGrade = (data.grade as DeveloperGrade) || calculatedInfo.grade;
   const top3Languages = (data.topLanguages && data.topLanguages.length > 0)
     ? data.topLanguages.slice(0, 3)
     : calculatedInfo.topLanguages;
