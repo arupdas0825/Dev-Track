@@ -22,7 +22,8 @@ import {
   Bell,
   CheckCircle2,
   ExternalLink,
-  Code
+  Code,
+  Activity
 } from 'lucide-react';
 
 export interface NavbarProps {
@@ -97,15 +98,14 @@ export const Navbar: React.FC<NavbarProps> = ({
     }
   };
 
-  const username = user?.username || user?.displayName?.toLowerCase().replace(/\s+/g, '') || 'developer';
+  const username = user?.username || user?.displayName?.toLowerCase().replace(/\s+/g, '') || 'shadcn';
   const avatarUrl = user?.photoURL || `https://api.dicebear.com/7.x/identicon/svg?seed=${username}`;
 
   const navLinks = [
-    { name: 'Feed', href: '/feed', icon: LayoutDashboard },
-    { name: 'Generator', href: '/', icon: Sparkles },
-    { name: 'Projects', href: '/projects', icon: Code },
-    { name: 'Community', href: '/community', icon: Users },
-    { name: 'AI Suite', href: '/ai', icon: Bot },
+    { name: 'Profile', href: `/u/${username}`, icon: User },
+    { name: 'Analytics', href: `/u/${username}?tab=analytics`, icon: Activity },
+    { name: 'Card Generator', href: '/', icon: Sparkles },
+    { name: 'Pinned Repos', href: `/u/${username}?tab=pinned`, icon: Code },
   ];
 
   return (

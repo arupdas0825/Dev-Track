@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
-export default function DashboardPage() {
+export default function ProfileRedirectPage() {
   const router = useRouter();
 
   useEffect(() => {
@@ -22,7 +22,7 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-slate-950 flex items-center justify-center text-slate-400 font-mono text-xs">
-      Loading Profile Command Center...
+      Redirecting to Profile...
     </div>
   );
 }

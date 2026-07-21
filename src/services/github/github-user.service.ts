@@ -39,4 +39,49 @@ export class GitHubUserService {
     }
     return res.json();
   }
+
+  static async fetchUserEvents(username: string, token?: string): Promise<any[]> {
+    if (!username) return [];
+    try {
+      const res = await fetch(`https://api.github.com/users/${username}/events?per_page=15`, {
+        headers: this.defaultHeaders(token),
+      });
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch (e) {
+      console.warn("Failed to fetch GitHub user events:", e);
+    }
+    return [];
+  }
+
+  static async checkIsFollowing(targetUsername: string, token: string): Promise<boolean> {
+    if (!targetUsername || !token) return false;
+    try {
+      const res = await fetch(`https://api.github.com/user/following/${targetUsername}`, {
+        headers: this.defaultHeaders(token),
+      });
+      return res.status === 204;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  static async followGitHubUser(targetUsername: string, token: string): Promise<boolean> {
+    if (!targetUsername || !token) throw new Error("Authentication token required to follow on GitHub.");
+    const res = await fetch(`https://api.github.com/user/following/${targetUsername}`, {
+      method: "PUT",
+      headers: this.defaultHeaders(token),
+    });
+    return res.status === 204 || res.ok;
+  }
+
+  static async unfollowGitHubUser(targetUsername: string, token: string): Promise<boolean> {
+    if (!targetUsername || !token) throw new Error("Authentication token required to unfollow on GitHub.");
+    const res = await fetch(`https://api.github.com/user/following/${targetUsername}`, {
+      method: "DELETE",
+      headers: this.defaultHeaders(token),
+    });
+    return res.status === 204 || res.ok;
+  }
 }
