@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Star, 
@@ -15,8 +15,10 @@ import {
   GitPullRequest,
   Flame,
   Activity,
-  X
+  X,
+  Loader2
 } from 'lucide-react';
+import { exportCardToPNG, exportCardToPDF, isUserAuthenticated } from '@/lib/exportCard';
 
 export type DeveloperTier = 'Bronze' | 'Silver' | 'Gold' | 'Diamond' | 'Emerald';
 export type DeveloperGrade = 'A+' | 'A' | 'B+' | 'B' | 'C';
@@ -123,12 +125,53 @@ export const DeveloperCard: React.FC<DeveloperCardProps> = ({
   onClose,
   interactive = true,
 }) => {
-  const handleAction = (actionName: string) => {
-    const user = typeof window !== 'undefined' ? localStorage.getItem('devtrack_current_user') : null;
-    if (!user && onRequireAuth) {
-      onRequireAuth(actionName);
-    } else {
-      alert(`Success: ${actionName} for @${data.username}!`);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [isExportingPNG, setIsExportingPNG] = useState(false);
+  const [isExportingPDF, setIsExportingPDF] = useState(false);
+
+  const handleExportPNG = async () => {
+    if (!isUserAuthenticated()) {
+      if (onRequireAuth) onRequireAuth('Download PNG');
+      return;
+    }
+    if (!cardRef.current) return;
+    setIsExportingPNG(true);
+    try {
+      await exportCardToPNG(cardRef.current, data.username);
+    } catch (err: any) {
+      console.error('PNG export failed:', err);
+      alert(err.message || 'Failed to export Developer Card to PNG.');
+    } finally {
+      setIsExportingPNG(false);
+    }
+  };
+
+  const handleExportPDF = async () => {
+    if (!isUserAuthenticated()) {
+      if (onRequireAuth) onRequireAuth('Download PDF');
+      return;
+    }
+    if (!cardRef.current) return;
+    setIsExportingPDF(true);
+    try {
+      await exportCardToPDF(cardRef.current, data.username);
+    } catch (err: any) {
+      console.error('PDF export failed:', err);
+      alert(err.message || 'Failed to export Developer Card to PDF.');
+    } finally {
+      setIsExportingPDF(false);
+    }
+  };
+
+  const handleShare = () => {
+    if (!isUserAuthenticated()) {
+      if (onRequireAuth) onRequireAuth('Share Card');
+      return;
+    }
+    const url = typeof window !== 'undefined' ? window.location.href : '';
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(url);
+      alert(`Copied Developer Card link to clipboard: ${url}`);
     }
   };
 
@@ -148,195 +191,195 @@ export const DeveloperCard: React.FC<DeveloperCardProps> = ({
   };
 
   const getGradeBadgeClass = (g: DeveloperGrade) => {
-    if (g === 'A+' || g === 'A') {
-      return 'border-amber-400/40 bg-gradient-to-r from-amber-500/20 via-emerald-500/20 to-teal-500/20 text-amber-300 shadow-md shadow-amber-500/10 backdrop-blur-md';
+    switch (g) {
+      case 'A+':
+      case 'A':
+        return 'border-amber-400/40 bg-gradient-to-r from-amber-400/20 via-yellow-500/10 to-amber-400/20 text-amber-300 shadow-[0_0_12px_rgba(251,191,36,0.25)]';
+      case 'B+':
+      case 'B':
+        return 'border-indigo-400/40 bg-indigo-500/15 text-indigo-300';
+      default:
+        return 'border-slate-500/40 bg-slate-800/50 text-slate-300';
     }
-    if (g === 'B+') {
-      return 'border-indigo-400/40 bg-gradient-to-r from-indigo-500/20 via-purple-500/20 to-cyan-500/20 text-indigo-200 shadow-md shadow-indigo-500/10 backdrop-blur-md';
-    }
-    if (g === 'B') {
-      return 'border-blue-400/40 bg-gradient-to-r from-blue-500/20 via-cyan-500/20 to-teal-500/20 text-blue-200 shadow-md shadow-blue-500/10 backdrop-blur-md';
-    }
-    return 'border-slate-700 bg-slate-800/80 text-slate-300 backdrop-blur-md';
   };
 
-  // Fallback defaults for tier, grade, and forks
-  const currentTier: DeveloperTier = data.tier || 'Silver';
-  const currentEmoji = data.tierEmoji || (currentTier === 'Emerald' ? '💚' : currentTier === 'Diamond' ? '💎' : currentTier === 'Gold' ? '🥇' : currentTier === 'Silver' ? '🥈' : '🥉');
-  const currentGrade: DeveloperGrade = data.grade || 'B+';
-  const totalForks = data.totalForks ?? 0;
+  const calculatedInfo = getDeveloperCardInfo(data);
+  const tier = data.tier || calculatedInfo.tier;
+  const tierEmoji = data.tierEmoji || calculatedInfo.tierEmoji;
+  const grade = data.grade || calculatedInfo.grade;
+  const top3Languages = (data.topLanguages && data.topLanguages.length > 0)
+    ? data.topLanguages.slice(0, 3)
+    : calculatedInfo.topLanguages;
 
-  // Strictly Top 3 Languages ONLY
-  const top3Languages = (data.topLanguages || []).slice(0, 3);
+  const pullRequestsDisplay = data.pullRequests !== undefined && data.pullRequests !== null 
+    ? data.pullRequests 
+    : 'Not Available from GitHub';
+
+  const totalContribsDisplay = data.totalContributions !== undefined && data.totalContributions !== null
+    ? data.totalContributions
+    : 'Not Available from GitHub';
+
+  const streakDisplay = data.currentStreak !== undefined && data.currentStreak !== null
+    ? (typeof data.currentStreak === 'number' ? `${data.currentStreak} days` : data.currentStreak)
+    : 'Not Available from GitHub';
 
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.98 }}
+      ref={cardRef}
+      initial={{ opacity: 0, scale: 0.96 }}
       animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.25 }}
-      className="relative w-full max-w-md overflow-hidden rounded-2xl border border-white/15 bg-gradient-to-b from-slate-900/95 via-slate-950/98 to-slate-900/95 p-4 sm:p-5 shadow-2xl backdrop-blur-2xl text-slate-100"
+      transition={{ duration: 0.3 }}
+      className="relative w-full max-w-[380px] sm:max-w-[400px] overflow-hidden rounded-[28px] border border-white/15 bg-gradient-to-b from-slate-900/95 via-slate-950/98 to-slate-900/95 p-5 sm:p-6 shadow-[0_24px_80px_rgba(0,0,0,0.85)] backdrop-blur-2xl text-slate-100 font-sans"
     >
-      {/* Outer Ambient Subtle Glow */}
-      <div className="pointer-events-none absolute -right-12 -top-12 h-36 w-36 rounded-full bg-indigo-500/15 blur-3xl" />
+      {/* Background Ambient Reflection */}
+      <div className="pointer-events-none absolute -top-24 -left-24 h-48 w-48 rounded-full bg-indigo-500/15 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-24 -right-24 h-48 w-48 rounded-full bg-purple-500/15 blur-3xl" />
 
-      {/* 1. TOP HEADER */}
-      <div className="relative z-10 flex items-center justify-between border-b border-white/10 pb-3">
-        {/* Tier Badge (Top Left) */}
-        <div className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-extrabold tracking-wide ${getTierColorClass(currentTier)}`}>
-          <span className="text-sm">{currentEmoji}</span>
-          <span>{currentTier} Developer</span>
+      {/* 1. TOP HEADER: Tier (Left), Grade (Right), Close (Far Right) */}
+      <div className="relative z-10 flex items-center justify-between gap-2 pb-4 border-b border-white/10">
+        {/* Left: Prestigious Tier Badge */}
+        <div className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-bold ${getTierColorClass(tier)}`}>
+          <span className="text-sm">{tierEmoji}</span>
+          <span className="tracking-wide uppercase text-[11px] font-extrabold">{tier} Developer</span>
         </div>
 
-        {/* Developer Grade (Top Right area before close button) */}
+        {/* Right Group: Developer Grade Badge & Optional Close Button */}
         <div className="flex items-center gap-2">
-          <div className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-extrabold shadow-sm backdrop-blur-md ${getGradeBadgeClass(currentGrade)}`}>
-            <span className="text-amber-400 text-xs">★</span>
-            <span>Grade {currentGrade}</span>
+          {/* Grade Badge */}
+          <div className={`flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-extrabold backdrop-blur-md ${getGradeBadgeClass(grade)}`}>
+            <span className="text-amber-400">★</span>
+            <span>Grade {grade}</span>
           </div>
 
           {onClose && (
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg p-1.5 text-slate-400 hover:bg-white/10 hover:text-white transition-colors"
+              className="flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-slate-900/60 text-slate-400 hover:text-white hover:bg-slate-800 transition-all"
             >
-              <X className="h-4 w-4" />
+              <X className="h-3.5 w-3.5" />
             </button>
           )}
         </div>
       </div>
 
-      {/* 2. PROFILE SECTION */}
-      <div className="relative z-10 mt-3.5 flex items-center gap-3.5">
-        {/* Avatar */}
+      {/* 2. DEVELOPER IDENTITY HEADER */}
+      <div className="relative z-10 mt-4 flex items-center gap-3.5">
         <div className="relative shrink-0">
           <img
             src={data.avatarUrl}
             alt={data.name}
-            className="h-14 w-14 rounded-xl object-cover ring-2 ring-indigo-500/40 shadow-md"
+            className="h-16 w-16 rounded-2xl object-cover ring-2 ring-indigo-500/30 shadow-lg bg-slate-900"
           />
-          <div className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-slate-950 shadow-sm">
+          <div className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-slate-950 shadow-md">
             <CheckCircle2 className="h-3.5 w-3.5" />
           </div>
         </div>
 
-        {/* Name, Username, Links */}
-        <div className="flex-1 min-w-0">
+        <div className="min-w-0 flex-1 space-y-1">
           <div className="flex items-center gap-2">
-            <h3 className="truncate text-base font-extrabold text-white leading-tight">
+            <h2 className="text-base sm:text-lg font-black text-white truncate tracking-tight">
               {data.name}
-            </h3>
+            </h2>
           </div>
-          <p className="text-xs font-medium text-indigo-400">@{data.username}</p>
+          <p className="text-xs font-bold text-indigo-400 font-mono truncate">
+            @{data.username}
+          </p>
 
-          {/* Location & Website Pills (if present) */}
-          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-400 font-mono">
+          <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-400 font-medium pt-0.5">
             {data.location && (
-              <span className="flex items-center gap-1 truncate max-w-[140px]">
-                <MapPin className="h-3 w-3 text-indigo-400 shrink-0" /> {data.location}
+              <span className="flex items-center gap-1">
+                <MapPin className="h-3 w-3 text-slate-500 shrink-0" />
+                <span className="truncate max-w-[110px]">{data.location}</span>
               </span>
             )}
             {data.blog && (
-              <a
-                href={data.blog.startsWith('http') ? data.blog : `https://${data.blog}`}
-                target="_blank"
-                rel="noreferrer"
-                className="flex items-center gap-1 text-indigo-300 hover:text-white transition-colors truncate max-w-[130px]"
-              >
-                <Globe className="h-3 w-3 text-cyan-400 shrink-0" /> Website
-              </a>
+              <span className="flex items-center gap-1 text-slate-400">
+                <Globe className="h-3 w-3 text-indigo-400 shrink-0" />
+                <span className="truncate max-w-[100px] font-mono">{data.blog}</span>
+              </span>
             )}
           </div>
         </div>
       </div>
 
-      {/* 3. COMPACT VERIFIED STATISTICS CONTAINER */}
-      <div className="relative z-10 mt-3.5 rounded-xl border border-white/10 bg-slate-950/70 p-2.5">
-        <div className="grid grid-cols-4 gap-2 text-center text-xs">
-          {/* Public Repos */}
-          <div className="rounded-lg bg-slate-900/60 p-1.5 border border-white/5">
-            <span className="block text-[9px] font-semibold text-slate-400 uppercase tracking-wider">Repos</span>
-            <span className="text-xs font-bold text-white flex items-center justify-center gap-1 mt-0.5">
-              <BookOpen className="h-3 w-3 text-indigo-400" /> {data.publicRepos}
+      {/* 3. CORE METRICS TELEMETRY GRID */}
+      <div className="relative z-10 mt-4 grid grid-cols-3 gap-2">
+        <div className="rounded-xl border border-white/10 bg-slate-900/60 p-2.5 text-center">
+          <span className="text-[10px] uppercase font-mono font-bold text-slate-400 block">Repos</span>
+          {isLoading ? (
+            <div className="mx-auto mt-1.5 h-4 w-10 animate-pulse rounded bg-slate-800" />
+          ) : (
+            <span className="text-sm sm:text-base font-extrabold text-white mt-0.5 block font-mono">
+              {data.publicRepos}
             </span>
-          </div>
-
-          {/* Total Stars */}
-          <div className="rounded-lg bg-slate-900/60 p-1.5 border border-white/5">
-            <span className="block text-[9px] font-semibold text-slate-400 uppercase tracking-wider">Stars</span>
-            <span className="text-xs font-bold text-amber-300 flex items-center justify-center gap-1 mt-0.5">
-              <Star className="h-3 w-3 fill-amber-300" /> {data.totalStars}
-            </span>
-          </div>
-
-          {/* Total Forks */}
-          <div className="rounded-lg bg-slate-900/60 p-1.5 border border-white/5">
-            <span className="block text-[9px] font-semibold text-slate-400 uppercase tracking-wider">Forks</span>
-            <span className="text-xs font-bold text-cyan-300 flex items-center justify-center gap-1 mt-0.5">
-              <GitFork className="h-3 w-3 text-cyan-400" /> {totalForks}
-            </span>
-          </div>
-
-          {/* Followers */}
-          <div className="rounded-lg bg-slate-900/60 p-1.5 border border-white/5">
-            <span className="block text-[9px] font-semibold text-slate-400 uppercase tracking-wider">Followers</span>
-            <span className="text-xs font-bold text-indigo-300 flex items-center justify-center gap-1 mt-0.5">
-              <Users className="h-3 w-3 text-indigo-400" /> {data.followers}
-            </span>
-          </div>
+          )}
         </div>
 
-        {/* Second Stat Row: Pull Requests, Total Contributions, Current Streak */}
-        <div className="mt-2 grid grid-cols-3 gap-2 text-center text-xs">
-          <div className="rounded-lg bg-slate-900/40 p-1.5 border border-white/5 min-h-[52px] flex flex-col justify-center">
-            <span className="block text-[9px] font-semibold text-slate-400 uppercase tracking-wider">Pull Requests</span>
-            <span className="text-[11px] font-bold text-slate-300 flex items-center justify-center gap-1 mt-0.5">
-              <GitPullRequest className="h-3 w-3 text-purple-400 shrink-0" /> 
-              {isLoading ? (
-                <span className="h-3 w-12 bg-slate-800 animate-pulse rounded inline-block" />
-              ) : data.pullRequests !== null && data.pullRequests !== undefined ? (
-                data.pullRequests
-              ) : (
-                <span className="text-[9px] text-slate-400 font-normal italic">Not Available from GitHub</span>
-              )}
+        <div className="rounded-xl border border-white/10 bg-slate-900/60 p-2.5 text-center">
+          <span className="text-[10px] uppercase font-mono font-bold text-slate-400 block">Total Stars</span>
+          {isLoading ? (
+            <div className="mx-auto mt-1.5 h-4 w-10 animate-pulse rounded bg-slate-800" />
+          ) : (
+            <span className="text-sm sm:text-base font-extrabold text-amber-300 mt-0.5 block font-mono">
+              {data.totalStars}
             </span>
-          </div>
+          )}
+        </div>
 
-          <div className="rounded-lg bg-slate-900/40 p-1.5 border border-white/5 min-h-[52px] flex flex-col justify-center">
-            <span className="block text-[9px] font-semibold text-slate-400 uppercase tracking-wider">Contributions</span>
-            <span className="text-[11px] font-bold text-slate-300 flex items-center justify-center gap-1 mt-0.5">
-              <Activity className="h-3 w-3 text-emerald-400 shrink-0" />
-              {isLoading ? (
-                <span className="h-3 w-12 bg-slate-800 animate-pulse rounded inline-block" />
-              ) : data.totalContributions !== null && data.totalContributions !== undefined ? (
-                data.totalContributions
-              ) : (
-                <span className="text-[9px] text-slate-400 font-normal italic">Not Available from GitHub</span>
-              )}
+        <div className="rounded-xl border border-white/10 bg-slate-900/60 p-2.5 text-center">
+          <span className="text-[10px] uppercase font-mono font-bold text-slate-400 block">Followers</span>
+          {isLoading ? (
+            <div className="mx-auto mt-1.5 h-4 w-10 animate-pulse rounded bg-slate-800" />
+          ) : (
+            <span className="text-sm sm:text-base font-extrabold text-indigo-300 mt-0.5 block font-mono">
+              {data.followers}
             </span>
-          </div>
-
-          <div className="rounded-lg bg-slate-900/40 p-1.5 border border-white/5 min-h-[52px] flex flex-col justify-center">
-            <span className="block text-[9px] font-semibold text-slate-400 uppercase tracking-wider">Streak</span>
-            <span className="text-[11px] font-bold text-slate-300 flex items-center justify-center gap-1 mt-0.5">
-              <Flame className="h-3 w-3 text-amber-400 shrink-0" />
-              {isLoading ? (
-                <span className="h-3 w-12 bg-slate-800 animate-pulse rounded inline-block" />
-              ) : data.currentStreak !== null && data.currentStreak !== undefined ? (
-                typeof data.currentStreak === 'number' ? `${data.currentStreak}d` : data.currentStreak
-              ) : (
-                <span className="text-[9px] text-slate-400 font-normal italic">Not Available from GitHub</span>
-              )}
-            </span>
-          </div>
+          )}
         </div>
       </div>
 
-      {/* 4. TOP 3 LANGUAGES SECTION ONLY */}
-      <div className="relative z-10 mt-3.5">
-        <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
-          <span>Top 3 Languages</span>
-          <span className="text-slate-500 font-mono text-[9px]">Calculated from public repos</span>
+      {/* DETAILED STATS (PRs, Contributions, Streak) */}
+      <div className="relative z-10 mt-2 grid grid-cols-3 gap-2">
+        <div className="rounded-xl border border-white/5 bg-slate-950/60 p-2 text-center">
+          <span className="text-[9px] uppercase font-mono text-slate-400 block">Pull Requests</span>
+          {isLoading ? (
+            <div className="mx-auto mt-1 h-3.5 w-12 animate-pulse rounded bg-slate-800" />
+          ) : (
+            <span className="text-xs font-bold text-slate-200 mt-0.5 block truncate">
+              {pullRequestsDisplay}
+            </span>
+          )}
+        </div>
+
+        <div className="rounded-xl border border-white/5 bg-slate-950/60 p-2 text-center">
+          <span className="text-[9px] uppercase font-mono text-slate-400 block">Contributions</span>
+          {isLoading ? (
+            <div className="mx-auto mt-1 h-3.5 w-12 animate-pulse rounded bg-slate-800" />
+          ) : (
+            <span className="text-xs font-bold text-slate-200 mt-0.5 block truncate">
+              {totalContribsDisplay}
+            </span>
+          )}
+        </div>
+
+        <div className="rounded-xl border border-white/5 bg-slate-950/60 p-2 text-center">
+          <span className="text-[9px] uppercase font-mono text-slate-400 block">Current Streak</span>
+          {isLoading ? (
+            <div className="mx-auto mt-1 h-3.5 w-12 animate-pulse rounded bg-slate-800" />
+          ) : (
+            <span className="text-xs font-bold text-emerald-400 mt-0.5 block truncate">
+              {streakDisplay}
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* 4. TOP LANGUAGES BREAKDOWN */}
+      <div className="relative z-10 mt-3.5 space-y-1.5">
+        <div className="flex items-center justify-between text-[11px] font-mono text-slate-400">
+          <span>Top Languages</span>
+          <span>GitHub Activity</span>
         </div>
 
         {top3Languages.length > 0 ? (
@@ -362,31 +405,46 @@ export const DeveloperCard: React.FC<DeveloperCardProps> = ({
         )}
       </div>
 
-      {/* 5. COMPACT ACTION BUTTONS */}
+      {/* 5. COMPACT ACTION BUTTONS (EXCLUDED FROM PNG/PDF CAPTURE VIA data-export-exclude) */}
       {interactive && (
-        <div className="relative z-10 mt-4 grid grid-cols-3 gap-2 pt-2.5 border-t border-white/10">
+        <div
+          data-export-exclude="true"
+          className="relative z-10 mt-4 grid grid-cols-3 gap-2 pt-2.5 border-t border-white/10"
+        >
           <button
             type="button"
-            onClick={() => handleAction('Download PNG')}
-            className="flex items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-slate-900/80 py-2 text-xs font-semibold text-slate-200 hover:border-indigo-500/40 hover:bg-slate-800 transition-all"
+            onClick={handleExportPNG}
+            disabled={isExportingPNG}
+            className="flex items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-slate-900/80 py-2 text-xs font-semibold text-slate-200 hover:border-indigo-500/40 hover:bg-slate-800 transition-all disabled:opacity-50 cursor-pointer"
           >
-            <Download className="h-3.5 w-3.5 text-indigo-400" />
-            <span>PNG</span>
+            {isExportingPNG ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin text-indigo-400 shrink-0" />
+            ) : (
+              <Download className="h-3.5 w-3.5 text-indigo-400 shrink-0" />
+            )}
+            <span>{isExportingPNG ? 'PNG...' : 'PNG'}</span>
           </button>
+
           <button
             type="button"
-            onClick={() => handleAction('Download PDF')}
-            className="flex items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-slate-900/80 py-2 text-xs font-semibold text-slate-200 hover:border-indigo-500/40 hover:bg-slate-800 transition-all"
+            onClick={handleExportPDF}
+            disabled={isExportingPDF}
+            className="flex items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-slate-900/80 py-2 text-xs font-semibold text-slate-200 hover:border-indigo-500/40 hover:bg-slate-800 transition-all disabled:opacity-50 cursor-pointer"
           >
-            <Download className="h-3.5 w-3.5 text-purple-400" />
-            <span>PDF</span>
+            {isExportingPDF ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin text-purple-400 shrink-0" />
+            ) : (
+              <Download className="h-3.5 w-3.5 text-purple-400 shrink-0" />
+            )}
+            <span>{isExportingPDF ? 'PDF...' : 'PDF'}</span>
           </button>
+
           <button
             type="button"
-            onClick={() => handleAction('Share Card')}
-            className="flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 py-2 text-xs font-semibold text-white shadow-md shadow-indigo-500/20 hover:opacity-95 transition-all"
+            onClick={handleShare}
+            className="flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 py-2 text-xs font-semibold text-white shadow-md shadow-indigo-500/20 hover:opacity-95 transition-all cursor-pointer"
           >
-            <Share2 className="h-3.5 w-3.5" />
+            <Share2 className="h-3.5 w-3.5 shrink-0" />
             <span>Share</span>
           </button>
         </div>
