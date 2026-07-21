@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -51,6 +51,9 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   const menuRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLDivElement>(null);
+  const navItemRefs = useRef<(HTMLAnchorElement | null)[]>([]);
+  const limelightRef = useRef<HTMLDivElement | null>(null);
+  const [isLimelightReady, setIsLimelightReady] = useState(false);
 
   // Sync user state from props or localStorage
   useEffect(() => {
@@ -147,12 +150,43 @@ export const Navbar: React.FC<NavbarProps> = ({
     { name: 'GitHub Analytics', href: `/u/${username}?tab=analytics`, icon: Activity, matchExact: false },
   ];
 
+  // Calculate current active link index for the Limelight animation (defaults to 0 for Home)
+  const rawIndex = leftNavLinks.findIndex((link) =>
+    link.matchExact ? pathname === link.href : pathname.startsWith(link.href.split('?')[0])
+  );
+  const activeNavIndex = rawIndex >= 0 ? rawIndex : 0;
+
+  // Position Limelight Spotlight effect dynamically over active tab
+  useEffect(() => {
+    const updateLimelight = () => {
+      const limelight = limelightRef.current;
+      const activeItem = navItemRefs.current[activeNavIndex];
+
+      if (limelight && activeItem) {
+        const newLeft = activeItem.offsetLeft + activeItem.offsetWidth / 2 - limelight.offsetWidth / 2;
+        limelight.style.left = `${newLeft}px`;
+        if (!isLimelightReady) {
+          setIsLimelightReady(true);
+        }
+      }
+    };
+
+    updateLimelight();
+    const animId = requestAnimationFrame(updateLimelight);
+    window.addEventListener('resize', updateLimelight);
+
+    return () => {
+      cancelAnimationFrame(animId);
+      window.removeEventListener('resize', updateLimelight);
+    };
+  }, [activeNavIndex, isLimelightReady, pathname]);
+
   return (
     <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-slate-950/80 backdrop-blur-xl transition-all font-sans">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8 h-16 gap-4">
         
-        {/* BRAND LOGO & LEFT NAVIGATION LINKS */}
-        <div className="flex items-center gap-6 shrink-0">
+        {/* BRAND LOGO & LEFT NAVIGATION LINKS WITH LIMELIGHT SPOTLIGHT ANIMATION */}
+        <div className="flex items-center gap-6 shrink-0 h-full">
           <Link 
             href="/" 
             className="group flex items-center gap-2.5 focus-visible:outline-none rounded-xl"
@@ -166,21 +200,20 @@ export const Navbar: React.FC<NavbarProps> = ({
             </span>
           </Link>
 
-          {/* Left Navigation Links next to logo */}
-          <nav className="hidden lg:flex items-center gap-1">
-            {leftNavLinks.map((link) => {
+          {/* Left Navigation Links with Limelight Animation */}
+          <nav className="hidden lg:flex items-center gap-1 relative h-full">
+            {leftNavLinks.map((link, index) => {
               const Icon = link.icon;
-              const isActive = link.matchExact
-                ? pathname === link.href
-                : pathname.startsWith(link.href.split('?')[0]);
+              const isActive = index === activeNavIndex;
               return (
                 <Link
                   key={link.name}
                   href={link.href}
-                  className={`flex items-center gap-2 rounded-xl px-3 py-1.5 text-xs font-bold transition-all ${
+                  ref={(el) => { navItemRefs.current[index] = el; }}
+                  className={`relative z-20 flex items-center gap-2 px-3.5 py-2 text-xs font-bold transition-all ${
                     isActive
-                      ? 'bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 shadow-[0_0_12px_rgba(99,102,241,0.2)]'
-                      : 'text-slate-400 border border-transparent hover:bg-white/5 hover:text-slate-200'
+                      ? 'text-indigo-300 font-extrabold'
+                      : 'text-slate-400 hover:text-slate-200'
                   }`}
                 >
                   <Icon className={`h-3.5 w-3.5 ${isActive ? 'text-indigo-400' : 'text-slate-400'}`} />
@@ -188,6 +221,17 @@ export const Navbar: React.FC<NavbarProps> = ({
                 </Link>
               );
             })}
+
+            {/* Dynamic Limelight Spotlight Beam Indicator */}
+            <div
+              ref={limelightRef}
+              className={`absolute top-0 z-30 w-10 h-[4px] rounded-full bg-gradient-to-r from-indigo-400 via-purple-400 to-indigo-400 shadow-[0_0_24px_rgba(99,102,241,1)] ${
+                isLimelightReady ? 'transition-[left] duration-300 ease-in-out' : ''
+              }`}
+              style={{ left: '-999px' }}
+            >
+              <div className="absolute left-[-50%] top-[4px] w-[200%] h-14 [clip-path:polygon(10%_100%,35%_0,65%_0,90%_100%)] bg-gradient-to-b from-indigo-500/40 via-purple-500/20 to-transparent pointer-events-none" />
+            </div>
           </nav>
         </div>
 
