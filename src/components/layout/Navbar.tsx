@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { DevTrackLogo } from '@/components/ui/DevTrackLogo';
 import { logOutUser } from '@/lib/firebase';
 import { GithubIcon } from '@/components/ui/GithubIcon';
+import { TierAvatar } from '@/components/ui/TierAvatar';
 import {
   Search,
   LogOut,
@@ -345,12 +346,14 @@ export const Navbar: React.FC<NavbarProps> = ({
                 className="flex items-center gap-2 rounded-2xl border border-white/10 bg-slate-900/80 p-1 pr-2.5 hover:border-indigo-500/40 transition-all focus:outline-none cursor-pointer"
               >
                 <div className="relative">
-                  <img
+                  <TierAvatar
                     src={avatarUrl}
                     alt={username}
-                    className="h-7 w-7 rounded-xl object-cover ring-2 ring-indigo-500/30"
+                    tier={user?.tier || 'Gold'}
+                    size="custom"
+                    customSizeClass="h-7 w-7 rounded-xl p-[1.5px]"
                   />
-                  <span className="absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full bg-emerald-400 ring-2 ring-slate-950" />
+                  <span className="absolute -bottom-0.5 -right-0.5 z-20 h-2 w-2 rounded-full bg-emerald-400 ring-2 ring-slate-950" />
                 </div>
                 <span className="hidden sm:inline text-xs font-extrabold text-white max-w-[90px] truncate">
                   @{username}
@@ -371,10 +374,11 @@ export const Navbar: React.FC<NavbarProps> = ({
                     {/* User Info */}
                     <div className="p-2.5 space-y-1">
                       <div className="flex items-center gap-2.5">
-                        <img
+                        <TierAvatar
                           src={avatarUrl}
                           alt={username}
-                          className="h-8 w-8 rounded-xl object-cover ring-2 ring-indigo-500/40"
+                          tier={user?.tier || 'Gold'}
+                          size="sm"
                         />
                         <div className="min-w-0 flex-1">
                           <h4 className="text-xs font-extrabold text-white truncate">

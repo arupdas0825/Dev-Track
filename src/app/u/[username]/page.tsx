@@ -4,6 +4,7 @@ import React, { useState, useEffect, use } from 'react';
 import { Navbar } from '@/components/layout/Navbar';
 import { DeveloperCard, DeveloperCardData } from '@/components/card/DeveloperCard';
 import { AuthModal } from '@/components/auth/AuthModal';
+import { TierAvatar } from '@/components/ui/TierAvatar';
 import { 
   Flame, 
   Star, 
@@ -343,12 +344,13 @@ export default function UserProfilePage({ params, searchParams }: PageProps) {
           {/* Avatar & User Details */}
           <div className="flex flex-col sm:flex-row items-start sm:items-end gap-5">
             <div className="relative">
-              <img
+              <TierAvatar
                 src={profileData.avatarUrl}
                 alt={profileData.name}
-                className="h-28 w-28 rounded-3xl object-cover ring-4 ring-slate-950 shadow-2xl bg-slate-900"
+                tier={profileData.tier || 'Silver'}
+                size="xl"
               />
-              <div className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 text-slate-950 shadow-md">
+              <div className="absolute -bottom-1 -right-1 z-20 flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 text-slate-950 shadow-md">
                 <CheckCircle2 className="h-4 w-4" />
               </div>
             </div>

@@ -19,6 +19,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { exportCardToPNG, exportCardToPDF, isUserAuthenticated } from '@/lib/exportCard';
+import { TierAvatar } from '@/components/ui/TierAvatar';
 
 export type DeveloperTier = 'Bronze' | 'Silver' | 'Gold' | 'Diamond' | 'Emerald';
 export type DeveloperGrade = 'A+' | 'A' | 'B+' | 'B' | 'C';
@@ -266,12 +267,14 @@ export const DeveloperCard: React.FC<DeveloperCardProps> = ({
       {/* 2. DEVELOPER IDENTITY HEADER */}
       <div className="relative z-10 mt-4 flex items-center gap-3.5">
         <div className="relative shrink-0">
-          <img
+          <TierAvatar
             src={data.avatarUrl}
             alt={data.name}
-            className="h-16 w-16 rounded-2xl object-cover ring-2 ring-indigo-500/30 shadow-lg bg-slate-900"
+            tier={tier}
+            size="custom"
+            customSizeClass="h-16 w-16 rounded-2xl p-[2.5px]"
           />
-          <div className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-slate-950 shadow-md">
+          <div className="absolute -bottom-1 -right-1 z-20 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-slate-950 shadow-md">
             <CheckCircle2 className="h-3.5 w-3.5" />
           </div>
         </div>
