@@ -12,7 +12,6 @@ import {
   LogOut,
   User,
   Settings,
-  Sparkles,
   ChevronDown,
   Menu,
   X,
@@ -21,7 +20,8 @@ import {
   Code,
   Activity,
   Home,
-  MessageSquare
+  MessageSquare,
+  Loader2
 } from 'lucide-react';
 
 export interface NavbarProps {
@@ -44,7 +44,13 @@ export const Navbar: React.FC<NavbarProps> = ({
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showSearchDropdown, setShowSearchDropdown] = useState(false);
+
   const menuRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLDivElement>(null);
 
   // Sync user state from props or localStorage
   useEffect(() => {
@@ -62,16 +68,50 @@ export const Navbar: React.FC<NavbarProps> = ({
     }
   }, [propUser]);
 
-  // Close dropdown on outside click
+  // Close dropdowns on outside click
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setIsProfileMenuOpen(false);
       }
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setShowSearchDropdown(false);
+      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // Debounced live GitHub user search
+  useEffect(() => {
+    if (!searchQuery.trim() || searchQuery.trim().length < 2) {
+      setSearchResults([]);
+      setShowSearchDropdown(false);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setIsSearching(true);
+      try {
+        const token = typeof window !== 'undefined' ? localStorage.getItem('devtrack_github_token') ?? undefined : undefined;
+        const headers: Record<string, string> = { Accept: 'application/vnd.github.v3+json' };
+        if (token) headers['Authorization'] = `token ${token}`;
+
+        const res = await fetch(`https://api.github.com/search/users?q=${encodeURIComponent(searchQuery.trim())}&per_page=5`, { headers });
+        if (res.ok) {
+          const json = await res.json();
+          setSearchResults(json.items || []);
+          setShowSearchDropdown(true);
+        }
+      } catch (err) {
+        console.warn('Search query error:', err);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 250);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   const handleSignOut = async () => {
     try {
@@ -92,7 +132,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      setShowSearchDropdown(false);
+      router.push(`/u/${encodeURIComponent(searchQuery.trim().replace(/^@/, ''))}`);
     }
   };
 
@@ -150,17 +191,22 @@ export const Navbar: React.FC<NavbarProps> = ({
           </nav>
         </div>
 
-        {/* CENTERED GLOBAL SEARCH BAR */}
-        <div className="hidden md:flex flex-1 max-w-sm mx-4">
+        {/* CENTERED GLOBAL SEARCH BAR WITH LIVE GITHUB SUGGESTIONS */}
+        <div className="hidden md:flex flex-1 max-w-sm mx-4 relative" ref={searchRef}>
           <form onSubmit={handleSearchSubmit} className="relative w-full">
             <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
-              <Search className="h-3.5 w-3.5 text-slate-500" />
+              {isSearching ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin text-indigo-400" />
+              ) : (
+                <Search className="h-3.5 w-3.5 text-slate-500" />
+              )}
             </div>
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search devs, repos, tech... ⌘K"
+              onFocus={() => { if (searchResults.length > 0) setShowSearchDropdown(true); }}
+              placeholder="Search devs on GitHub... ⌘K"
               className="w-full rounded-xl border border-white/10 bg-slate-900/60 pl-9 pr-10 py-1.5 text-xs text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
             />
             <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5">
@@ -169,6 +215,48 @@ export const Navbar: React.FC<NavbarProps> = ({
               </kbd>
             </div>
           </form>
+
+          {/* Live Search Suggestions Dropdown */}
+          <AnimatePresence>
+            {showSearchDropdown && searchResults.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 6 }}
+                className="absolute left-0 right-0 top-full mt-2 rounded-2xl border border-white/15 bg-slate-900/95 p-2 shadow-2xl backdrop-blur-2xl z-50 space-y-1 font-sans"
+              >
+                {searchResults.map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => {
+                      setShowSearchDropdown(false);
+                      setSearchQuery('');
+                      router.push(`/u/${item.login}`);
+                    }}
+                    className="flex items-center gap-3 w-full rounded-xl p-2 text-left hover:bg-indigo-500/15 transition-all cursor-pointer group"
+                  >
+                    <img
+                      src={item.avatar_url}
+                      alt={item.login}
+                      className="h-8 w-8 rounded-xl object-cover ring-1 ring-white/10 shrink-0"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-1">
+                        <span className="text-xs font-extrabold text-white group-hover:text-indigo-300 truncate">
+                          @{item.login}
+                        </span>
+                        <span className="text-[9px] font-mono text-emerald-400 bg-emerald-500/10 px-1.5 py-0.2 rounded border border-emerald-500/20 shrink-0">
+                          ✓ Verified
+                        </span>
+                      </div>
+                      <span className="text-[10px] text-slate-400 font-mono block truncate">View GitHub Developer Profile</span>
+                    </div>
+                  </button>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         {/* RIGHT SECTION: NOTIFICATIONS, MESSAGES & USER PROFILE */}
@@ -265,7 +353,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                         className="flex items-center gap-2 rounded-xl px-3 py-1.5 text-xs font-semibold text-slate-300 hover:bg-indigo-500/15 hover:text-indigo-300 transition-all"
                       >
                         <User className="h-3.5 w-3.5 text-indigo-400" />
-                        <span>Public Profile</span>
+                        <span>My Profile</span>
                       </Link>
                       <Link
                         href="/settings"
@@ -336,7 +424,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search devs, repos..."
+                placeholder="Search devs..."
                 className="w-full rounded-xl border border-white/10 bg-slate-900 pl-9 pr-4 py-2 text-xs text-white placeholder-slate-500 focus:outline-none"
               />
             </form>

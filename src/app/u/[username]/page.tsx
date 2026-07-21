@@ -10,7 +10,6 @@ import {
   GitFork, 
   GitCommit, 
   Award, 
-  ShieldCheck, 
   FolderGit2, 
   Calendar, 
   MapPin, 
@@ -18,20 +17,20 @@ import {
   Building,
   CheckCircle2, 
   Share2, 
-  Briefcase, 
   Users, 
   Activity,
   GitPullRequest,
   ExternalLink,
   Sparkles,
-  Lock,
   MessageSquare,
   Clock,
   BookOpen,
-  ChevronRight,
   TrendingUp,
   Code2,
-  Check
+  Check,
+  Pencil,
+  Save,
+  X
 } from 'lucide-react';
 import { GithubIcon } from '@/components/ui/GithubIcon';
 import Link from 'next/link';
@@ -77,10 +76,39 @@ export default function UserProfilePage({ params, searchParams }: PageProps) {
   const [contributions, setContributions] = useState<ContributionStats | null>(null);
   const [userEvents, setUserEvents] = useState<any[]>([]);
   
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [customAbout, setCustomAbout] = useState<string>('');
+  const [isEditingAbout, setIsEditingAbout] = useState(false);
+  const [aboutInput, setAboutInput] = useState<string>('');
+
   const [isFollowing, setIsFollowing] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [authActionTitle, setAuthActionTitle] = useState('Sign in with GitHub');
+
+  // Load current user and stored custom About text
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('devtrack_current_user');
+      if (stored) {
+        try {
+          setCurrentUser(JSON.parse(stored));
+        } catch (e) {}
+      }
+      const savedAbout = localStorage.getItem(`devtrack_about_${username.toLowerCase()}`);
+      if (savedAbout) {
+        setCustomAbout(savedAbout);
+        setAboutInput(savedAbout);
+      }
+    }
+  }, [username]);
+
+  // Ownership Check: Is this my profile or someone else's profile?
+  const isOwnProfile = Boolean(
+    currentUser &&
+    currentUser.username &&
+    currentUser.username.toLowerCase() === username.toLowerCase()
+  );
 
   // Load all live GitHub data for the target user
   useEffect(() => {
@@ -95,7 +123,7 @@ export default function UserProfilePage({ params, searchParams }: PageProps) {
       GitHubRepositoryService.fetchPinnedRepositories(username, token),
       GitHubContributionService.fetchUserContributions(username, token),
       GitHubUserService.fetchUserEvents(username, token),
-      token ? GitHubUserService.checkIsFollowing(username, token) : Promise.resolve(false),
+      token && !isOwnProfile ? GitHubUserService.checkIsFollowing(username, token) : Promise.resolve(false),
     ])
       .then(([cardData, userRepos, pinned, contribStats, events, followingStatus]) => {
         if (isCancelled) return;
@@ -105,6 +133,13 @@ export default function UserProfilePage({ params, searchParams }: PageProps) {
         setContributions(contribStats);
         setUserEvents(events);
         setIsFollowing(followingStatus);
+
+        // If no custom about stored, prefill with GitHub bio
+        const savedAbout = typeof window !== 'undefined' ? localStorage.getItem(`devtrack_about_${username.toLowerCase()}`) : null;
+        if (!savedAbout && cardData.bio) {
+          setCustomAbout(cardData.bio);
+          setAboutInput(cardData.bio);
+        }
       })
       .catch((err) => {
         console.error('Error fetching live GitHub profile data:', err);
@@ -116,9 +151,19 @@ export default function UserProfilePage({ params, searchParams }: PageProps) {
     return () => {
       isCancelled = true;
     };
-  }, [username]);
+  }, [username, isOwnProfile]);
 
-  // Handle live GitHub follow/unfollow functionality
+  // Handle saving custom About section (Max 1000 chars)
+  const handleSaveAbout = () => {
+    const trimmed = aboutInput.slice(0, 1000);
+    setCustomAbout(trimmed);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(`devtrack_about_${username.toLowerCase()}`, trimmed);
+    }
+    setIsEditingAbout(false);
+  };
+
+  // Handle live GitHub follow/unfollow functionality (Other User Profiles)
   const handleFollowToggle = async () => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('devtrack_github_token') : null;
 
@@ -167,7 +212,7 @@ export default function UserProfilePage({ params, searchParams }: PageProps) {
     ? Object.values(contributions.dailyContributions).reduce((sum, val) => sum + val, 0)
     : (contributions?.totalCommits || 0) + (contributions?.totalPRs || 0) + (contributions?.totalIssues || 0);
 
-  // Auto-calculated DevTrack Achievements from live GitHub activity
+  // DevTrack Achievements
   const devTrackAchievements = [
     {
       id: 'first_repo',
@@ -253,19 +298,19 @@ export default function UserProfilePage({ params, searchParams }: PageProps) {
     { name: 'Quickdraw', icon: '⚡', desc: 'Closed an issue or pull request within 5 minutes of creation.' },
   ];
 
-  // Language stats formatting for charts
+  // Language stats formatting
   const languageStats = (profileData.topLanguages || []).map((lang) => ({
     name: lang.name,
     percent: lang.percent,
     color: lang.color,
   }));
 
-  // Recharts Monthly trend data derived from daily contributions
+  // Recharts Monthly trend data
   const monthlyTrendData = React.useMemo(() => {
     if (!contributions?.dailyContributions) return [];
     const map: Record<string, number> = {};
     Object.entries(contributions.dailyContributions).forEach(([dateStr, count]) => {
-      const monthKey = dateStr.substring(0, 7); // YYYY-MM
+      const monthKey = dateStr.substring(0, 7);
       map[monthKey] = (map[monthKey] || 0) + count;
     });
     return Object.entries(map)
@@ -285,7 +330,7 @@ export default function UserProfilePage({ params, searchParams }: PageProps) {
     <div className="min-h-screen bg-slate-950 text-slate-100 selection:bg-indigo-500 selection:text-white font-sans">
       <Navbar />
 
-      {/* Hero Ambient Cover Header */}
+      {/* Hero Cover Header */}
       <div className="relative h-56 sm:h-64 w-full bg-gradient-to-r from-indigo-950 via-slate-950 to-purple-950 overflow-hidden border-b border-white/10">
         <div className="absolute inset-0 opacity-25 bg-[radial-gradient(#818CF8_1px,transparent_1px)] [background-size:20px_20px]" />
         <div className="absolute -bottom-12 -left-12 h-64 w-64 rounded-full bg-indigo-500/15 blur-3xl pointer-events-none" />
@@ -346,33 +391,48 @@ export default function UserProfilePage({ params, searchParams }: PageProps) {
                 {profileData.createdAt && (
                   <span className="flex items-center gap-1">
                     <Calendar className="h-3.5 w-3.5 text-slate-500 shrink-0" />
-                    GitHub member since {profileData.createdAt}
+                    Joined GitHub {profileData.createdAt}
                   </span>
                 )}
               </div>
             </div>
           </div>
 
-          {/* Follow & Share Actions */}
+          {/* DYNAMIC ACTION BUTTONS (MY PROFILE vs OTHER USER PROFILE) */}
           <div className="flex flex-wrap items-center gap-3">
-            {/* Live GitHub Follow Button */}
-            <button
-              type="button"
-              onClick={handleFollowToggle}
-              disabled={followLoading}
-              className={`flex items-center gap-2 rounded-2xl px-5 py-2.5 text-xs font-bold shadow-lg transition-all ${
-                isFollowing
-                  ? 'border border-emerald-500/40 bg-emerald-500/15 text-emerald-300 shadow-emerald-500/10 hover:bg-emerald-500/25'
-                  : 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-indigo-500/20 hover:opacity-95'
-              }`}
-            >
-              {isFollowing ? <Check className="h-4 w-4 text-emerald-400" /> : <GithubIcon className="h-4 w-4" />}
-              <span>{isFollowing ? 'Following on GitHub' : 'Follow on GitHub'}</span>
-              <span className="ml-1 rounded-full bg-black/20 px-2 py-0.5 text-[10px] font-mono">
-                {profileData.followers}
-              </span>
-            </button>
+            {isOwnProfile ? (
+              /* MY PROFILE ACTIONS: Edit Profile & Share Profile */
+              <>
+                <button
+                  type="button"
+                  onClick={() => setIsEditingAbout(!isEditingAbout)}
+                  className="flex items-center gap-2 rounded-2xl border border-indigo-500/40 bg-indigo-500/15 px-4 py-2.5 text-xs font-bold text-indigo-300 hover:bg-indigo-500/25 shadow-md shadow-indigo-500/10 transition-all cursor-pointer"
+                >
+                  <Pencil className="h-4 w-4 text-indigo-400" />
+                  <span>{isEditingAbout ? 'Cancel Edit' : 'Edit Profile'}</span>
+                </button>
+              </>
+            ) : (
+              /* OTHER USER PROFILE ACTIONS: Follow on GitHub & Share Profile */
+              <button
+                type="button"
+                onClick={handleFollowToggle}
+                disabled={followLoading}
+                className={`flex items-center gap-2 rounded-2xl px-5 py-2.5 text-xs font-bold shadow-lg transition-all cursor-pointer ${
+                  isFollowing
+                    ? 'border border-emerald-500/40 bg-emerald-500/15 text-emerald-300 shadow-emerald-500/10 hover:bg-emerald-500/25'
+                    : 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-indigo-500/20 hover:opacity-95'
+                }`}
+              >
+                {isFollowing ? <Check className="h-4 w-4 text-emerald-400" /> : <GithubIcon className="h-4 w-4" />}
+                <span>{isFollowing ? 'Following on GitHub' : 'Follow on GitHub'}</span>
+                <span className="ml-1 rounded-full bg-black/20 px-2 py-0.5 text-[10px] font-mono">
+                  {profileData.followers}
+                </span>
+              </button>
+            )}
 
+            {/* Share Profile Button */}
             <button
               type="button"
               onClick={() => {
@@ -382,7 +442,7 @@ export default function UserProfilePage({ params, searchParams }: PageProps) {
                   alert(`Copied Developer Profile link to clipboard: ${url}`);
                 }
               }}
-              className="flex items-center gap-2 rounded-2xl border border-white/10 bg-slate-900/80 px-4 py-2.5 text-xs font-semibold text-slate-200 hover:border-indigo-500/40 hover:bg-slate-800 transition-all"
+              className="flex items-center gap-2 rounded-2xl border border-white/10 bg-slate-900/80 px-4 py-2.5 text-xs font-semibold text-slate-200 hover:border-indigo-500/40 hover:bg-slate-800 transition-all cursor-pointer"
             >
               <Share2 className="h-4 w-4 text-indigo-400" />
               <span>Share Profile</span>
@@ -426,27 +486,74 @@ export default function UserProfilePage({ params, searchParams }: PageProps) {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
               {/* Left Main Content Area (Col 1-7) */}
               <div className="lg:col-span-7 space-y-6">
-                {/* About Section */}
-                <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-6 backdrop-blur-xl space-y-3">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 font-mono">
-                    About Developer
-                  </h3>
-                  <p className="text-xs sm:text-sm text-slate-200 leading-relaxed">
-                    {profileData.bio || `${profileData.name} is a software engineer publishing open-source projects on GitHub.`}
-                  </p>
+                {/* About Section (Editable for My Profile, Read-Only for Others) */}
+                <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-6 backdrop-blur-xl space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 font-mono">
+                      About Developer
+                    </h3>
+                    {isOwnProfile && !isEditingAbout && (
+                      <button
+                        type="button"
+                        onClick={() => setIsEditingAbout(true)}
+                        className="flex items-center gap-1 text-xs font-semibold text-indigo-400 hover:text-indigo-300 transition-colors cursor-pointer"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                        <span>Edit</span>
+                      </button>
+                    )}
+                  </div>
 
-                  <div className="pt-3 border-t border-white/10 grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs font-mono text-slate-300">
-                    <div className="rounded-xl border border-white/5 bg-slate-950/60 p-2.5">
-                      <span className="block text-[10px] text-slate-500 uppercase font-semibold">Public Repos</span>
-                      <span className="text-sm font-bold text-white mt-0.5 block">{profileData.publicRepos}</span>
+                  {isOwnProfile && isEditingAbout ? (
+                    <div className="space-y-3">
+                      <textarea
+                        value={aboutInput}
+                        onChange={(e) => setAboutInput(e.target.value.slice(0, 1000))}
+                        maxLength={1000}
+                        rows={4}
+                        placeholder="Write a bio about your software development journey, skills, and goals..."
+                        className="w-full rounded-2xl border border-indigo-500/40 bg-slate-950/80 p-3.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 font-sans leading-relaxed"
+                      />
+                      <div className="flex items-center justify-between text-[11px] font-mono text-slate-400">
+                        <span>{aboutInput.length}/1000 characters</span>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setIsEditingAbout(false)}
+                            className="rounded-xl border border-white/10 bg-slate-900 px-3 py-1.5 text-xs font-semibold text-slate-400 hover:bg-slate-800 transition-all cursor-pointer"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleSaveAbout}
+                            className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 px-4 py-1.5 text-xs font-bold text-white shadow-md hover:opacity-90 transition-all cursor-pointer"
+                          >
+                            <Save className="h-3.5 w-3.5" />
+                            <span>Save Changes</span>
+                          </button>
+                        </div>
+                      </div>
                     </div>
-                    <div className="rounded-xl border border-white/5 bg-slate-950/60 p-2.5">
+                  ) : (
+                    <p className="text-xs sm:text-sm text-slate-200 leading-relaxed">
+                      {customAbout || profileData.bio || `${profileData.name} is a software engineer publishing open-source projects on GitHub.`}
+                    </p>
+                  )}
+
+                  {/* Facebook / LinkedIn Style Live Statistics Grid */}
+                  <div className="pt-3 border-t border-white/10 grid grid-cols-3 gap-3 text-xs font-mono">
+                    <div className="rounded-xl border border-white/5 bg-slate-950/60 p-3 text-center">
                       <span className="block text-[10px] text-slate-500 uppercase font-semibold">Followers</span>
-                      <span className="text-sm font-bold text-indigo-300 mt-0.5 block">{profileData.followers}</span>
+                      <span className="text-base sm:text-lg font-extrabold text-indigo-300 mt-0.5 block">{profileData.followers}</span>
                     </div>
-                    <div className="rounded-xl border border-white/5 bg-slate-950/60 p-2.5">
+                    <div className="rounded-xl border border-white/5 bg-slate-950/60 p-3 text-center">
                       <span className="block text-[10px] text-slate-500 uppercase font-semibold">Following</span>
-                      <span className="text-sm font-bold text-purple-300 mt-0.5 block">{profileData.following}</span>
+                      <span className="text-base sm:text-lg font-extrabold text-purple-300 mt-0.5 block">{profileData.following || 0}</span>
+                    </div>
+                    <div className="rounded-xl border border-white/5 bg-slate-950/60 p-3 text-center">
+                      <span className="block text-[10px] text-slate-500 uppercase font-semibold">Public Repos</span>
+                      <span className="text-base sm:text-lg font-extrabold text-white mt-0.5 block">{profileData.publicRepos}</span>
                     </div>
                   </div>
                 </div>
@@ -660,7 +767,7 @@ export default function UserProfilePage({ params, searchParams }: PageProps) {
 
           {/* TAB 3: POSTS & UPDATES (Placeholder for now) */}
           {activeTab === 'posts' && (
-            <div className="rounded-3xl border border-white/15 bg-gradient-to-b from-slate-900/90 via-slate-950/95 to-slate-900/90 p-10 text-center max-w-xl mx-auto space-y-4 shadow-2xl backdrop-blur-2xl">
+            <div className="rounded-3xl border border-white/15 bg-gradient-to-b from-slate-900/90 via-slate-950/98 to-slate-900/90 p-10 text-center max-w-xl mx-auto space-y-4 shadow-2xl backdrop-blur-2xl">
               <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-indigo-500/30 bg-indigo-500/10 text-indigo-400 shadow-lg shadow-indigo-500/20">
                 <MessageSquare className="h-8 w-8" />
               </div>
@@ -681,7 +788,7 @@ export default function UserProfilePage({ params, searchParams }: PageProps) {
                 <button
                   type="button"
                   onClick={() => setActiveTab('overview')}
-                  className="rounded-2xl bg-gradient-to-r from-indigo-500 to-purple-600 px-6 py-2.5 text-xs font-bold text-white shadow-md hover:opacity-90 transition-all"
+                  className="rounded-2xl bg-gradient-to-r from-indigo-500 to-purple-600 px-6 py-2.5 text-xs font-bold text-white shadow-md hover:opacity-90 transition-all cursor-pointer"
                 >
                   Return to Overview Dashboard
                 </button>
