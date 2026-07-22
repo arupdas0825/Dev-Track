@@ -475,6 +475,18 @@ export function DevTrackRobotDisplay({ text = 'DevTrack' }: { text?: string }) {
 
   return (
     <div className="relative w-full h-full min-h-[460px] flex flex-col items-center justify-center overflow-hidden rounded-3xl">
+      {/* Official DevTrack Floating Brand Badge Overlay */}
+      <div className="absolute top-4 left-4 z-20 flex items-center gap-2 rounded-full border border-white/10 bg-slate-950/80 px-3.5 py-1.5 backdrop-blur-xl shadow-xl">
+        <img
+          src="/devtrack-logo.png"
+          alt="DevTrack Brand Logo"
+          className="h-6 w-6 object-contain animate-logo-breathe animate-logo-float"
+        />
+        <span className="font-extrabold text-xs tracking-tight text-white font-mono">
+          Dev<span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400">Track</span>
+        </span>
+      </div>
+
       {/* Background DevTrack Branding Text (Auto-scaling SVG to prevent any text clipping) */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none z-0 px-2">
         <svg viewBox="0 0 700 160" className="w-full h-auto max-h-[340px] max-w-full">

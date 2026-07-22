@@ -236,6 +236,12 @@ export const DeveloperCard: React.FC<DeveloperCardProps> = ({
       <div className="pointer-events-none absolute -top-24 -left-24 h-48 w-48 rounded-full bg-indigo-500/15 blur-3xl" />
       <div className="pointer-events-none absolute -bottom-24 -right-24 h-48 w-48 rounded-full bg-purple-500/15 blur-3xl" />
 
+      {/* Official Brand Identity Watermark Logo */}
+      <div className="absolute top-3 right-14 z-0 opacity-20 pointer-events-none flex items-center gap-1 font-mono text-[10px]">
+        <img src="/devtrack-logo.png" alt="DevTrack Logo" className="h-6 w-6 object-contain" />
+        <span className="font-extrabold text-white">DevTrack</span>
+      </div>
+
       {/* 1. TOP HEADER: Tier (Left), Grade (Right), Close (Far Right) */}
       <div className="relative z-10 flex items-center justify-between gap-2 pb-4 border-b border-white/10">
         {/* Left: Prestigious Tier Badge */}

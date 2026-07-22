@@ -178,8 +178,52 @@ a[href*="spline.design"],
   display: none !important;
 }
 
-@keyframes shimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
+@keyframes logoBreathe {
+  0%, 100% {
+    opacity: 0.65;
+    filter: drop-shadow(0 0 10px rgba(6, 182, 212, 0.4)) drop-shadow(0 0 20px rgba(139, 92, 246, 0.3));
+  }
+  50% {
+    opacity: 1;
+    filter: drop-shadow(0 0 18px rgba(6, 182, 212, 0.7)) drop-shadow(0 0 32px rgba(139, 92, 246, 0.6));
+  }
 }
+
+.animate-logo-breathe {
+  animation: logoBreathe 4s ease-in-out infinite;
+}
+
+@keyframes logoFloat {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+.animate-logo-float {
+  animation: logoFloat 5s ease-in-out infinite;
+}
+
+@keyframes logoShimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-logo-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.35) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  background-size: 200% 100%;
+  animation: logoShimmer 3.5s ease-in-out infinite;
+}
+
 
