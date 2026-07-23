@@ -18,6 +18,23 @@
   --diff-remove: #EF4444;
 }
 
+/* ☀️ PURE WHITE LIGHT THEME - CSS VARIABLE OVERRIDES */
+html.light {
+  --background: #FFFFFF;
+  --surface: #F8FAFC;
+  --surface-secondary: #F1F5F9;
+  --surface-glass: rgba(255, 255, 255, 0.92);
+  --border: rgba(0, 0, 0, 0.08);
+  --border-highlight: rgba(79, 70, 229, 0.25);
+  --text-primary: #0F172A;
+  --text-secondary: #475569;
+  --text-muted: #64748B;
+  --accent-primary: #4F46E5;
+  --accent-secondary: #7C3AED;
+  --accent-cyan: #0284C7;
+  --accent-emerald: #059669;
+}
+
 @theme {
   --color-background: var(--background);
   --color-surface: var(--surface);
@@ -42,9 +59,279 @@ body {
     radial-gradient(at 100% 100%, rgba(139, 92, 246, 0.1) 0px, transparent 50%),
     radial-gradient(at 50% 50%, rgba(6, 182, 212, 0.05) 0px, transparent 70%);
   background-attachment: fixed;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* Glassmorphism Utilities */
+html.light body {
+  background-color: #FFFFFF;
+  color: #0F172A;
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(79, 70, 229, 0.05) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(124, 58, 237, 0.04) 0px, transparent 50%),
+    radial-gradient(at 50% 50%, rgba(2, 132, 199, 0.03) 0px, transparent 70%);
+}
+
+/* ════════════════════════════════════════════════════════════
+   ☀️ GLOBAL LIGHT THEME OVERRIDES
+   Force-remaps all hardcoded Tailwind dark slate classes
+   so every component responds to html.light without edits.
+   ════════════════════════════════════════════════════════════ */
+
+/* --- PAGE / CONTAINER BACKGROUNDS --- */
+html.light .bg-slate-950,
+html.light .min-h-screen.bg-slate-950,
+html.light [class*="bg-slate-950"] {
+  background-color: #FFFFFF !important;
+}
+
+html.light .bg-slate-900,
+html.light [class*="bg-slate-900"] {
+  background-color: #F8FAFC !important;
+}
+
+html.light .bg-slate-800,
+html.light [class*="bg-slate-800"] {
+  background-color: #F1F5F9 !important;
+}
+
+html.light .bg-slate-700,
+html.light [class*="bg-slate-700"] {
+  background-color: #E2E8F0 !important;
+}
+
+/* Opacity variants — override to light surfaces with reduced opacity */
+html.light [class*="bg-slate-950\/"] {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+}
+
+html.light [class*="bg-slate-900\/"] {
+  background-color: rgba(248, 250, 252, 0.95) !important;
+}
+
+html.light [class*="bg-slate-800\/"] {
+  background-color: rgba(241, 245, 249, 0.9) !important;
+}
+
+/* --- TEXT COLORS --- */
+html.light .text-slate-100,
+html.light .text-slate-200 {
+  color: #0F172A !important;
+}
+
+html.light .text-slate-300 {
+  color: #1E293B !important;
+}
+
+html.light .text-slate-400 {
+  color: #475569 !important;
+}
+
+html.light .text-slate-500 {
+  color: #64748B !important;
+}
+
+html.light .text-slate-600 {
+  color: #64748B !important;
+}
+
+html.light .text-white {
+  color: #0F172A !important;
+}
+
+/* --- BORDER COLORS --- */
+html.light .border-white\/10,
+html.light .border-slate-800,
+html.light [class*="border-slate-800"] {
+  border-color: rgba(0, 0, 0, 0.1) !important;
+}
+
+html.light .border-white\/05,
+html.light .border-slate-700,
+html.light [class*="border-slate-700"] {
+  border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+html.light [class*="border-slate-800\/"] {
+  border-color: rgba(0, 0, 0, 0.1) !important;
+}
+
+html.light [class*="border-slate-700\/"] {
+  border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+html.light [class*="border-white\/"] {
+  border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+/* --- NAVBAR --- */
+html.light header.bg-slate-950\/80,
+html.light header[class*="bg-slate-950"] {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  border-bottom-color: rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 1px 20px rgba(0, 0, 0, 0.06) !important;
+}
+
+/* Desktop nav link text */
+html.light .text-cyan-300 {
+  color: #4F46E5 !important;
+}
+
+html.light .text-cyan-400 {
+  color: #0284C7 !important;
+}
+
+/* Search bar in navbar */
+html.light input[class*="bg-slate-900"] {
+  background-color: #F1F5F9 !important;
+  border-color: rgba(0, 0, 0, 0.12) !important;
+  color: #0F172A !important;
+}
+
+html.light input::placeholder {
+  color: #94A3B8 !important;
+}
+
+/* --- SEARCH DROPDOWN --- */
+html.light [class*="bg-slate-950\/95"] {
+  background-color: rgba(255, 255, 255, 0.98) !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* --- CARDS & PANELS --- */
+html.light .glass-panel {
+  background: rgba(255, 255, 255, 0.85) !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06) !important;
+}
+
+html.light .glass-card {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.95) 100%) !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 1) !important;
+}
+
+html.light .glass-card-hover:hover {
+  border-color: rgba(79, 70, 229, 0.25) !important;
+  box-shadow: 0 20px 40px rgba(79, 70, 229, 0.08) !important;
+}
+
+html.light .glass-input {
+  background: rgba(248, 250, 252, 0.98) !important;
+  border-color: rgba(0, 0, 0, 0.12) !important;
+  color: #0F172A !important;
+}
+
+html.light .glass-input:focus {
+  border-color: #4F46E5 !important;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12) !important;
+}
+
+/* --- DEVELOPER CARD (DeveloperCard.tsx) --- */
+html.light .glass-card .text-slate-400 {
+  color: #475569 !important;
+}
+
+/* --- POST CARDS --- */
+html.light article[class*="bg-slate-900"] {
+  background-color: rgba(255, 255, 255, 0.98) !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.06) !important;
+}
+
+/* --- SIDEBARS --- */
+html.light [class*="bg-slate-900"][class*="rounded"] {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+/* --- MOBILE TOP BAR --- */
+html.light header.bg-slate-950\/80.block.md\:hidden,
+html.light header[class*="bg-slate-950"][class*="md:hidden"] {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  border-bottom-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+/* --- MOBILE BOTTOM NAV --- */
+html.light nav[class*="bg-slate-950"] {
+  background-color: rgba(255, 255, 255, 0.96) !important;
+  border-top-color: rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.06) !important;
+}
+
+/* --- MOBILE HAMBURGER DRAWER --- */
+html.light [class*="bg-slate-950"][class*="fixed"][class*="inset"] {
+  background-color: rgba(255, 255, 255, 0.98) !important;
+}
+
+/* Backdrop overlay in light mode */
+html.light [class*="bg-black"][class*="\/50"],
+html.light [class*="bg-black\/50"] {
+  background-color: rgba(0, 0, 0, 0.2) !important;
+}
+
+/* --- MOBILE SEARCH MODAL --- */
+html.light [class*="bg-slate-950"][class*="min-h-screen"] {
+  background-color: #FFFFFF !important;
+}
+
+/* --- HOVER STATES --- */
+html.light [class*="hover:bg-slate-900"]:hover,
+html.light [class*="hover:bg-slate-900\/"] {
+  background-color: #F1F5F9 !important;
+}
+
+html.light [class*="hover:bg-slate-800"]:hover,
+html.light [class*="hover:bg-slate-800\/"] {
+  background-color: #E2E8F0 !important;
+}
+
+/* --- SPECIAL BADGE / TAG BACKGROUNDS --- */
+html.light [class*="bg-cyan-950"] {
+  background-color: rgba(219, 234, 254, 0.8) !important;
+}
+
+html.light [class*="bg-indigo-950"] {
+  background-color: rgba(224, 231, 255, 0.8) !important;
+}
+
+html.light [class*="bg-purple-950"] {
+  background-color: rgba(237, 233, 254, 0.8) !important;
+}
+
+html.light [class*="bg-emerald-950"] {
+  background-color: rgba(209, 250, 229, 0.8) !important;
+}
+
+html.light [class*="bg-slate-950"][class*="px-"] {
+  background-color: rgba(241, 245, 249, 0.9) !important;
+}
+
+/* --- GRADIENT ACCENTS: keep vibrant even in light mode --- */
+html.light .text-gradient {
+  background: linear-gradient(135deg, #0F172A 0%, #334155 40%, #4F46E5 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* --- SCROLLBAR IN LIGHT MODE --- */
+html.light ::-webkit-scrollbar-track {
+  background: #F8FAFC;
+}
+
+html.light ::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border: 2px solid #F8FAFC;
+}
+
+html.light ::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}
+
+/* ════════════════════════════════════════════════════════════
+   GLASSMORPHISM UTILITIES
+   ════════════════════════════════════════════════════════════ */
 .glass-panel {
   background: rgba(15, 23, 42, 0.7);
   backdrop-filter: blur(16px);
@@ -89,12 +376,14 @@ body {
   background: linear-gradient(135deg, #FFFFFF 0%, #CBD5E1 50%, #818CF8 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .text-gradient-primary {
   background: linear-gradient(135deg, #818CF8 0%, #C084FC 50%, #38BDF8 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 /* Glow effects */
@@ -225,5 +514,3 @@ a[href*="spline.design"],
   background-size: 200% 100%;
   animation: logoShimmer 3.5s ease-in-out infinite;
 }
-
-

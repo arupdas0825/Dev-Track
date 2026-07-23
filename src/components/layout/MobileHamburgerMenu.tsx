@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DevTrackLogo } from '@/components/ui/DevTrackLogo';
 import { TierAvatar } from '@/components/ui/TierAvatar';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import {
   X,
   Bookmark,
@@ -163,23 +164,15 @@ export const MobileHamburgerMenu: React.FC<MobileHamburgerMenuProps> = ({
                   <ChevronRight className="w-4 h-4 text-slate-600" />
                 </Link>
 
-                <button
-                  onClick={() => {
-                    onClose();
-                    onOpenTheme?.();
-                  }}
-                  className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-slate-900/80 border border-transparent hover:border-slate-800/60 text-slate-200 text-sm font-medium text-left active:scale-98 transition-all"
-                >
+                <div className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-900/80 border border-transparent hover:border-slate-800/60 text-slate-200 text-sm font-medium">
                   <div className="flex items-center gap-3">
                     <div className="p-2 rounded-lg bg-purple-500/10 text-purple-400">
                       <SunMoon className="w-4 h-4" />
                     </div>
-                    <span>Theme Customization</span>
+                    <span>Theme Mode</span>
                   </div>
-                  <span className="text-[11px] font-mono text-cyan-400 bg-cyan-950 px-2 py-0.5 rounded-full border border-cyan-800/40">
-                    Glass
-                  </span>
-                </button>
+                  <ThemeToggle showLabel />
+                </div>
 
                 <p className="px-3 pt-4 pb-1 text-[11px] font-mono uppercase tracking-wider text-slate-500 font-semibold">
                   Resources & Support

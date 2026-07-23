@@ -88,7 +88,7 @@ export const MobileProfileView: React.FC<MobileProfileViewProps> = ({
   return (
     <div className="w-full space-y-4 pb-20 block md:hidden">
       {/* CARD 1: Profile Header Stacked Card */}
-      <section className="w-full bg-slate-900/80 backdrop-blur-2xl border border-slate-800/90 rounded-3xl overflow-hidden shadow-2xl">
+      <section className="w-full bg-slate-900/80 dark:bg-slate-900/80 light:bg-white/95 backdrop-blur-2xl border border-slate-800/90 light:border-slate-200/90 rounded-3xl overflow-hidden shadow-2xl transition-colors">
         {/* Cover Gradient Banner */}
         <div className="h-32 w-full bg-gradient-to-r from-cyan-900 via-indigo-900 to-purple-950 relative">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(34,211,238,0.25),transparent_50%)]" />

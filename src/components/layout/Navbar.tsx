@@ -29,6 +29,7 @@ import { MobileTopBar } from './MobileTopBar';
 import { MobileBottomNav } from './MobileBottomNav';
 import { MobileHamburgerMenu } from './MobileHamburgerMenu';
 import { MobileSearchModal } from './MobileSearchModal';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
 
 export interface NavbarProps {
   currentUser?: any;
@@ -323,8 +324,10 @@ export const Navbar: React.FC<NavbarProps> = ({
             </AnimatePresence>
           </div>
 
-          {/* RIGHT PROFILE & AUTH BUTTONS */}
+          {/* RIGHT PROFILE, THEME TOGGLE & AUTH BUTTONS */}
           <div className="flex items-center gap-3">
+            <ThemeToggle />
+
             {user ? (
               <div className="relative" ref={menuRef}>
                 <button

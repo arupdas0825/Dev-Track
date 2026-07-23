@@ -38,6 +38,7 @@ export interface ThemeContextProps {
   chart: ChartSettings;
   modalOpen: boolean;
   setMode: (mode: ThemeMode) => void;
+  toggleThemeMode: () => void;
   setProfile: (profile: ThemeProfile) => void;
   setAccent: (accent: AccentColor) => void;
   setLayout: (layout: LayoutDensity) => void;
@@ -133,7 +134,7 @@ const accentColors: Record<AccentColor, string> = {
 };
 
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
-  const [mode, setMode] = useState<ThemeMode>("system");
+  const [mode, setMode] = useState<ThemeMode>("dark");
   const [profile, setProfile] = useState<ThemeProfile>("github-dark");
   const [accent, setAccent] = useState<AccentColor>("blue");
   const [layout, setLayout] = useState<LayoutDensity>("default");
@@ -162,32 +163,37 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
   // Apply theme variables whenever relevant state changes
   useEffect(() => {
     if (typeof document === "undefined") return;
-    // Resolve mode
     const effectiveMode =
       mode === "system"
         ? window.matchMedia("(prefers-color-scheme: dark)").matches
           ? "dark"
           : "light"
         : mode;
-    // Apply profile colors
-    const vars = themeProfiles[profile];
-    Object.entries(vars).forEach(([key, value]) => {
-      document.documentElement.style.setProperty(key, value);
-    });
-    // Apply accent override
-    document.documentElement.style.setProperty("--accent", accentColors[accent]);
-    // Apply mode‑specific adjustments (background may differ for light mode)
+
     if (effectiveMode === "light") {
+      document.documentElement.classList.remove("dark");
+      document.documentElement.classList.add("light");
       document.documentElement.style.setProperty("--background", "#ffffff");
-      document.documentElement.style.setProperty("--foreground", "#24292f");
-      document.documentElement.style.setProperty("--text-primary", "#24292f");
-      document.documentElement.style.setProperty("--text-secondary", "#57606a");
+      document.documentElement.style.setProperty("--surface", "#f8fafc");
+      document.documentElement.style.setProperty("--surface-secondary", "#f1f5f9");
+      document.documentElement.style.setProperty("--border", "rgba(0, 0, 0, 0.08)");
+      document.documentElement.style.setProperty("--foreground", "#0f172a");
+      document.documentElement.style.setProperty("--text-primary", "#0f172a");
+      document.documentElement.style.setProperty("--text-secondary", "#475569");
     } else {
-      // dark background already set by profile
+      document.documentElement.classList.remove("light");
+      document.documentElement.classList.add("dark");
+      const vars = themeProfiles[profile];
+      Object.entries(vars).forEach(([key, value]) => {
+        document.documentElement.style.setProperty(key, value);
+      });
       document.documentElement.style.setProperty("--foreground", "#F0F6FC");
       document.documentElement.style.setProperty("--text-primary", "#F0F6FC");
       document.documentElement.style.setProperty("--text-secondary", "#8B949E");
     }
+    // Apply accent override
+    document.documentElement.style.setProperty("--accent", accentColors[accent]);
+
     // Persist
     localStorage.setItem("devtrack_theme_mode", mode);
     localStorage.setItem("devtrack_theme_profile", profile);
@@ -199,6 +205,10 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
     );
     localStorage.setItem("devtrack_chart_settings", JSON.stringify(chartSettings));
   }, [mode, profile, accent, layout, interfaceSettings, chartSettings]);
+
+  const toggleThemeMode = () => {
+    setMode((prev) => (prev === "light" ? "dark" : "light"));
+  };
 
   const setInterface = (partial: Partial<InterfaceSettings>) => {
     setInterfaceSettings((prev) => ({ ...prev, ...partial }));
@@ -216,6 +226,7 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
     chart: chartSettings,
     modalOpen,
     setMode,
+    toggleThemeMode,
     setProfile,
     setAccent,
     setLayout,

@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { DevTrackLogo } from '@/components/ui/DevTrackLogo';
 import { TierAvatar } from '@/components/ui/TierAvatar';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { Bell, MessageSquare, Menu, Search, User } from 'lucide-react';
 
 interface MobileTopBarProps {
@@ -40,6 +41,9 @@ export const MobileTopBar: React.FC<MobileTopBarProps> = ({
 
         {/* Right: Quick Action Controls */}
         <div className="flex items-center gap-1.5 sm:gap-2">
+          {/* Theme Toggle */}
+          <ThemeToggle />
+
           {/* Search Trigger */}
           <button
             onClick={onOpenSearch}

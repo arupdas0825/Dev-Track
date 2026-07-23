@@ -60,7 +60,7 @@ export const MobilePostCard: React.FC<MobilePostCardProps> = ({ post, onRequireA
   const tier = (post.author?.tier as any) || 'Diamond';
 
   return (
-    <article className="w-full bg-slate-900/70 backdrop-blur-xl border border-slate-800/90 rounded-2xl p-4 shadow-lg hover:border-slate-700/80 transition-all">
+    <article className="w-full bg-slate-900/70 dark:bg-slate-900/70 light:bg-white/95 backdrop-blur-xl border border-slate-800/90 light:border-slate-200/90 rounded-2xl p-4 shadow-lg hover:border-slate-700/80 transition-all">
       {/* Header: Author & Tier Avatar */}
       <div className="flex items-center justify-between mb-3">
         <Link href={`/u/${authorUsername}`} className="flex items-center gap-3 group">
