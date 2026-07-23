@@ -8,21 +8,24 @@ import { DevTrackLogo } from '@/components/ui/DevTrackLogo';
 import { logOutUser } from '@/lib/firebase';
 import { GithubIcon } from '@/components/ui/GithubIcon';
 import { TierAvatar } from '@/components/ui/TierAvatar';
+import { LiquidMetalButton } from '@/components/ui/LiquidMetalButton';
+import { LiquidMetalWrapper } from '@/components/ui/LiquidMetalWrapper';
 import {
   Search,
   LogOut,
   User,
   Settings,
   ChevronDown,
-  Menu,
-  X,
   Bell,
   CheckCircle2,
   Code,
   Activity,
   Home,
   MessageSquare,
-  Loader2
+  Loader2,
+  Users,
+  Sparkles,
+  Briefcase,
 } from 'lucide-react';
 
 import { MobileTopBar } from './MobileTopBar';
@@ -158,7 +161,9 @@ export const Navbar: React.FC<NavbarProps> = ({
   const leftNavLinks = [
     { name: 'Home', href: '/feed', icon: Home, matchExact: true },
     { name: 'Projects', href: '/projects', icon: Code, matchExact: false },
-    { name: 'GitHub Analytics', href: `/u/${username}?tab=analytics`, icon: Activity, matchExact: false },
+    { name: 'Connections', href: '/network', icon: Users, matchExact: false },
+    { name: 'AI Insights', href: '/ai', icon: Sparkles, matchExact: false },
+    { name: 'Job Analyser', href: '/jobs', icon: Briefcase, matchExact: false },
   ];
 
   const rawIndex = leftNavLinks.findIndex((link) =>
@@ -226,7 +231,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               href="/feed" 
               className="group flex items-center gap-2.5 focus-visible:outline-none rounded-xl"
             >
-              <DevTrackLogo size={32} />
+              <DevTrackLogo size={32} animated={false} />
               <span className="text-lg font-black tracking-tight text-white flex items-center gap-1.5 font-mono">
                 DevTrack
                 <span className="rounded-md bg-cyan-500/20 px-1.5 py-0.5 text-[9px] font-bold text-cyan-300 border border-cyan-500/30 font-mono">
@@ -235,56 +240,50 @@ export const Navbar: React.FC<NavbarProps> = ({
               </span>
             </Link>
 
-            {/* Left Navigation Links with Limelight Animation */}
-            <nav className="hidden lg:flex items-center gap-1 relative h-full">
+            {/* Left Navigation Links with Liquid Metal Shader Border */}
+            <nav className="hidden lg:flex items-center gap-1.5 relative h-full">
               {leftNavLinks.map((link, index) => {
                 const Icon = link.icon;
                 const isActive = index === activeNavIndex;
                 return (
-                  <Link
-                    key={link.name}
-                    href={link.href}
-                    ref={(el) => { navItemRefs.current[index] = el; }}
-                    className={`relative z-20 flex items-center gap-2 px-3.5 py-2 text-xs font-bold transition-all ${
-                      isActive
-                        ? 'text-cyan-300 font-extrabold'
-                        : 'text-slate-400 hover:text-slate-200'
-                    }`}
-                  >
-                    <Icon className={`h-3.5 w-3.5 ${isActive ? 'text-cyan-400' : 'text-slate-400'}`} />
-                    <span>{link.name}</span>
+                  <Link key={link.name} href={link.href}>
+                    <LiquidMetalWrapper
+                      borderRadius="12px"
+                      active={isActive}
+                      padding="1.5px"
+                      className="transition-all"
+                    >
+                      <div className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-bold transition-all ${
+                        isActive ? 'text-cyan-300 font-extrabold' : 'text-slate-300 hover:text-white'
+                      }`}>
+                        <Icon className={`h-3.5 w-3.5 ${isActive ? 'text-cyan-400' : 'text-slate-400'}`} />
+                        <span className="whitespace-nowrap">{link.name}</span>
+                      </div>
+                    </LiquidMetalWrapper>
                   </Link>
                 );
               })}
-
-              <div
-                ref={limelightRef}
-                className={`absolute top-0 z-30 w-10 h-[4px] rounded-full bg-gradient-to-r from-cyan-400 via-indigo-400 to-purple-400 shadow-[0_0_24px_rgba(34,211,238,1)] ${
-                  isLimelightReady ? 'transition-[left] duration-300 ease-in-out' : ''
-                }`}
-                style={{ left: '-999px' }}
-              >
-                <div className="absolute left-[-50%] top-[4px] w-[200%] h-14 [clip-path:polygon(10%_100%,35%_0,65%_0,90%_100%)] bg-gradient-to-b from-cyan-500/40 via-purple-500/20 to-transparent pointer-events-none" />
-              </div>
             </nav>
           </div>
 
-          {/* CENTERED GLOBAL SEARCH BAR */}
-          <div className="hidden md:flex flex-1 max-w-sm mx-4 relative" ref={searchRef}>
-            <form onSubmit={handleSearchSubmit} className="w-full relative">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onFocus={() => { if (searchResults.length > 0) setShowSearchDropdown(true); }}
-                placeholder="Search developers (e.g. torvalds, gaearon)..."
-                className="w-full rounded-2xl border border-white/10 bg-slate-900/90 pl-9 pr-8 py-2 text-xs text-white placeholder-slate-500 focus:border-cyan-500/60 focus:outline-none focus:ring-1 focus:ring-cyan-500/30 transition-all font-mono"
-              />
-              {isSearching && (
-                <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 animate-spin text-cyan-400" />
-              )}
-            </form>
+          {/* CENTERED GLOBAL SEARCH BAR WITH LIQUID METAL BORDER */}
+          <div className="hidden md:flex flex-1 max-w-xs mx-2 relative" ref={searchRef}>
+            <LiquidMetalWrapper borderRadius="14px" className="w-full" padding="1.5px">
+              <form onSubmit={handleSearchSubmit} className="w-full relative px-3 py-1.5 flex items-center">
+                <Search className="h-3.5 w-3.5 text-slate-400 shrink-0 mr-2" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onFocus={() => { if (searchResults.length > 0) setShowSearchDropdown(true); }}
+                  placeholder="Search developers..."
+                  className="w-full bg-transparent text-xs text-white placeholder-slate-400 focus:outline-none font-mono"
+                />
+                {isSearching && (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin text-cyan-400 shrink-0 ml-2" />
+                )}
+              </form>
+            </LiquidMetalWrapper>
 
             {/* LIVE SEARCH DROPDOWN */}
             <AnimatePresence>
@@ -325,25 +324,50 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
 
           {/* RIGHT PROFILE, THEME TOGGLE & AUTH BUTTONS */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+
+            {/* Notification + Message Icons with Liquid Metal Shader Border */}
+            <div className="hidden md:flex items-center gap-1.5">
+              <Link href="/notifications" aria-label="Notifications">
+                <LiquidMetalWrapper borderRadius="12px" padding="1.5px">
+                  <div className="relative p-2 text-slate-300 hover:text-white flex items-center justify-center">
+                    <Bell className="w-4 h-4" />
+                    <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_6px_rgba(34,211,238,0.8)]" />
+                  </div>
+                </LiquidMetalWrapper>
+              </Link>
+
+              <Link href="/messages" aria-label="Messages">
+                <LiquidMetalWrapper borderRadius="12px" padding="1.5px">
+                  <div className="relative p-2 text-slate-300 hover:text-white flex items-center justify-center">
+                    <MessageSquare className="w-4 h-4" />
+                    <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-indigo-400 shadow-[0_0_6px_rgba(129,140,248,0.8)]" />
+                  </div>
+                </LiquidMetalWrapper>
+              </Link>
+            </div>
+
             <ThemeToggle />
 
             {user ? (
               <div className="relative" ref={menuRef}>
-                <button
+                <LiquidMetalButton
+                  width={145}
+                  height={40}
                   onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
-                  className="flex items-center gap-2 rounded-2xl border border-white/10 bg-slate-900/60 p-1.5 pr-3 hover:bg-slate-800 transition-all"
                 >
-                  <TierAvatar
-                    src={user.avatarUrl || user.photoURL || `https://api.dicebear.com/7.x/identicon/svg?seed=${username}`}
-                    alt={username}
-                    tier={user.tier || 'Diamond'}
-                    size="sm"
-                    className="w-7 h-7 rounded-lg"
-                  />
-                  <span className="text-xs font-bold text-slate-200">{username}</span>
-                  <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
-                </button>
+                  <div className="flex items-center gap-2 px-1">
+                    <TierAvatar
+                      src={user.avatarUrl || user.photoURL || `https://api.dicebear.com/7.x/identicon/svg?seed=${username}`}
+                      alt={username}
+                      tier={user.tier || 'Diamond'}
+                      size="sm"
+                      className="w-6 h-6 rounded-lg"
+                    />
+                    <span className="text-xs font-bold text-slate-100 font-mono truncate max-w-[75px]">{username}</span>
+                    <ChevronDown className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                  </div>
+                </LiquidMetalButton>
 
                 <AnimatePresence>
                   {isProfileMenuOpen && (
@@ -381,13 +405,10 @@ export const Navbar: React.FC<NavbarProps> = ({
                 </AnimatePresence>
               </div>
             ) : (
-              <button
+              <LiquidMetalButton
+                label="Sign In"
                 onClick={() => onRequireAuth?.('Sign In')}
-                className="flex items-center gap-2 rounded-2xl bg-gradient-to-r from-cyan-500 to-indigo-600 px-4 py-2 text-xs font-bold text-slate-950 shadow-[0_0_15px_rgba(34,211,238,0.3)] hover:opacity-95 active:scale-95 transition-all"
-              >
-                <GithubIcon className="h-4 w-4" />
-                <span>Sign In</span>
-              </button>
+              />
             )}
           </div>
         </div>
