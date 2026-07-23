@@ -82,9 +82,12 @@ export const MobileTopBar: React.FC<MobileTopBarProps> = ({
 
           {/* User Profile Avatar or Sign In */}
           {user ? (
-            <Link href={`/u/${user.username || 'me'}`} className="ml-1 active:scale-95 transition-transform">
+            <Link
+              href={`/u/${user.username || user.displayName?.toLowerCase().replace(/\s+/g, '') || 'shadcn'}`}
+              className="ml-1 active:scale-95 transition-transform shrink-0"
+            >
               <TierAvatar
-                src={user.avatarUrl || user.photoURL || 'https://avatars.githubusercontent.com/u/9919?v=4'}
+                src={user.avatarUrl || user.photoURL || `https://api.dicebear.com/7.x/identicon/svg?seed=${user.username || 'user'}`}
                 alt={user.name || user.username || 'User'}
                 tier={user.tier || 'Diamond'}
                 size="sm"

@@ -103,13 +103,6 @@ export const FeedLayout: React.FC = () => {
     <>
       {/* 📱 MOBILE VIEW CONTAINER (< md) */}
       <div className="block md:hidden min-h-screen bg-slate-950 text-slate-100 pb-24">
-        <MobileTopBar
-          user={user}
-          onOpenSearch={() => setIsSearchOpen(true)}
-          onOpenHamburger={() => setIsHamburgerOpen(true)}
-          onOpenAuth={() => handleRequireAuth('Sign In')}
-        />
-
         <main className="px-3 py-4 space-y-4 max-w-lg mx-auto">
           {/* Quick Create Update Bar on Mobile */}
           <div
@@ -133,18 +126,6 @@ export const FeedLayout: React.FC = () => {
             ))}
           </div>
         </main>
-
-        {/* Floating FAB for Quick Post */}
-        <button
-          onClick={() => setIsComposerOpen(true)}
-          className="fixed bottom-20 right-4 z-40 p-3.5 rounded-full bg-gradient-to-r from-cyan-500 to-indigo-600 text-slate-950 shadow-[0_0_20px_rgba(34,211,238,0.5)] active:scale-90 transition-all block md:hidden"
-          aria-label="Create Post"
-        >
-          <Plus className="w-6 h-6 stroke-[2.5]" />
-        </button>
-
-        {/* Mobile Navigation Bar */}
-        <MobileBottomNav user={user} activeTabOverride="home" />
 
         {/* Mobile Modals */}
         <MobileHamburgerMenu

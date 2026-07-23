@@ -32,6 +32,7 @@ import { MobileTopBar } from './MobileTopBar';
 import { MobileBottomNav } from './MobileBottomNav';
 import { MobileHamburgerMenu } from './MobileHamburgerMenu';
 import { MobileSearchModal } from './MobileSearchModal';
+import { MobilePostComposer } from '@/components/devfeed/MobilePostComposer';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 
 export interface NavbarProps {
@@ -63,6 +64,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   // Mobile states
   const [isMobileHamburgerOpen, setIsMobileHamburgerOpen] = useState(false);
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
+  const [isMobileComposerOpen, setIsMobileComposerOpen] = useState(false);
 
   const menuRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLDivElement>(null);
@@ -205,7 +207,10 @@ export const Navbar: React.FC<NavbarProps> = ({
         onOpenAuth={() => onRequireAuth?.('Sign In')}
       />
 
-      <MobileBottomNav user={user} />
+      <MobileBottomNav
+        user={user}
+        onOpenComposer={() => setIsMobileComposerOpen(true)}
+      />
 
       <MobileHamburgerMenu
         isOpen={isMobileHamburgerOpen}
@@ -219,6 +224,19 @@ export const Navbar: React.FC<NavbarProps> = ({
       <MobileSearchModal
         isOpen={isMobileSearchOpen}
         onClose={() => setIsMobileSearchOpen(false)}
+      />
+
+      <MobilePostComposer
+        isOpen={isMobileComposerOpen}
+        onClose={() => setIsMobileComposerOpen(false)}
+        user={user}
+        onPostCreated={() => {
+          if (pathname === '/feed') {
+            window.location.reload();
+          } else {
+            router.push('/feed');
+          }
+        }}
       />
 
       {/* 💻 DESKTOP HEADER NAVBAR (>= md) */}

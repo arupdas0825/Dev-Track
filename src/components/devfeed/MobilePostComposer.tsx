@@ -2,7 +2,19 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Send, Sparkles, Code, Image as ImageIcon, Link as LinkIcon, Loader2 } from 'lucide-react';
+import { 
+  X, 
+  Send, 
+  Sparkles, 
+  Code, 
+  Rocket, 
+  GitCommit, 
+  FileText, 
+  Terminal, 
+  Brain,
+  Link as LinkIcon, 
+  Loader2 
+} from 'lucide-react';
 import { TierAvatar } from '@/components/ui/TierAvatar';
 import { FeedPost } from './PostCard';
 
@@ -21,8 +33,18 @@ export const MobilePostComposer: React.FC<MobilePostComposerProps> = ({
 }) => {
   const [content, setContent] = useState('');
   const [repoUrl, setRepoUrl] = useState('');
+  const [selectedType, setSelectedType] = useState<'text' | 'project_launch' | 'repo_update' | 'article' | 'code_snippet' | 'ai_insight'>('text');
   const [showRepoInput, setShowRepoInput] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const creationTypes = [
+    { id: 'text', label: 'New Post', icon: FileText, color: 'text-cyan-400 bg-cyan-950/40 border-cyan-800/40' },
+    { id: 'project_launch', label: 'Launch Project', icon: Rocket, color: 'text-purple-400 bg-purple-950/40 border-purple-800/40' },
+    { id: 'repo_update', label: 'Repo Update', icon: GitCommit, color: 'text-emerald-400 bg-emerald-950/40 border-emerald-800/40' },
+    { id: 'article', label: 'Article', icon: FileText, color: 'text-indigo-400 bg-indigo-950/40 border-indigo-800/40' },
+    { id: 'code_snippet', label: 'Snippet', icon: Terminal, color: 'text-amber-400 bg-amber-950/40 border-amber-800/40' },
+    { id: 'ai_insight', label: 'AI Insight', icon: Brain, color: 'text-pink-400 bg-pink-950/40 border-pink-800/40' },
+  ];
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,13 +60,13 @@ export const MobilePostComposer: React.FC<MobilePostComposerProps> = ({
           avatarUrl: user?.avatarUrl || user?.photoURL || 'https://avatars.githubusercontent.com/u/9919?v=4',
           tier: user?.tier || 'Master',
         },
-        type: repoUrl ? 'project_launch' : 'text',
+        type: selectedType as any,
         content: content.trim(),
         repoUrl: repoUrl.trim() || undefined,
         likesCount: 1,
         commentsCount: 0,
         createdAt: 'Just now',
-        aiSummary: repoUrl ? 'Community project launch verified on DevTrack.' : undefined,
+        aiSummary: selectedType === 'project_launch' ? 'Community project launch verified on DevTrack.' : undefined,
       };
 
       onPostCreated(newPost);
@@ -91,6 +113,33 @@ export const MobilePostComposer: React.FC<MobilePostComposerProps> = ({
               </button>
             </div>
 
+            {/* Creation Types Selection */}
+            <div className="flex items-center gap-2 py-3 overflow-x-auto no-scrollbar border-b border-slate-800/60">
+              {creationTypes.map((type) => {
+                const Icon = type.icon;
+                const isSelected = selectedType === type.id;
+                return (
+                  <button
+                    key={type.id}
+                    onClick={() => {
+                      setSelectedType(type.id as any);
+                      if (type.id === 'project_launch' || type.id === 'repo_update') {
+                        setShowRepoInput(true);
+                      }
+                    }}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap border transition-all active:scale-95 ${
+                      isSelected
+                        ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40 shadow-sm'
+                        : 'bg-slate-900 text-slate-300 border-slate-800 hover:border-slate-700'
+                    }`}
+                  >
+                    <Icon className="w-3.5 h-3.5" />
+                    <span>{type.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+
             {/* Author details */}
             <div className="flex items-center gap-3 pt-3">
               <TierAvatar
@@ -98,77 +147,72 @@ export const MobilePostComposer: React.FC<MobilePostComposerProps> = ({
                 alt={user?.name || user?.username || 'Developer'}
                 tier={user?.tier || 'Diamond'}
                 size="sm"
-                className="w-9 h-9 rounded-xl"
+                className="w-8 h-8 rounded-xl"
               />
               <div>
-                <h4 className="text-xs font-semibold text-slate-200">{user?.name || user?.username || 'Developer'}</h4>
-                <span className="text-[10px] font-mono text-cyan-400">Public Developer Feed</span>
+                <h4 className="text-xs font-semibold text-slate-200">{user?.name || user?.username || 'Verified Developer'}</h4>
+                <p className="text-[10px] font-mono text-cyan-400">@{user?.username || 'developer'}</p>
               </div>
             </div>
 
-            {/* Form */}
-            <form onSubmit={handleSubmit} className="mt-3 flex-1 flex flex-col justify-between">
-              <div className="space-y-3">
-                <textarea
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                  placeholder="Share a project launch, kernel update, or dev insight..."
-                  className="w-full h-32 bg-transparent text-slate-100 placeholder-slate-500 text-sm focus:outline-none resize-none font-sans"
-                  autoFocus
-                />
+            {/* Textarea & Inputs */}
+            <form onSubmit={handleSubmit} className="mt-3 flex-1 flex flex-col justify-between gap-3">
+              <textarea
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                placeholder={
+                  selectedType === 'project_launch'
+                    ? 'Share your project release notes, architecture highlights, and demo links...'
+                    : selectedType === 'code_snippet'
+                    ? 'Paste your code snippet or architectural pattern...'
+                    : 'Share a developer insight, code tip, or project update...'
+                }
+                rows={4}
+                className="w-full bg-slate-900/60 border border-slate-800/80 rounded-2xl p-3 text-xs text-slate-100 placeholder-slate-500 focus:border-cyan-500 focus:outline-none font-sans resize-none"
+              />
 
-                {showRepoInput && (
-                  <div className="flex items-center gap-2 p-2 rounded-xl bg-slate-900 border border-cyan-500/40">
-                    <Code className="w-4 h-4 text-cyan-400 shrink-0" />
-                    <input
-                      type="url"
-                      value={repoUrl}
-                      onChange={(e) => setRepoUrl(e.target.value)}
-                      placeholder="https://github.com/username/repository"
-                      className="w-full bg-transparent text-xs text-slate-200 placeholder-slate-500 focus:outline-none font-mono"
-                    />
-                  </div>
-                )}
-              </div>
+              {showRepoInput && (
+                <div className="flex items-center gap-2 bg-slate-900/60 border border-slate-800/80 rounded-xl px-3 py-2">
+                  <LinkIcon className="w-4 h-4 text-cyan-400 shrink-0" />
+                  <input
+                    type="url"
+                    value={repoUrl}
+                    onChange={(e) => setRepoUrl(e.target.value)}
+                    placeholder="https://github.com/username/repo-name"
+                    className="w-full bg-transparent text-xs text-slate-100 placeholder-slate-500 focus:outline-none font-mono"
+                  />
+                </div>
+              )}
 
-              {/* Action Bar & Submit */}
-              <div className="pt-3 border-t border-slate-800 flex items-center justify-between mt-4">
+              {/* Actions footer */}
+              <div className="flex items-center justify-between pt-2 border-t border-slate-800">
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
                     onClick={() => setShowRepoInput(!showRepoInput)}
-                    className={`p-2 rounded-xl border text-xs flex items-center gap-1.5 active:scale-95 transition-all ${
-                      showRepoInput
-                        ? 'bg-cyan-950 border-cyan-500/60 text-cyan-300'
-                        : 'bg-slate-900 border-slate-800 text-slate-400'
+                    className={`p-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 border transition-all ${
+                      showRepoInput ? 'bg-cyan-950 text-cyan-400 border-cyan-800' : 'bg-slate-900 text-slate-400 border-slate-800'
                     }`}
                   >
-                    <Code className="w-4 h-4" />
-                    <span className="font-mono text-[11px]">Attach Repo</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    className="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 active:scale-95 transition-all"
-                  >
-                    <ImageIcon className="w-4 h-4" />
+                    <LinkIcon className="w-3.5 h-3.5" />
+                    <span>Repo</span>
                   </button>
                 </div>
 
                 <button
                   type="submit"
                   disabled={!content.trim() || isSubmitting}
-                  className="py-2.5 px-5 rounded-xl bg-gradient-to-r from-cyan-500 to-indigo-600 font-semibold text-xs text-slate-950 flex items-center gap-2 shadow-[0_0_15px_rgba(34,211,238,0.3)] disabled:opacity-50 active:scale-95 transition-all"
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-indigo-600 font-bold text-xs text-slate-950 shadow-[0_0_15px_rgba(34,211,238,0.3)] disabled:opacity-50 active:scale-95 transition-all"
                 >
                   {isSubmitting ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      Posting...
+                      <span>Publishing...</span>
                     </>
                   ) : (
                     <>
                       <Send className="w-4 h-4" />
-                      Post
+                      <span>Post</span>
                     </>
                   )}
                 </button>

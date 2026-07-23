@@ -79,10 +79,14 @@ export const MobileHamburgerMenu: React.FC<MobileHamburgerMenuProps> = ({
 
               {/* User Profile Banner / Quick Info */}
               {user ? (
-                <div className="p-4 border-b border-slate-800/60 bg-gradient-to-br from-slate-900/60 to-slate-950">
+                <Link
+                  href={`/u/${user.username || user.displayName?.toLowerCase().replace(/\s+/g, '') || 'shadcn'}`}
+                  onClick={onClose}
+                  className="block p-4 border-b border-slate-800/60 bg-gradient-to-br from-slate-900/60 to-slate-950 active:bg-slate-900 transition-colors"
+                >
                   <div className="flex items-center gap-3">
                     <TierAvatar
-                      src={user.avatarUrl || user.photoURL || 'https://avatars.githubusercontent.com/u/9919?v=4'}
+                      src={user.avatarUrl || user.photoURL || `https://api.dicebear.com/7.x/identicon/svg?seed=${user.username || 'user'}`}
                       alt={user.name || user.username || 'User'}
                       tier={user.tier || 'Diamond'}
                       size="md"
@@ -99,7 +103,7 @@ export const MobileHamburgerMenu: React.FC<MobileHamburgerMenuProps> = ({
                       </div>
                     </div>
                   </div>
-                </div>
+                </Link>
               ) : (
                 <div className="p-4 border-b border-slate-800/60 bg-gradient-to-r from-cyan-950/20 to-indigo-950/20">
                   <p className="text-xs text-slate-300 mb-3">Claim your verified developer identity & track your score.</p>
