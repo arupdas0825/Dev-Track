@@ -20,7 +20,7 @@ export const FileUploadMetadataSchema = z.object({
     .min(1, { message: 'Filename is required.' })
     .max(255, { message: 'Filename is too long.' }),
   mimeType: z.enum(['image/png', 'image/jpeg', 'image/webp', 'application/pdf'], {
-    required_error: 'Unsupported file MIME type. Only PNG, JPEG, WebP, and PDF are allowed.',
+    message: 'Unsupported file MIME type. Only PNG, JPEG, WebP, and PDF are allowed.',
   }),
   sizeInBytes: z
     .number()

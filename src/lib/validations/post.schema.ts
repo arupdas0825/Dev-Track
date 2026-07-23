@@ -7,7 +7,7 @@ export const PostCreationSchema = z.object({
     .min(1, { message: 'Post content cannot be empty.' })
     .max(5000, { message: 'Post content exceeds 5,000 characters.' }),
   type: z.enum(['text', 'project_launch', 'repo_update', 'article', 'code_snippet', 'ai_insight'], {
-    required_error: 'Creation type is required.',
+    message: 'Creation type is required.',
   }),
   repoUrl: z
     .string()

@@ -31,7 +31,7 @@ export function handleApiError(error: unknown): NextResponse {
 
   // Zod Validation Error (Immediate Rejection)
   if (error instanceof ZodError) {
-    const formattedErrors = error.errors.map((err) => ({
+    const formattedErrors = error.issues.map((err: any) => ({
       field: err.path.join('.'),
       message: err.message,
     }));
