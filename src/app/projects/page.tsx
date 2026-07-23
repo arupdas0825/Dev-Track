@@ -22,7 +22,7 @@ export default function ProjectsPage() {
   const projects = [
     {
       id: 'devtrack-2',
-      title: 'DevTrack 2.0 Identity Platform',
+      title: 'DevTrack Identity Platform',
       tagline: 'Developer identity engine transforming GitHub commits into verified scores and visual cards.',
       category: 'Developer Tools',
       stars: 4890,

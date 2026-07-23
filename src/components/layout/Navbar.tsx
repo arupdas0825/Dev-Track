@@ -252,9 +252,6 @@ export const Navbar: React.FC<NavbarProps> = ({
               <DevTrackLogo size={32} animated={false} />
               <span className="text-lg font-black tracking-tight text-white flex items-center gap-1.5 font-mono">
                 DevTrack
-                <span className="rounded-md bg-cyan-500/20 px-1.5 py-0.5 text-[9px] font-bold text-cyan-300 border border-cyan-500/30 font-mono">
-                  2.0
-                </span>
               </span>
             </Link>
 

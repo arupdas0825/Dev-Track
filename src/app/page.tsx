@@ -386,7 +386,7 @@ export default function LandingPage() {
               <div className="flex items-center gap-2 mb-4">
                 <span className="inline-flex items-center gap-1.5 rounded-full border border-indigo-500/30 bg-indigo-500/10 px-3 py-1 text-[11px] font-bold text-indigo-300">
                   <Sparkles className="h-3.5 w-3.5 text-indigo-400" />
-                  DevTrack 2.0 Identity Engine
+                  DevTrack Identity Engine
                 </span>
               </div>
 
@@ -491,7 +491,7 @@ export default function LandingPage() {
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400 font-mono">
             <div className="flex items-center gap-2">
               <Terminal className="h-4 w-4 text-indigo-400" />
-              <span className="font-bold text-white">DevTrack 2.0</span>
+              <span className="font-bold text-white">DevTrack</span>
               <span className="text-slate-600">|</span>
               <span>The Professional Developer Network</span>
             </div>

@@ -28,7 +28,7 @@ const monoFont = IBM_Plex_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"),
-  title: "DevTrack 2.0 — The Professional Network for Developers",
+  title: "DevTrack — The Professional Developer Identity Platform",
   description: "Build your professional developer identity. DevTrack transforms raw GitHub commits, pull requests, and repositories into verified profile cards, real-time developer scores, and a social developer network.",
   keywords: ["developer identity", "developer network", "GitHub profile card", "developer score", "open source portfolio", "developer ecosystem"],
   icons: {
@@ -48,7 +48,7 @@ export const metadata: Metadata = {
     title: "DevTrack",
   },
   openGraph: {
-    title: "DevTrack 2.0 — The Professional Network for Developers",
+    title: "DevTrack — The Professional Developer Identity Platform",
     description: "Build your professional developer identity. Transform GitHub activity into verified profile cards and developer scores.",
     images: [
       {

@@ -26,7 +26,7 @@ const INITIAL_POSTS: FeedPost[] = [
       archetype: 'UI Engineering Lead'
     },
     type: 'project_launch',
-    content: '🚀 Excited to announce DevTrack 2.0 Identity Platform! Built from scratch with Next.js App Router, Tailwind, Framer Motion, and AI profile scoring.',
+    content: '🚀 Excited to announce DevTrack Identity Platform! Built from scratch with Next.js App Router, Tailwind, Framer Motion, and AI profile scoring.',
     repoUrl: 'https://github.com/shadcn/ui',
     likesCount: 142,
     commentsCount: 18,
