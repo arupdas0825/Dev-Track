@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, use } from 'react';
 import { Navbar } from '@/components/layout/Navbar';
+import { MobileProfileView } from '@/components/profile/MobileProfileView';
 import { DeveloperCard, DeveloperCardData } from '@/components/card/DeveloperCard';
 import { AuthModal } from '@/components/auth/AuthModal';
 import { TierAvatar } from '@/components/ui/TierAvatar';
@@ -331,14 +332,33 @@ export default function UserProfilePage({ params, searchParams }: PageProps) {
     <div className="min-h-screen bg-slate-950 text-slate-100 selection:bg-indigo-500 selection:text-white font-sans">
       <Navbar />
 
-      {/* Hero Cover Header */}
-      <div className="relative h-56 sm:h-64 w-full bg-gradient-to-r from-indigo-950 via-slate-950 to-purple-950 overflow-hidden border-b border-white/10">
-        <div className="absolute inset-0 opacity-25 bg-[radial-gradient(#818CF8_1px,transparent_1px)] [background-size:20px_20px]" />
-        <div className="absolute -bottom-12 -left-12 h-64 w-64 rounded-full bg-indigo-500/15 blur-3xl pointer-events-none" />
-        <div className="absolute -top-12 -right-12 h-64 w-64 rounded-full bg-purple-500/15 blur-3xl pointer-events-none" />
+      {/* 📱 MOBILE NATIVE STACKED PROFILE (< md) */}
+      <div className="px-3 pt-3 block md:hidden">
+        <MobileProfileView
+          profileData={{
+            ...profileData,
+            location: profileData.location ?? undefined,
+            company: profileData.company ?? undefined,
+            website: profileData.blog ?? undefined,
+            followersCount: profileData.followers,
+            followingCount: 280,
+            grade: 'A+',
+          }}
+          isOwnProfile={isOwnProfile}
+          onEditProfile={() => setIsEditingAbout(!isEditingAbout)}
+        />
       </div>
 
-      <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-24">
+      {/* 💻 DESKTOP HERO & PROFILE LAYOUT (>= md) */}
+      <div className="hidden md:block">
+        {/* Hero Cover Header */}
+        <div className="relative h-56 sm:h-64 w-full bg-gradient-to-r from-indigo-950 via-slate-950 to-purple-950 overflow-hidden border-b border-white/10">
+          <div className="absolute inset-0 opacity-25 bg-[radial-gradient(#818CF8_1px,transparent_1px)] [background-size:20px_20px]" />
+          <div className="absolute -bottom-12 -left-12 h-64 w-64 rounded-full bg-indigo-500/15 blur-3xl pointer-events-none" />
+          <div className="absolute -top-12 -right-12 h-64 w-64 rounded-full bg-purple-500/15 blur-3xl pointer-events-none" />
+        </div>
+
+        <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-24">
         {/* Profile Header Card */}
         <div className="relative -mt-20 z-10 flex flex-col md:flex-row items-start md:items-end justify-between gap-6 pb-6 border-b border-white/10">
           {/* Avatar & User Details */}
@@ -983,6 +1003,7 @@ export default function UserProfilePage({ params, searchParams }: PageProps) {
           )}
         </div>
       </main>
+      </div>
 
       {/* Auth Modal Trigger */}
       <AuthModal

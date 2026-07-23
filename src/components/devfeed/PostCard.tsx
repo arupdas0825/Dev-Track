@@ -24,7 +24,8 @@ export interface FeedPost {
     name: string;
     username: string;
     avatarUrl: string;
-    archetype: string;
+    archetype?: string;
+    tier?: string;
   };
   authorId?: string;
   authorUsername?: string;

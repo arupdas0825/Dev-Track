@@ -7,6 +7,14 @@ import { PostCard, FeedPost } from './PostCard';
 import { TrendingSidebar } from './TrendingSidebar';
 import { AuthModal } from '../auth/AuthModal';
 
+import { MobileTopBar } from '@/components/layout/MobileTopBar';
+import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
+import { MobileHamburgerMenu } from '@/components/layout/MobileHamburgerMenu';
+import { MobileSearchModal } from '@/components/layout/MobileSearchModal';
+import { MobilePostCard } from './MobilePostCard';
+import { MobilePostComposer } from './MobilePostComposer';
+import { Plus, Sparkles } from 'lucide-react';
+
 const INITIAL_POSTS: FeedPost[] = [
   {
     id: 'post_101',
@@ -14,6 +22,7 @@ const INITIAL_POSTS: FeedPost[] = [
       name: 'shadcn',
       username: 'shadcn',
       avatarUrl: 'https://avatars.githubusercontent.com/u/124599?v=4',
+      tier: 'Master',
       archetype: 'UI Engineering Lead'
     },
     type: 'project_launch',
@@ -30,6 +39,7 @@ const INITIAL_POSTS: FeedPost[] = [
       name: 'Linus Torvalds',
       username: 'torvalds',
       avatarUrl: 'https://avatars.githubusercontent.com/u/1024025?v=4',
+      tier: 'Apex',
       archetype: 'System Kernel Creator'
     },
     type: 'repo_update',
@@ -46,6 +56,7 @@ const INITIAL_POSTS: FeedPost[] = [
       name: 'Dan Abramov',
       username: 'gaearon',
       avatarUrl: 'https://avatars.githubusercontent.com/u/810438?v=4',
+      tier: 'Legend',
       archetype: 'UI & State Pioneer'
     },
     type: 'code_snippet',
@@ -62,6 +73,11 @@ export const FeedLayout: React.FC = () => {
   const [posts, setPosts] = useState<FeedPost[]>(INITIAL_POSTS);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [authActionTitle, setAuthActionTitle] = useState('Sign in to Continue');
+
+  // Mobile Modals & Sheet State
+  const [isHamburgerOpen, setIsHamburgerOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isComposerOpen, setIsComposerOpen] = useState(false);
 
   useEffect(() => {
     const stored = localStorage.getItem('devtrack_current_user');
@@ -84,32 +100,32 @@ export const FeedLayout: React.FC = () => {
   };
 
   return (
-    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-      {/* 3-Column Grid Layout */}
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
-        {/* Left Sidebar (Col 1-3) */}
-        <aside className="lg:col-span-3">
-          <div className="sticky top-24">
-            <LeftProfileSidebar
-              user={user}
-              onRequireAuth={() => handleRequireAuth('Claim Profile')}
-            />
+    <>
+      {/* 📱 MOBILE VIEW CONTAINER (< md) */}
+      <div className="block md:hidden min-h-screen bg-slate-950 text-slate-100 pb-24">
+        <MobileTopBar
+          user={user}
+          onOpenSearch={() => setIsSearchOpen(true)}
+          onOpenHamburger={() => setIsHamburgerOpen(true)}
+          onOpenAuth={() => handleRequireAuth('Sign In')}
+        />
+
+        <main className="px-3 py-4 space-y-4 max-w-lg mx-auto">
+          {/* Quick Create Update Bar on Mobile */}
+          <div
+            onClick={() => setIsComposerOpen(true)}
+            className="flex items-center gap-3 p-3 rounded-2xl bg-slate-900/80 border border-slate-800/80 shadow-md active:scale-98 transition-all cursor-pointer"
+          >
+            <div className="w-8 h-8 rounded-xl bg-cyan-950 text-cyan-400 border border-cyan-800/40 flex items-center justify-center font-mono font-bold text-xs">
+              +
+            </div>
+            <span className="text-xs text-slate-400 font-sans">Share code update, repo launch, or dev insight...</span>
           </div>
-        </aside>
 
-        {/* Center Main Feed (Col 4-8) */}
-        <main className="lg:col-span-6 space-y-6">
-          {/* Post Generator Box */}
-          <CreatePostWidget
-            user={user}
-            onPostCreated={handlePostCreated}
-            onRequireAuth={() => handleRequireAuth('Post Updates')}
-          />
-
-          {/* Feed Posts Stack */}
-          <div className="space-y-5">
+          {/* Posts Feed */}
+          <div className="space-y-4">
             {posts.map((post) => (
-              <PostCard
+              <MobilePostCard
                 key={post.id}
                 post={post}
                 onRequireAuth={() => handleRequireAuth('React or Comment')}
@@ -118,12 +134,78 @@ export const FeedLayout: React.FC = () => {
           </div>
         </main>
 
-        {/* Right Sidebar (Col 9-12) */}
-        <aside className="lg:col-span-3">
-          <div className="sticky top-24">
-            <TrendingSidebar />
-          </div>
-        </aside>
+        {/* Floating FAB for Quick Post */}
+        <button
+          onClick={() => setIsComposerOpen(true)}
+          className="fixed bottom-20 right-4 z-40 p-3.5 rounded-full bg-gradient-to-r from-cyan-500 to-indigo-600 text-slate-950 shadow-[0_0_20px_rgba(34,211,238,0.5)] active:scale-90 transition-all block md:hidden"
+          aria-label="Create Post"
+        >
+          <Plus className="w-6 h-6 stroke-[2.5]" />
+        </button>
+
+        {/* Mobile Navigation Bar */}
+        <MobileBottomNav user={user} activeTabOverride="home" />
+
+        {/* Mobile Modals */}
+        <MobileHamburgerMenu
+          isOpen={isHamburgerOpen}
+          onClose={() => setIsHamburgerOpen(false)}
+          user={user}
+          onOpenAuth={() => handleRequireAuth('Sign In')}
+        />
+
+        <MobileSearchModal
+          isOpen={isSearchOpen}
+          onClose={() => setIsSearchOpen(false)}
+        />
+
+        <MobilePostComposer
+          isOpen={isComposerOpen}
+          onClose={() => setIsComposerOpen(false)}
+          user={user}
+          onPostCreated={handlePostCreated}
+        />
+      </div>
+
+      {/* 💻 DESKTOP VIEW CONTAINER (>= md) */}
+      <div className="hidden md:block mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
+          {/* Left Sidebar */}
+          <aside className="lg:col-span-3">
+            <div className="sticky top-24">
+              <LeftProfileSidebar
+                user={user}
+                onRequireAuth={() => handleRequireAuth('Claim Profile')}
+              />
+            </div>
+          </aside>
+
+          {/* Main Feed */}
+          <main className="lg:col-span-6 space-y-6">
+            <CreatePostWidget
+              user={user}
+              onPostCreated={handlePostCreated}
+              onRequireAuth={() => handleRequireAuth('Post Updates')}
+            />
+
+            <div className="space-y-5">
+              {posts.map((post) => (
+                <PostCard
+                  key={post.id}
+                  post={post}
+                  onRequireAuth={() => handleRequireAuth('React or Comment')}
+                />
+              ))}
+            </div>
+          </main>
+
+          {/* Right Sidebar */}
+          <aside className="lg:col-span-3">
+            <div className="sticky top-24">
+              <TrendingSidebar />
+            </div>
+          </aside>
+        </div>
       </div>
 
       <AuthModal
@@ -131,6 +213,6 @@ export const FeedLayout: React.FC = () => {
         onClose={() => setIsAuthOpen(false)}
         actionTitle={authActionTitle}
       />
-    </div>
+    </>
   );
 };
